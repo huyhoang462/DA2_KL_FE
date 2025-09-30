@@ -1,1 +1,23 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: #ffc107;
+  --color-bg-main: #000;
+}
+
+/* Ẩn icon mắt mặc định trên Chrome, Edge, Opera */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear,
+input[type='password']::-webkit-credentials-auto-fill-button,
+input[type='password']::-webkit-input-decoration-container,
+input[type='password']::-webkit-input-password-toggle-button,
+input[type='password']::-webkit-input-suffix {
+  display: none !important;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Ẩn icon trên Firefox */
+input[type='password']::-moz-password-toggle {
+  display: none !important;
+}
