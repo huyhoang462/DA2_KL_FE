@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
+  --spacing-hheader: 4rem;
+
   --color-primary: #ffc107;
   --color-bg-main: #000;
 }
@@ -20,4 +22,9 @@ input[type='password']::-webkit-input-suffix {
 /* Ẩn icon trên Firefox */
 input[type='password']::-moz-password-toggle {
   display: none !important;
+}
+
+html,
+body {
+  @apply bg-bg-main;
 }

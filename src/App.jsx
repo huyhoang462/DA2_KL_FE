@@ -13,12 +13,14 @@ import SearchPage from './pages/user/SearchPage';
 import SelectTicketsPage from './pages/user/SelectTicketsPage';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import MyEventsPage from './pages/organizer/MyEventsPage';
+import SignupPage from './pages/auth/SignupPage';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route element={<ProtectedRoute />}></Route>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />

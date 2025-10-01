@@ -123,7 +123,7 @@ const Header = () => {
         >
           <UserIcon
             size={28}
-            className="h-8 w-8 rounded-full border border-gray-400 bg-gray-300 p-1"
+            className="h-8 w-8 rounded-full border-2 border-white p-1"
           />
           <ChevronDown size={18} className="ml-1 text-gray-700" />
           {dropdownOpen && renderUserDropdown()}
@@ -207,13 +207,12 @@ const Header = () => {
 
   return (
     <header className="bg-primary fixed top-0 left-0 z-50 w-full shadow transition-all duration-300">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="h-hheader container mx-auto flex items-center justify-between px-4">
         <Link
           to="/"
           className="flex items-center gap-2 text-xl font-bold text-white transition hover:text-yellow-400"
         >
-          {/* <img src="/Logo.png" className="h-12" /> */}
-          SHINETICKET
+          <img src="/Logo.png" className="h-12" />
         </Link>
 
         <div className="relative hidden md:block">
