@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeClosed, Loader2, X } from 'lucide-react';
+import { Eye, EyeClosed, X } from 'lucide-react';
 import { handleLogin } from '../../services/authService';
 import { useDispatch } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 
-// Giả lập API quên mật khẩu
 const forgotPasswordAPI = async (email) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -26,10 +27,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // Modal quên mật khẩu
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotError, setForgotError] = useState('');
@@ -43,14 +43,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage('');
+    setErrorMessage({});
+    const newErrorMessage = {};
 
-    if (!email || !password) {
-      setErrorMessage('Vui lòng nhập đầy đủ email và mật khẩu.');
-      return;
+    if (!email) {
+      newErrorMessage.email = 'Bạn chưa nhập email!';
+    } else if (!validateEmail(email)) {
+      newErrorMessage.email = 'Email không hợp lệ!';
     }
-    if (!validateEmail(email)) {
-      setErrorMessage('Email không hợp lệ.');
+    if (!password) {
+      newErrorMessage.password = 'Bạn chưa nhập mật khẩu!';
+    }
+    if (Object.keys(newErrorMessage).length > 0) {
+      setErrorMessage(newErrorMessage);
       return;
     }
 
@@ -60,23 +65,25 @@ export default function LoginPage() {
       dispatch(login(data));
       nav('/');
     } catch (err) {
-      setErrorMessage(err?.error || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+      setErrorMessage({
+        error: err?.error || 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Ẩn lỗi khi người dùng tiếp tục nhập
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
-    if (errorMessage) setErrorMessage('');
+    if (errorMessage.email)
+      setErrorMessage((pre) => ({ ...pre, email: undefined }));
   };
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
-    if (errorMessage) setErrorMessage('');
+    if (errorMessage.password)
+      setErrorMessage((pre) => ({ ...pre, password: undefined }));
   };
 
-  // Xử lý modal quên mật khẩu
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
     setForgotError('');
@@ -101,74 +108,63 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 px-4">
-      <div className="relative w-full max-w-md rounded-xl bg-gray-900 p-8 shadow-lg">
+    <div className="bg-background-primary flex min-h-screen items-center justify-center px-4">
+      <div className="bg-foreground relative w-full max-w-md rounded-xl p-8 shadow-lg">
         <X
           onClick={() => nav('/')}
-          className="hover:text-primary absolute top-4 right-4 h-6 w-6 cursor-pointer text-gray-400"
+          className="hover:text-primary text-text-primary absolute top-4 right-4 h-6 w-6 cursor-pointer"
           aria-label="Đóng"
         />
         <div className="mb-6 flex flex-col items-center">
           <img src="/favicon.ico" alt="Logo" className="mb-2 h-16" />
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-text-primary text-2xl font-bold">
             Đăng nhập vào <span className="text-primary">ShineTicket</span>
           </h1>
         </div>
-        {errorMessage && (
-          <div className="mb-4 rounded bg-red-100 px-4 py-2 text-center text-sm text-red-700">
-            {errorMessage}
+        {errorMessage?.error && (
+          <div className="text-destructive bg-destructive-background mb-4 rounded px-4 py-2 text-center text-sm">
+            {errorMessage?.error}
           </div>
         )}
-        <form className="space-y-5" onSubmit={handleSubmit} autoComplete="off">
+        <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
           <div>
-            <label
-              htmlFor="email"
-              className="mb-1 block text-sm font-medium text-gray-200"
-            >
-              Email
-            </label>
-            <input
+            <Input
               id="email"
+              label="Email"
               spellCheck={false}
               autoFocus
               autoComplete="username"
-              className="focus:border-primary block w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 text-white placeholder-gray-400 focus:outline-none"
-              placeholder="name@company.com"
               value={email}
               onChange={handleEmailChange}
               disabled={loading}
+              error={errorMessage?.email}
             />
           </div>
           <div>
-            <label
-              htmlFor="password"
-              className="mb-1 block text-sm font-medium text-gray-200"
-            >
-              Mật khẩu
-            </label>
             <div className="relative">
-              <input
+              <Input
                 id="password"
+                label="Mật khẩu"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
-                className="focus:border-primary block w-full rounded-lg border border-gray-700 bg-gray-800 p-2.5 pr-10 text-white placeholder-gray-400 focus:outline-none"
-                placeholder="••••••••"
                 value={password}
                 onChange={handlePasswordChange}
+                error={errorMessage?.password}
                 disabled={loading}
               />
+
               <button
                 type="button"
                 tabIndex={-1}
-                className="hover:text-primary absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+                className="hover:text-primary text-text-primary absolute top-10 right-0 pr-3"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 disabled={loading}
               >
                 {showPassword ? (
-                  <EyeClosed className="h-5 w-5 cursor-pointer" />
-                ) : (
                   <Eye className="h-5 w-5 cursor-pointer" />
+                ) : (
+                  <EyeClosed className="h-5 w-5 cursor-pointer" />
                 )}
               </button>
             </div>
@@ -178,11 +174,11 @@ export default function LoginPage() {
               to="/signup"
               className="text-primary text-sm font-medium hover:underline"
             >
-              Đăng ký tài khoản
+              Đăng ký
             </Link>
             <button
               type="button"
-              className="hover:text-primary cursor-pointer text-sm text-gray-300"
+              className="hover:text-primary text-text-primary cursor-pointer text-sm"
               disabled={loading}
               onClick={() => {
                 setShowForgotModal(true);
@@ -194,35 +190,29 @@ export default function LoginPage() {
               Quên mật khẩu?
             </button>
           </div>
-          <button
-            type="submit"
-            className="bg-primary focus:ring-primary flex w-full cursor-pointer items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-semibold text-gray-900 transition hover:bg-yellow-400 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
-            disabled={loading}
-          >
-            {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+
+          <Button type="submit" loading={loading} className="w-full">
             Đăng nhập
-          </button>
+          </Button>
         </form>
 
-        {/* Modal Quên mật khẩu */}
         {showForgotModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <div className="bg-background-secondary relative w-full max-w-sm rounded-lg p-6 shadow-xl">
               <button
-                className="hover:text-primary absolute top-3 right-3 cursor-pointer text-gray-400"
+                className="hover:text-primary text-text-primary absolute top-3 right-3 cursor-pointer"
                 onClick={() => setShowForgotModal(false)}
                 aria-label="Đóng"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h2 className="mb-4 text-lg font-bold text-gray-800">
+              <h2 className="text-text-primary mb-4 text-lg font-bold">
                 Quên mật khẩu
               </h2>
               <form onSubmit={handleForgotSubmit} className="space-y-4">
-                <input
+                <Input
                   id="reset-email"
                   spellCheck={false}
-                  className="focus:border-primary block w-full rounded border border-gray-300 bg-gray-50 p-2 text-gray-900 focus:outline-none"
                   placeholder="Nhập email của bạn"
                   value={forgotEmail}
                   onChange={(e) => {
@@ -234,28 +224,27 @@ export default function LoginPage() {
                   disabled={forgotLoading}
                 />
                 {forgotError && (
-                  <div className="rounded bg-red-100 px-3 py-2 text-sm text-red-700">
+                  <div className="bg-destructive-background text-destructive rounded px-3 py-2 text-sm">
                     {forgotError}
                   </div>
                 )}
                 {forgotSuccess && (
-                  <div className="rounded bg-green-100 px-3 py-2 text-sm text-green-700">
+                  <div className="bg-success-background text-success rounded px-3 py-2 text-sm">
                     {forgotSuccess}
                   </div>
                 )}
-                <button
+
+                <Button
                   type={forgotSuccess ? 'button' : 'submit'}
-                  className="bg-primary flex w-full cursor-pointer items-center justify-center rounded px-4 py-2 font-semibold text-gray-900 transition hover:bg-yellow-400 disabled:opacity-60"
                   disabled={forgotLoading}
+                  className="w-full"
                   onClick={
                     forgotSuccess ? () => setShowForgotModal(false) : undefined
                   }
+                  loading={forgotLoading}
                 >
-                  {forgotLoading && (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  )}
                   {forgotSuccess ? 'OK' : 'Xác nhận'}
-                </button>
+                </Button>
               </form>
             </div>
           </div>

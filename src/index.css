@@ -3,28 +3,95 @@
 @theme {
   --spacing-hheader: 4rem;
 
-  --color-primary: #ffc107;
-  --color-bg-main: #000;
+  /* -------------------------------------------------- */
+  /* 1. MÀU THƯƠNG HIỆU (BRAND/PRIMARY)                  */
+  /* Giữ nguyên theo yêu cầu. Đây là nhận diện cốt lõi. */
+  /* -------------------------------------------------- */
+  --color-primary: #ffc107; /* Màu vàng kim đặc trưng */
+  --color-primary-hover: #f9db1c; /* Đậm hơn cho trạng thái hover */
+  --color-primary-foreground: #212529; /* Chữ đen đậm trên nền vàng, đảm bảo độ tương phản > 4.5:1 (chuẩn WCAG AA) */
+
+  /* -------------------------------------------------- */
+  /* 2. MÀU TRUNG TÍNH (NEUTRAL) - NỀN TẢNG CỦA GIAO DIỆN */
+  /* Nhóm màu quan trọng nhất cho nền sáng. Tôi chọn các sắc độ xám nhẹ, dịu mắt thay vì trắng/đen tuyệt đối. */
+  /* -------------------------------------------------- */
+
+  /* Nền (Background) */
+  --color-background-primary: #f8f9fa; /* Nền chính của trang, màu trắng xám rất nhẹ, giảm mỏi mắt so với trắng tinh (#FFFFFF) */
+  --color-background-secondary: #ffffff; /* Nền cho các thành phần "nổi" như Card, Modal, tạo chiều sâu tinh tế */
+  --color-foreground: #f9fafb; /* Nền cho input, button, các thành phần tương tác */
+  /* Chữ (Text) */
+  --color-text-primary: #212529; /* Chữ chính - màu đen-xám đậm, dễ đọc */
+  --color-text-secondary: #6c757d; /* Chữ phụ, mô tả - màu xám, tạo phân cấp thông tin */
+  --color-text-placeholder: #adb5bd; /* Chữ cho placeholder, trạng thái mờ */
+
+  /* Viền (Border) */
+  --color-border-default: #d1d5dc; /* Viền cho input, card, các đường phân cách */
+  --color-border-subtle: #e9ecef; /* Viền mờ hơn, ít quan trọng hơn */
+
+  /* -------------------------------------------------- */
+  /* 3. MÀU NGỮ NGHĨA (SEMANTIC/FUNCTIONAL)              */
+  /* Dành cho các thông báo, trạng thái. Tôi đã bổ sung thêm màu Cảnh báo và Thông tin. */
+  /* -------------------------------------------------- */
+
+  /* Thành công (Success) */
+  --color-success: #198754; /* Xanh lá cây đậm, rõ ràng */
+  --color-success-hover: #157347; /* Hover cho màu xanh */
+  --color-success-foreground: #ffffff; /* Chữ trắng trên nền xanh */
+  --color-success-background: #d1e7dd; /* Nền cho alert, badge thành công */
+  --color-success-text-on-subtle: #0f5132; /* Chữ trên nền alert thành công */
+
+  /* Nguy hiểm / Lỗi (Destructive / Error) */
+  --color-destructive: #fb2c36; /* Màu đỏ cho lỗi, xóa */
+  --color-destructive-hover: #bb2d3b; /* Hover cho màu đỏ */
+  --color-destructive-foreground: #ffffff; /* Chữ trắng trên nền đỏ */
+  --color-destructive-background: #f8d7da; /* Nền cho alert, badge lỗi */
+  --color-destructive-text-on-subtle: #842029; /* Chữ trên nền alert lỗi */
+
+  /* Cảnh báo (Warning) */
+  --color-warning: #ffc107; /* Tái sử dụng màu Primary vì bản chất màu vàng đã là cảnh báo */
+  --color-warning-hover: #e0a800;
+  --color-warning-foreground: #212529;
+  --color-warning-background: #fff3cd; /* Nền cho alert, badge cảnh báo */
+  --color-warning-text-on-subtle: #664d03; /* Chữ trên nền alert cảnh báo */
+
+  /* Thông tin (Info) */
+  --color-info: #0dcaf0; /* Màu xanh dương nhạt, thân thiện */
+  --color-info-hover: #0aa7c4; /* Hover cho màu xanh dương */
+  --color-info-foreground: #ffffff; /* Chữ trắng trên nền xanh dương */
+  --color-info-background: #cff4fc; /* Nền cho alert, badge thông tin */
+  --color-info-text-on-subtle: #055160; /* Chữ trên nền alert thông tin */
+
+  /* -------------------------------------------------- */
+  /* 4. MÀU TRẠNG THÁI TƯƠNG TÁC (INTERACTIVE STATES)    */
+  /* Các màu chuyên dụng cho các trạng thái giao diện người dùng. */
+  /* -------------------------------------------------- */
+
+  /* Link */
+  --color-link: var(
+    --color-primary
+  ); /* Link sử dụng màu Primary để đồng bộ thương hiệu */
+  --color-link-hover: var(--color-primary-hover); /* Link hover */
+
+  /* Vòng tròn Focus (Quan trọng cho Accessibility) */
+  --color-focus-ring: #ffda6a; /* Vòng sáng quanh input, button khi focus, giúp người dùng biết họ đang ở đâu */
+
+  /* Trạng thái Vô hiệu hóa (Disabled) */
+  --color-disabled-background: #e9ecef; /* Nền cho button, input bị vô hiệu hóa */
+  --color-disabled-text: #adb5bd; /* Chữ cho các element bị vô hiệu hóa */
+}
+[data-theme='light'] {
+  --background-primary: #f9db1c;
 }
 
-/* Ẩn icon mắt mặc định trên Chrome, Edge, Opera */
 input[type='password']::-ms-reveal,
-input[type='password']::-ms-clear,
-input[type='password']::-webkit-credentials-auto-fill-button,
-input[type='password']::-webkit-input-decoration-container,
-input[type='password']::-webkit-input-password-toggle-button,
-input[type='password']::-webkit-input-suffix {
+input[type='password']::-ms-clear {
   display: none !important;
   pointer-events: none;
   opacity: 0;
 }
 
-/* Ẩn icon trên Firefox */
-input[type='password']::-moz-password-toggle {
-  display: none !important;
-}
-
 html,
 body {
-  @apply bg-bg-main;
+  @apply bg-background-primary;
 }

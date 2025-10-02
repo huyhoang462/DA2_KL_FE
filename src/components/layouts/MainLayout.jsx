@@ -4,7 +4,7 @@ import Header from '../shared/Header';
 
 const MainLayout = () => {
   return (
-    <div className="bg-bg-main min-h-screen">
+    <div className="bg-background min-h-screen">
       <Header />
       <div className="pt-hheader">
         <main>

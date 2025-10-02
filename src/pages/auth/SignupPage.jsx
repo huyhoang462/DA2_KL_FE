@@ -47,14 +47,12 @@ export default function SignupPage() {
     if (Object.keys(errors).length > 0) return;
 
     setLoading(true);
-    // TODO: Gọi API đăng ký ở đây
     setTimeout(() => {
       setLoading(false);
       nav('/login');
     }, 1000);
   };
 
-  // Hàm helper để giảm lặp code trong onChange
   const handleInputChange = (setter, fieldName) => (e) => {
     setter(e.target.value);
     if (fieldError[fieldName]) {
@@ -63,21 +61,20 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-2">
-      <div className="mx-auto w-full max-w-md rounded-2xl bg-white px-6 py-8 shadow-xl">
+    <div className="bg-background-primary flex min-h-screen items-center justify-center px-2">
+      <div className="bg-foreground mx-auto w-full max-w-md rounded-2xl px-6 py-8 shadow-xl">
         <div className="mb-4 flex flex-col items-center">
           <img
             src="/favicon.ico"
             alt="Logo ShineTicket"
             className="mb-2 h-16"
           />
-          <h1 className="mb-1 text-2xl font-extrabold text-gray-900">
+          <h1 className="text-text-primary mb-1 text-2xl font-extrabold">
             Đăng ký <span className="text-primary">ShineTicket</span>
           </h1>
         </div>
 
-        {/* Giảm khoảng cách giữa các trường một chút để tối ưu hơn */}
-        <form className="space-y-5" onSubmit={handleSubmit} autoComplete="off">
+        <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
           <FloatingLabelInput
             id="email"
             label="Email"
@@ -121,7 +118,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 tabIndex={-1}
-                className="hover:text-primary text-gray-400"
+                className="hover:text-primary text-text-secondary cursor-pointer"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 disabled={loading}
@@ -147,7 +144,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 tabIndex={-1}
-                className="hover:text-primary text-gray-400"
+                className="hover:text-primary text-text-secondary cursor-pointer"
                 onClick={() => setShowConfirmPassword((v) => !v)}
                 aria-label={
                   showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
@@ -165,7 +162,7 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            className="bg-primary focus:ring-primary flex w-full cursor-pointer items-center justify-center rounded-lg px-5 py-3 text-center text-base font-semibold text-gray-900 transition hover:bg-yellow-400 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+            className="bg-primary focus:ring-primary text-primary-foreground hover:bg-primary-hover flex w-full cursor-pointer items-center justify-center rounded-lg px-5 py-3 text-center text-base font-semibold transition focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
@@ -173,11 +170,11 @@ export default function SignupPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="text-text-secondary mt-4 text-center text-sm">
           Đã có tài khoản?{' '}
           <Link
             to="/login"
-            className="text-primary cursor-pointer font-semibold hover:underline"
+            className="text-link cursor-pointer font-semibold hover:underline"
           >
             Đăng nhập
           </Link>
