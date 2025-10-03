@@ -65,9 +65,11 @@ export default function LoginPage() {
       dispatch(login(data));
       nav('/');
     } catch (err) {
-      setErrorMessage({
-        error: err?.error || 'Đã có lỗi xảy ra. Vui lòng thử lại.',
-      });
+      if (err?.status === 401)
+        setErrorMessage({ error: 'Email hoặc mật khẩu không đúng!' });
+      else if (err?.status === 500)
+        setErrorMessage({ error: 'Đã có lỗi ở BE' });
+      else setErrorMessage({ error: 'Lỗi ngoại dự kiêns' });
     } finally {
       setLoading(false);
     }
