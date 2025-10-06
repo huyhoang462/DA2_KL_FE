@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeClosed, Loader2 } from 'lucide-react';
+import { Eye, EyeClosed, Loader2, X } from 'lucide-react';
 
 import FloatingLabelInput from '../../components/ui/FloatingLabelInput';
+import {
+  handleRegisterRequest,
+  handleVerifyEmail,
+} from '../../services/authService';
 
 const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validatePhone = (phone) => /^0\d{9,10}$/.test(phone);
 
 export default function SignupPage() {
+  const [formStep, setFormStep] = useState('register');
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -15,12 +20,25 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [fieldError, setFieldError] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const nav = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleInputChange = (setter, fieldName) => (e) => {
+    setter(e.target.value);
+    if (fieldError[fieldName]) {
+      setFieldError((prev) => ({ ...prev, [fieldName]: undefined }));
+    }
+    if (serverError) {
+      setServerError('');
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     let errors = {};
 
@@ -47,18 +65,146 @@ export default function SignupPage() {
     if (Object.keys(errors).length > 0) return;
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      nav('/login');
-    }, 1000);
-  };
+    setServerError('');
 
-  const handleInputChange = (setter, fieldName) => (e) => {
-    setter(e.target.value);
-    if (fieldError[fieldName]) {
-      setFieldError((prev) => ({ ...prev, [fieldName]: undefined }));
+    const formData = {
+      email,
+      password,
+      name: fullName,
+      phone,
+      role: 'user',
+    };
+
+    try {
+      await handleRegisterRequest({ formData });
+      setFormStep('verify');
+    } catch (error) {
+      if (error.status >= 400 && error.status < 500) {
+        setServerError(error.message);
+      } else {
+        setServerError('Lỗi hệ thống, vui lòng thử lại sau.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleVerifySubmit = async (e) => {
+    e.preventDefault();
+    setFieldError({});
+    if (!otp || otp.trim().length !== 6) {
+      setFieldError({ otp: 'Vui lòng nhập mã OTP gồm 6 chữ số.' });
+      return;
+    }
+
+    setLoading(true);
+    setServerError('');
+
+    try {
+      await handleVerifyEmail({ email, otp });
+      setShowSuccessModal(true);
+    } catch (error) {
+      if (error.status >= 400 && error.status < 500) {
+        setServerError(error.message);
+      } else {
+        setServerError('Lỗi hệ thống, vui lòng thử lại sau.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (formStep === 'verify') {
+    return (
+      <div className="bg-background-primary flex min-h-screen items-center justify-center px-2">
+        <div className="bg-foreground mx-auto w-full max-w-md rounded-2xl px-6 py-8 shadow-xl">
+          <div className="mb-4 flex flex-col items-center">
+            <img
+              src="/favicon.ico"
+              alt="Logo ShineTicket"
+              className="mb-2 h-16"
+            />
+            <h1 className="text-text-primary mb-2 text-2xl font-extrabold">
+              Xác thực Email
+            </h1>
+            <p className="text-text-secondary text-center text-sm">
+              Một mã xác thực đã được gửi đến{' '}
+              <strong className="text-text-primary">{email}</strong>. Vui lòng
+              kiểm tra và nhập mã vào bên dưới.
+            </p>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleVerifySubmit}>
+            <FloatingLabelInput
+              id="otp"
+              label="Mã OTP"
+              type="text"
+              value={otp}
+              onChange={handleInputChange(setOtp, 'otp')}
+              error={fieldError.otp}
+              disabled={loading}
+              autoComplete="one-time-code"
+            />
+
+            {serverError && (
+              <p className="text-center text-sm text-red-500">{serverError}</p>
+            )}
+
+            <button
+              type="submit"
+              className="bg-primary focus:ring-primary text-primary-foreground hover:bg-primary-hover flex w-full cursor-pointer items-center justify-center rounded-lg px-5 py-3 text-center text-base font-semibold transition focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+              disabled={loading}
+            >
+              {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+              Xác nhận
+            </button>
+          </form>
+
+          <div className="text-text-secondary mt-4 text-center text-sm">
+            Không nhận được mã?{' '}
+            <button
+              onClick={() => {
+                /* TODO: Thêm logic gửi lại mã OTP */
+              }}
+              className="text-link cursor-pointer font-semibold hover:underline"
+              disabled={loading}
+            >
+              Gửi lại
+            </button>
+          </div>
+        </div>
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-background-secondary relative w-full max-w-sm rounded-lg p-6 shadow-xl">
+              <button
+                className="hover:text-primary text-text-primary absolute top-3 right-3 cursor-pointer"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  nav('/login');
+                }}
+                aria-label="Đóng"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h2 className="text-text-primary mb-4 text-lg font-bold">
+                Xác thực thành công!
+              </h2>
+              <p className="text-text-secondary mb-6 text-sm">
+                Tài khoản của bạn đã được xác thực thành công. Bạn có thể đăng
+                nhập ngay bây giờ.
+              </p>
+              <button
+                className="bg-primary text-primary-foreground hover:bg-primary-hover w-full cursor-pointer rounded-lg px-5 py-3 font-semibold"
+                onClick={() => nav('/login')}
+              >
+                Đến trang đăng nhập
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background-primary flex min-h-screen items-center justify-center px-2">
@@ -74,7 +220,11 @@ export default function SignupPage() {
           </h1>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+        <form
+          className="space-y-4"
+          onSubmit={handleRegisterSubmit}
+          autoComplete="off"
+        >
           <FloatingLabelInput
             id="email"
             label="Email"
@@ -159,6 +309,10 @@ export default function SignupPage() {
               </button>
             }
           />
+
+          {serverError && (
+            <p className="text-center text-sm text-red-500">{serverError}</p>
+          )}
 
           <button
             type="submit"
