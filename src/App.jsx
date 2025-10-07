@@ -14,6 +14,7 @@ import SelectTicketsPage from './pages/user/SelectTicketsPage';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import MyEventsPage from './pages/organizer/MyEventsPage';
 import SignupPage from './pages/auth/SignupPage';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="my-events" element={<MyEventsPage />} />
         </Route>
       </Routes>
+      <ToastContainer autoClose={2000} />
     </BrowserRouter>
   );
 }

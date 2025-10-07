@@ -43,3 +43,39 @@ export const handleVerifyEmail = async ({ email, otp }) => {
     throw extractError(error);
   }
 };
+
+export const forgotPasswordAPI = async ({ email }) => {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+      email,
+    });
+    return res.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const verifyResetCodeAPI = async ({ email, code }) => {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/auth/verify-reset-code`, {
+      email,
+      code,
+    });
+    return res.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const resetPasswordAPI = async ({ email, code, newPassword }) => {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+      email,
+      code,
+      newPassword,
+    });
+    return res.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
