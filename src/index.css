@@ -95,3 +95,19 @@ html,
 body {
   @apply bg-background-primary;
 }
+/* Scrollbar đẹp cho toàn app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) var(--color-background-secondary);
+}
+::-webkit-scrollbar {
+  width: 8px;
+  background: var(--color-background-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}

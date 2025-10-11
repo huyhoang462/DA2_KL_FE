@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -9,6 +9,9 @@ import {
   Ticket,
   User,
   Calendar,
+  PlusCircle,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import useClickOutside from '../../hooks/useClickOutside';
@@ -35,7 +38,7 @@ const Header = () => {
       label: 'Thông tin tài khoản',
       icon: <User className="mr-2 h-4 w-4" />,
       onClick: () => {
-        nav('/account');
+        nav('user/profile');
         setDropdownOpen(false);
       },
     },
@@ -43,7 +46,7 @@ const Header = () => {
       label: 'Vé của tôi',
       icon: <Ticket className="mr-2 h-4 w-4" />,
       onClick: () => {
-        nav('/my-tickets');
+        nav('user/tickets');
         setDropdownOpen(false);
       },
     },
@@ -59,26 +62,29 @@ const Header = () => {
       label: 'Đăng xuất',
       icon: <LogOut className="mr-2 h-4 w-4" />,
       onClick: handleLogout,
-      className: 'text-red-500 hover:bg-red-50',
+      className:
+        'text-destructive hover:bg-destructive-background font-semibold',
     },
   ];
 
   const renderUserDropdown = () => (
     <div
       ref={dropdownRef}
-      className="animate-fade-in absolute top-12 right-0 z-50 w-56 rounded-lg bg-white py-2 shadow-xl ring-1 ring-black/10"
+      className="animate-fade-in border-border-default bg-background-secondary ring-border-default absolute top-12 right-0 z-50 w-56 rounded-xl border py-2 shadow-lg ring-1"
     >
-      <div className="border-b border-gray-100 px-4 py-2">
-        <div className="font-semibold text-gray-800">
+      <div className="border-border-default border-b px-4 py-2">
+        <div className="text-text-primary font-semibold">
           {auth.user?.name || 'Tài khoản'}
         </div>
-        <div className="text-xs text-gray-500">{auth.user?.email}</div>
+        <div className="text-text-secondary text-xs">{auth.user?.email}</div>
       </div>
       <ul className="py-1">
         {userMenuItems.map((item) => (
           <li
             key={item.label}
-            className={`flex cursor-pointer items-center px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100 ${item.className || ''}`}
+            className={`flex cursor-pointer items-center rounded-lg px-4 py-2 text-sm transition ${
+              item.className || 'hover:bg-primary/20'
+            }`}
             onClick={item.onClick}
           >
             {item.icon}
@@ -92,17 +98,19 @@ const Header = () => {
   const renderRightContent = () => {
     if (!isLoggedIn) {
       return (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Link
             to="/login"
-            className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow hover:bg-gray-100"
+            className="text-text-primary hover:bg-primary/10 hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
           >
+            <LogIn className="h-5 w-5" />
             Đăng nhập
           </Link>
           <Link
             to="/signup"
-            className="bg-primary rounded-md px-4 py-2 text-sm font-semibold text-white shadow hover:bg-yellow-400 hover:text-gray-900"
+            className="text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
           >
+            <UserPlus className="h-5 w-5" />
             Đăng ký
           </Link>
         </div>
@@ -110,22 +118,23 @@ const Header = () => {
     }
 
     return (
-      <div className="relative flex h-8 items-center gap-6">
+      <div className="relative flex h-8 items-center gap-4">
         <Link
           to="/dashboard/create-event"
-          className="hover:text-primary text-sm font-semibold"
+          className="hover:bg-background-secondary text-background-primary hover:text-primary flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition"
         >
-          Tổ chức sự kiện
+          <PlusCircle className="h-5 w-5" />
+          <span>Tổ chức sự kiện</span>
         </Link>
         <div
           className="relative flex cursor-pointer items-center select-none"
           onClick={() => setDropdownOpen((v) => !v)}
         >
           <UserIcon
-            size={28}
-            className="h-8 w-8 rounded-full border-2 border-white p-1"
+            size={18}
+            className="text-primary-foreground bg-background-secondary h-8 w-8 rounded-full p-1 shadow"
           />
-          <ChevronDown size={18} className="ml-1 text-gray-700" />
+          <ChevronDown size={18} className="text-primary-foreground ml-1" />
           {dropdownOpen && renderUserDropdown()}
         </div>
       </div>
@@ -138,19 +147,19 @@ const Header = () => {
       className="fixed inset-0 z-50 flex justify-end bg-black/40"
       style={{ animation: 'fadeIn .2s' }}
     >
-      <div className="bg-primary flex h-full w-64 flex-col px-4 py-6 shadow-lg">
+      <div className="border-border-default bg-background-secondary flex h-full w-64 flex-col border-l px-4 py-6 shadow-2xl">
         <button
-          className="hover:text-primary mb-4 self-end text-gray-500"
+          className="text-text-secondary hover:text-primary mb-4 self-end"
           onClick={() => setMobileMenuOpen(false)}
         >
           <svg width="24" height="24" fill="none" stroke="currentColor">
             <path d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <nav className="flex flex-col gap-4">
+        <nav className="flex flex-col gap-2">
           <Link
             to="/"
-            className="text-primary text-lg font-bold"
+            className="text-primary hover:bg-primary/10 cursor-pointer rounded-lg px-3 py-2 text-lg font-bold transition"
             onClick={() => setMobileMenuOpen(false)}
           >
             Trang chủ
@@ -160,25 +169,37 @@ const Header = () => {
             <>
               <Link
                 to="/login"
-                className="text-base font-medium"
+                className="text-text-primary hover:bg-primary/10 hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition"
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <LogIn className="h-5 w-5" />
                 Đăng nhập
               </Link>
               <Link
                 to="/signup"
-                className="text-base font-medium"
+                className="text-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition"
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <UserPlus className="h-5 w-5" />
                 Đăng ký
               </Link>
             </>
           ) : (
             <>
+              <button
+                className="border-primary bg-background-secondary text-primary hover:bg-primary hover:text-primary-foreground flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-base font-medium transition"
+                onClick={() => {
+                  nav('/dashboard/create-event');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <PlusCircle className="h-5 w-5" />
+                Tổ chức sự kiện
+              </button>
               {userMenuItems.slice(0, -1).map((item) => (
                 <button
                   key={item.label}
-                  className="flex items-center text-left text-base font-medium"
+                  className="text-text-primary hover:bg-primary/10 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-base font-medium transition"
                   onClick={() => {
                     item.onClick();
                     setMobileMenuOpen(false);
@@ -189,7 +210,7 @@ const Header = () => {
                 </button>
               ))}
               <button
-                className="flex items-center text-base font-medium text-red-500"
+                className="text-destructive hover:bg-destructive-background flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium font-semibold transition"
                 onClick={() => {
                   handleLogout();
                   setMobileMenuOpen(false);
@@ -210,17 +231,17 @@ const Header = () => {
       <div className="h-hheader container mx-auto flex items-center justify-between px-4">
         <Link
           to="/"
-          className="flex items-center gap-2 text-xl font-bold text-white transition hover:text-yellow-400"
+          className="text-primary-foreground hover:text-primary-hover flex items-center gap-2 text-xl font-bold transition"
         >
           <img src="/Logo.png" className="h-12" />
         </Link>
 
         <div className="relative hidden md:block">
-          <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Search className="text-text-placeholder absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Tìm kiếm sự kiện..."
-            className="focus:border-primary w-64 rounded-full border border-gray-700 bg-gray-800 py-2 pr-4 pl-10 text-white placeholder-gray-400 focus:outline-none lg:w-96"
+            className="border-border-default bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary focus:ring-primary w-64 rounded-full border py-2 pr-4 pl-10 transition focus:ring-2 focus:outline-none lg:w-96"
           />
         </div>
 
@@ -230,7 +251,7 @@ const Header = () => {
 
         <div className="md:hidden">
           <Menu
-            className="h-7 w-7 cursor-pointer text-white"
+            className="text-primary-foreground h-7 w-7 cursor-pointer"
             onClick={() => setMobileMenuOpen(true)}
           />
         </div>

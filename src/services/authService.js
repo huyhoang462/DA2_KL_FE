@@ -79,3 +79,20 @@ export const resetPasswordAPI = async ({ email, code, newPassword }) => {
     throw extractError(error);
   }
 };
+
+export const handleChangePassword = async ({
+  userId,
+  oldPassword,
+  newPassword,
+}) => {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/auth/change-password`, {
+      userId,
+      oldPassword,
+      newPassword,
+    });
+    return res.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
