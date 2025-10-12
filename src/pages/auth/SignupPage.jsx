@@ -8,9 +8,7 @@ import {
   handleVerifyEmail,
 } from '../../services/authService';
 
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const validatePhone = (phone) => /^0\d{9,10}$/.test(phone);
-
+import { validateEmail, validatePhone } from '../../utils/validation';
 export default function SignupPage() {
   const [formStep, setFormStep] = useState('register');
   const [email, setEmail] = useState('');

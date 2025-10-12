@@ -96,3 +96,16 @@ export const handleChangePassword = async ({
     throw extractError(error);
   }
 };
+
+export const handleEditProfile = async ({ userId, name, phone }) => {
+  try {
+    const res = await axios.put(`${API_BASE_URL}/auth/edit-profile`, {
+      userId,
+      name,
+      phone,
+    });
+    return res.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};

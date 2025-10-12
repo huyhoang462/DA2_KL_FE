@@ -26,6 +26,12 @@ export const authLocalStorageMiddleware = (store) => (next) => (action) => {
     };
     saveDB(db);
   }
+  if (action.type === 'auth/setUser') {
+    const state = store.getState();
+    const db = getDB();
+    db.auth.user = state.auth.user;
+    saveDB(db);
+  }
   if (action.type === 'auth/logout') {
     const db = getDB();
     db.auth = {
