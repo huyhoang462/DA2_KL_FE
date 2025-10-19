@@ -11,7 +11,7 @@ const ProfileSection = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
-  const [fullName, setFullName] = useState(user?.name || '');
+  const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [infoError, setInfoError] = useState({});
   const [infoLoading, setInfoLoading] = useState(false);
@@ -33,7 +33,7 @@ const ProfileSection = () => {
     try {
       const res = await handleEditProfile({
         userId: user.id,
-        name: fullName,
+        fullName,
         phone,
       });
       setInfoSuccess(res?.message || 'Cập nhật thông tin thành công!');
@@ -116,7 +116,7 @@ const ProfileSection = () => {
               onClick={() => {
                 setEditMode(false);
                 setInfoSuccess('');
-                setFullName(user?.name || '');
+                setFullName(user?.fullName || '');
                 setPhone(user?.phone || '');
                 setInfoError({});
               }}

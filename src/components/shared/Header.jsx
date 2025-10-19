@@ -38,7 +38,7 @@ const Header = () => {
       label: 'Thông tin tài khoản',
       icon: <User className="mr-2 h-4 w-4" />,
       onClick: () => {
-        nav('user/profile');
+        nav('/user/profile');
         setDropdownOpen(false);
       },
     },
@@ -46,7 +46,7 @@ const Header = () => {
       label: 'Vé của tôi',
       icon: <Ticket className="mr-2 h-4 w-4" />,
       onClick: () => {
-        nav('user/tickets');
+        nav('/user/tickets');
         setDropdownOpen(false);
       },
     },
@@ -82,7 +82,7 @@ const Header = () => {
         {userMenuItems.map((item) => (
           <li
             key={item.label}
-            className={`flex cursor-pointer items-center rounded-lg px-4 py-2 text-sm transition ${
+            className={`flex cursor-pointer items-center px-4 py-2 text-sm transition ${
               item.className || 'hover:bg-primary/20'
             }`}
             onClick={item.onClick}
@@ -210,7 +210,7 @@ const Header = () => {
                 </button>
               ))}
               <button
-                className="text-destructive hover:bg-destructive-background flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium font-semibold transition"
+                className="text-destructive hover:bg-destructive-background flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition"
                 onClick={() => {
                   handleLogout();
                   setMobileMenuOpen(false);

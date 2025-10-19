@@ -1,10 +1,11 @@
 import { API_BASE_URL } from '../constants/apiConstants';
 import axios from 'axios';
+import axiosInstance from '../api/axios';
 import { extractError } from '../utils/extractError';
 
 export const handleLogin = async ({ email, password }) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+    const response = await axiosInstance.post(`${API_BASE_URL}/auth/login`, {
       email,
       password,
     });
@@ -20,7 +21,7 @@ export const handleRegisterRequest = async ({ formData }) => {
     const response = await axios.post(`${API_BASE_URL}/auth/register-request`, {
       email: formData.email,
       password: formData.password,
-      name: formData.name,
+      fullName: formData.name,
       phone: formData.phone,
       role: formData.role,
     });
@@ -86,22 +87,25 @@ export const handleChangePassword = async ({
   newPassword,
 }) => {
   try {
-    const res = await axios.post(`${API_BASE_URL}/auth/change-password`, {
-      userId,
-      oldPassword,
-      newPassword,
-    });
+    const res = await axiosInstance.post(
+      `${API_BASE_URL}/auth/change-password`,
+      {
+        userId,
+        oldPassword,
+        newPassword,
+      }
+    );
     return res.data;
   } catch (error) {
     throw extractError(error);
   }
 };
 
-export const handleEditProfile = async ({ userId, name, phone }) => {
+export const handleEditProfile = async ({ userId, fullName, phone }) => {
   try {
-    const res = await axios.put(`${API_BASE_URL}/auth/edit-profile`, {
+    const res = await axiosInstance.put(`${API_BASE_URL}/auth/edit-profile`, {
       userId,
-      name,
+      fullName,
       phone,
     });
     return res.data;
