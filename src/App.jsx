@@ -11,10 +11,12 @@ import MyTicketsPage from './pages/user/MyTicketsPage';
 import PaymentPage from './pages/user/PaymentPage';
 import SearchPage from './pages/user/SearchPage';
 import SelectTicketsPage from './pages/user/SelectTicketsPage';
-import DashboardLayout from './components/layouts/DashboardLayout';
 import MyEventsPage from './pages/organizer/MyEventsPage';
 import SignupPage from './pages/auth/SignupPage';
 import { ToastContainer } from 'react-toastify';
+import OrganizerLayout from './components/layouts/OrganizerLayout';
+import CheckinAccountsPage from './pages/organizer/CheckinAccountsPage';
+import CreateEventPage from './pages/organizer/CreateEventPage';
 
 function App() {
   return (
@@ -35,8 +37,10 @@ function App() {
           <Route path="orders" element={<MyOrderPage />} />
           <Route path="tickets" element={<MyTicketsPage />} />
         </Route>
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path="/organizer" element={<OrganizerLayout />}>
+          <Route path="create-event" element={<CreateEventPage />} />
           <Route path="my-events" element={<MyEventsPage />} />
+          <Route path="checkin-accounts" element={<CheckinAccountsPage />} />
         </Route>
       </Routes>
       <ToastContainer autoClose={2000} />

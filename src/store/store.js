@@ -1,35 +1,50 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
-import { authLocalStorageMiddleware } from './middlewares/localStorageMiddleware';
+import eventReducer from './slices/eventSlice';
+import storage from 'redux-persist/lib/storage';
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from 'redux-persist';
 
-const loadAuthFromLocalStorage = () => {
-  try {
-    const serializedState = localStorage.getItem('shineticket');
-    if (serializedState === null) {
-      return {
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        status: 'idle',
-        error: null,
-      };
-    }
-    const parsedState = JSON.parse(serializedState);
-    return parsedState.auth;
-  } catch (err) {
-    console.error('Could not load auth state from localStorage', err);
-
-    return undefined;
-  }
+// Cấu hình chung
+const rootPersistConfig = {
+  key: 'root',
+  storage: storage,
+  // Giờ chúng ta sẽ dùng blacklist để bỏ qua auth, vì auth đã có config riêng
+  blacklist: ['auth'],
 };
 
-export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-  },
-  preloadedState: {
-    auth: loadAuthFromLocalStorage(),
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat([authLocalStorageMiddleware]),
+const authPersistConfig = {
+  key: 'auth',
+  storage: storage,
+  // Chỉ lưu những trường này của authSlice, không lưu status hay error
+  whitelist: ['user', 'token', 'isAuthenticated'],
+};
+const rootReducer = combineReducers({
+  // Bọc authReducer bằng persistReducer với config riêng của nó
+  auth: persistReducer(authPersistConfig, authReducer),
+  event: eventReducer, // eventReducer sẽ được quản lý bởi rootPersistConfig
 });
+
+// Bọc rootReducer bằng rootPersistConfig
+const persistedReducer = persistReducer(rootPersistConfig, rootReducer);
+
+export const store = configureStore({
+  reducer: persistedReducer,
+  // KHÔNG CẦN preloadedState nữa, redux-persist sẽ lo việc này
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }), // KHÔNG CẦN concat middleware localStorage nữa
+});
+
+export const persistor = persistStore(store);
