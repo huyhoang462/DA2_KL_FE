@@ -73,6 +73,24 @@ export default function BasicInfoForm() {
             status={uploadStatus}
           />
         </div>
+        <div className="sm:col-span-3">
+          <label>Ngày bắt đầu sự kiện</label>
+          {/* <DatePicker value={eventData.startDate} onChange={(date) => handleFieldChange('startDate', date)} /> */}
+          <Input
+            type="date"
+            value={eventData.startDate}
+            onChange={(e) => handleFieldChange('startDate', e.target.value)}
+          />
+        </div>
+        <div className="sm:col-span-3">
+          <label>Ngày kết thúc sự kiện</label>
+          {/* <DatePicker value={eventData.endDate} onChange={(date) => handleFieldChange('endDate', date)} /> */}
+          <Input
+            type="date"
+            value={eventData.endDate}
+            onChange={(e) => handleFieldChange('endDate', e.target.value)}
+          />
+        </div>
 
         <div className="sm:col-span-6">
           <label

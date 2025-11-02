@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import { setCurrentStep } from '../../store/slices/eventSlice';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import BasicInfoForm from '../../components/features/event/BasicInfoForm';
+import ShowsInfoForm from '../../components/features/event/ShowsInfoForm';
 
 const CreateEventPage = () => {
   const dispatch = useDispatch();
@@ -34,7 +35,7 @@ const CreateEventPage = () => {
       case 1:
         return <BasicInfoForm />;
       case 2:
-        return <div>Component Form Lịch diễn & Vé sẽ ở đây</div>;
+        return <ShowsInfoForm />;
       case 3:
         return <div>Component Xuất bản sẽ ở đây</div>;
       default:
