@@ -1,9 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
-
+import set from 'lodash.set';
 const initialState = {
   currentStep: 1,
   event: {
     name: '',
+    bannerImageUrl: '',
     description: '',
     format: 'offline',
     location: {
@@ -36,6 +37,10 @@ const eventSlice = createSlice({
     setCurrentStep: (state, action) => {
       state.currentStep = action.payload;
     },
+    updateEventField: (state, action) => {
+      const { field, value } = action.payload;
+      set(state.event, field, value);
+    },
     setEventShows: (state, action) => {
       state.event.shows = action.payload;
     },
@@ -45,6 +50,11 @@ const eventSlice = createSlice({
   },
 });
 
-export const { setEvent, clearEvents, setCurrentStep, setEventShows } =
-  eventSlice.actions;
+export const {
+  setEvent,
+  clearEvents,
+  setCurrentStep,
+  updateEventField,
+  setEventShows,
+} = eventSlice.actions;
 export default eventSlice.reducer;

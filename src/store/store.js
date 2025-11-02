@@ -45,6 +45,7 @@ export const store = configureStore({
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }), // KHÔNG CẦN concat middleware localStorage nữa
+  devTools: false,
 });
 
 export const persistor = persistStore(store);
