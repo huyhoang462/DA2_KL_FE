@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateEventField } from '../../../store/slices/eventSlice';
 import Input from '../../ui/Input';
+import { validateEmail, validatePhone } from '../../../utils/validation';
 import ImageUploader from '../../ui/ImageUploader';
 import RichTextEditor from '../../ui/RichTextEditor';
 import LocationInput from './LocationInput';
@@ -15,13 +16,14 @@ const uploadToCloudinary = async (file) => {
   return `https://res.cloudinary.com/demo/image/upload/sample.jpg?timestamp=${Date.now()}`;
 };
 
-export default function BasicInfoForm() {
+export default function BasicInfoForm({ error, onChange }) {
   const dispatch = useDispatch();
   const eventData = useSelector((state) => state.event.event);
 
   const [uploadStatus, setUploadStatus] = useState('idle');
 
   const handleFieldChange = (field, value) => {
+    if (error[field]) onChange(field);
     dispatch(updateEventField({ field, value }));
   };
 
@@ -59,7 +61,7 @@ export default function BasicInfoForm() {
             maxLength={100}
             value={eventData.name}
             onChange={(e) => handleFieldChange('name', e.target.value)}
-            //error=
+            error={error?.name}
           />
         </div>
 
@@ -74,21 +76,23 @@ export default function BasicInfoForm() {
           />
         </div>
         <div className="sm:col-span-3">
-          <label>Ngày bắt đầu sự kiện</label>
           {/* <DatePicker value={eventData.startDate} onChange={(date) => handleFieldChange('startDate', date)} /> */}
           <Input
             type="date"
+            label="Ngày bắt đầu"
             value={eventData.startDate}
             onChange={(e) => handleFieldChange('startDate', e.target.value)}
+            error={error?.startDate}
           />
         </div>
         <div className="sm:col-span-3">
-          <label>Ngày kết thúc sự kiện</label>
           {/* <DatePicker value={eventData.endDate} onChange={(date) => handleFieldChange('endDate', date)} /> */}
           <Input
             type="date"
+            label="Ngày kết thúc"
             value={eventData.endDate}
             onChange={(e) => handleFieldChange('endDate', e.target.value)}
+            error={error?.endDate}
           />
         </div>
 
@@ -109,6 +113,7 @@ export default function BasicInfoForm() {
           <CategoryInput
             value={eventData.category}
             onChange={(e) => handleFieldChange('category', e.target.value)}
+            error={error?.category}
           />
         </div>
 
@@ -120,11 +125,14 @@ export default function BasicInfoForm() {
             id="format"
             value={eventData.format}
             onChange={(e) => handleFieldChange('format', e.target.value)}
-            className="bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary border-border-default block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none"
+            className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none ${error?.format ? 'border-destructive' : 'border-border-default'}`}
           >
             <option value="offline">Offline (Tại địa điểm)</option>
             <option value="online">Online</option>
           </select>
+          {error?.format && (
+            <div className="text-destructive mt-1 text-xs">{error?.format}</div>
+          )}
         </div>
 
         <div className="sm:col-span-6">

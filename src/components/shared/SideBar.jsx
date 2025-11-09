@@ -4,10 +4,6 @@ import { Link, NavLink } from 'react-router-dom';
 import { cn } from '../../utils/lib';
 import { PlusSquare, X } from 'lucide-react';
 
-// Props:
-// - navigationItems: Mảng các mục menu [{ name, path, icon }]
-// - mobileOpen: State để điều khiển đóng/mở trên mobile
-// - setMobileOpen: Hàm để thay đổi state đó
 export default function Sidebar({
   navigationItems,
   mobileOpen,
@@ -55,7 +51,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="border-border-default bg-background-primary hidden border-r md:block">
+      <aside className="border-border-default bg-background-primary hidden border-r md:sticky md:top-0 md:block md:h-screen md:overflow-auto">
         {sidebarContent}
       </aside>
 
@@ -67,9 +63,10 @@ export default function Sidebar({
       )}
       <aside
         className={cn(
-          'bg-background-primary fixed inset-y-0 left-0 z-40 h-screen w-4/5 max-w-xs transform transition-transform duration-300 ease-in-out md:hidden',
+          'bg-background-primary fixed inset-y-0 left-0 z-50 h-screen w-4/5 max-w-xs transform transition-transform duration-300 ease-in-out md:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        aria-hidden={!mobileOpen}
       >
         {sidebarContent}
         <button

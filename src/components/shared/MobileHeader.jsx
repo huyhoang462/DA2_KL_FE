@@ -8,7 +8,7 @@ export default function MobileHeader({
   breadcrumbs,
 }) {
   return (
-    <header className="bg-background-secondary border-border-default flex h-14 items-center gap-4 border-b px-4 md:hidden lg:h-[60px] lg:px-6">
+    <header className="bg-background-secondary border-border-default fixed top-0 right-0 left-0 z-20 flex h-14 items-center gap-4 border-b px-4 md:hidden lg:h-[60px] lg:px-6">
       <button className="cursor-pointer" onClick={() => setMobileOpen(true)}>
         <Menu className="h-6 w-6" />
         <span className="sr-only">Menu</span>

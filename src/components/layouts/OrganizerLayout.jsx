@@ -31,7 +31,7 @@ const OrganizerLayout = () => {
       />
       <div className="flex flex-col">
         <MobileHeader setMobileOpen={setMobileSidebarOpen} />
-        <main className="bg-background-primary flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <main className="bg-background-primary flex flex-1 flex-col gap-4 p-4 pt-14 md:pt-0 lg:gap-6 lg:p-6">
           <Outlet />
         </main>
       </div>
