@@ -16,15 +16,14 @@ const uploadToCloudinary = async (file) => {
   return `https://res.cloudinary.com/demo/image/upload/sample.jpg?timestamp=${Date.now()}`;
 };
 
-export default function BasicInfoForm({ error, onChange }) {
+export default function BasicInfoForm({ errors, onFieldUpdate }) {
   const dispatch = useDispatch();
   const eventData = useSelector((state) => state.event.event);
 
   const [uploadStatus, setUploadStatus] = useState('idle');
 
   const handleFieldChange = (field, value) => {
-    if (error[field]) onChange(field);
-    dispatch(updateEventField({ field, value }));
+    onFieldUpdate(field, value);
   };
 
   const handleBannerChange = async (file) => {
@@ -61,7 +60,7 @@ export default function BasicInfoForm({ error, onChange }) {
             maxLength={100}
             value={eventData.name}
             onChange={(e) => handleFieldChange('name', e.target.value)}
-            error={error?.name}
+            error={errors?.name}
           />
         </div>
 
@@ -82,7 +81,7 @@ export default function BasicInfoForm({ error, onChange }) {
             label="Ngày bắt đầu"
             value={eventData.startDate}
             onChange={(e) => handleFieldChange('startDate', e.target.value)}
-            error={error?.startDate}
+            error={errors?.startDate}
           />
         </div>
         <div className="sm:col-span-3">
@@ -92,7 +91,7 @@ export default function BasicInfoForm({ error, onChange }) {
             label="Ngày kết thúc"
             value={eventData.endDate}
             onChange={(e) => handleFieldChange('endDate', e.target.value)}
-            error={error?.endDate}
+            error={errors?.endDate}
           />
         </div>
 
@@ -113,7 +112,7 @@ export default function BasicInfoForm({ error, onChange }) {
           <CategoryInput
             value={eventData.category}
             onChange={(e) => handleFieldChange('category', e.target.value)}
-            error={error?.category}
+            error={errors?.category}
           />
         </div>
 
@@ -125,13 +124,15 @@ export default function BasicInfoForm({ error, onChange }) {
             id="format"
             value={eventData.format}
             onChange={(e) => handleFieldChange('format', e.target.value)}
-            className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none ${error?.format ? 'border-destructive' : 'border-border-default'}`}
+            className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none ${errors?.format ? 'border-destructive' : 'border-border-default'}`}
           >
             <option value="offline">Offline (Tại địa điểm)</option>
             <option value="online">Online</option>
           </select>
-          {error?.format && (
-            <div className="text-destructive mt-1 text-xs">{error?.format}</div>
+          {errors?.format && (
+            <div className="text-destructive mt-1 text-xs">
+              {errors?.format}
+            </div>
           )}
         </div>
 
@@ -149,6 +150,7 @@ export default function BasicInfoForm({ error, onChange }) {
             onChange={(field, value) =>
               handleFieldChange(`organizer.${field}`, value)
             }
+            error={errors?.organizer}
           />
         </div>
       </div>

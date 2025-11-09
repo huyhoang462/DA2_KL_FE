@@ -13,7 +13,7 @@ const initialState = {
       ward: '',
       province: '',
     },
-    organizerInfo: {
+    organizer: {
       name: '',
       email: '',
       phone: '',

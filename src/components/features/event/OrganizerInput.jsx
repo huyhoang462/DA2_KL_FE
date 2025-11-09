@@ -2,10 +2,10 @@ import React from 'react';
 import Input from '../../ui/Input';
 import clsx from 'clsx';
 
-export default function OrganizerInput({ value, onChange }) {
+export default function OrganizerInput({ value, onChange, error }) {
   const handleChange = (e) => {
-    const { name, value: fieldValue } = e.target;
-    onChange(name, fieldValue);
+    const { name, value: value } = e.target;
+    onChange(name, value);
   };
 
   return (
@@ -18,6 +18,7 @@ export default function OrganizerInput({ value, onChange }) {
           placeholder="Ví dụ: Shine Inc."
           value={value?.name || ''}
           onChange={handleChange}
+          error={error?.name}
           required
         />
       </div>
@@ -31,6 +32,7 @@ export default function OrganizerInput({ value, onChange }) {
           placeholder="contact@example.com"
           value={value?.email || ''}
           onChange={handleChange}
+          error={error?.email}
         />
       </div>
 
@@ -43,6 +45,7 @@ export default function OrganizerInput({ value, onChange }) {
           placeholder="0123 456 789"
           value={value?.phone || ''}
           onChange={handleChange}
+          error={error?.phone}
         />
       </div>
 
