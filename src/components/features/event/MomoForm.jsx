@@ -8,22 +8,22 @@ export default function MomoForm({ data, onChange, errors }) {
 
   return (
     <div className="space-y-6">
-      <h3 className="font-semibold text-text-primary">Chi tiết ví MoMo</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <h3 className="text-text-primary font-semibold">Chi tiết ví MoMo</h3>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Input
           label="Số điện thoại MoMo"
-          name="momoPhoneNumber"
+          name="phoneNumber"
           type="tel"
-          value={data?.momoPhoneNumber || ''}
+          value={data?.phoneNumber || ''}
           onChange={handleChange}
-          error={errors?.momoPhoneNumber}
+          error={errors?.phoneNumber}
         />
         <Input
           label="Tên chủ ví"
-          name="momoAccountName"
-          value={data?.momoAccountName || ''}
+          name="accountName"
+          value={data?.accountName || ''}
           onChange={handleChange}
-          error={errors?.momoAccountName}
+          error={errors?.accountName}
           placeholder="Tên đầy đủ, không dấu"
         />
       </div>

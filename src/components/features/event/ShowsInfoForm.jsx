@@ -22,7 +22,7 @@ export default function ShowsInfoForm({ errors, onChange }) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-text-primary text-lg leading-7 font-semibold">

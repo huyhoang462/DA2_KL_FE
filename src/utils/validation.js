@@ -49,22 +49,24 @@ export const validateStepOne = (eventData) => {
     errors.endDate = 'Ngày kết thúc không thể trước ngày bắt đầu.';
   }
 
-  const locationInfo = eventData.location || {};
-  const locationErros = {};
+  if (eventData.format === 'offline') {
+    const locationInfo = eventData.location || {};
+    const locationErros = {};
 
-  if (!locationInfo.province) {
-    locationErros.province = 'Vui lòng chọn tỉnh.';
-  }
+    if (!locationInfo.province) {
+      locationErros.province = 'Vui lòng chọn tỉnh.';
+    }
 
-  if (!locationInfo.ward) {
-    locationErros.ward = 'Vui lòng chọn xã';
-  }
+    if (!locationInfo.ward) {
+      locationErros.ward = 'Vui lòng chọn xã';
+    }
 
-  if (!locationInfo.street || locationInfo.street.trim() === '') {
-    locationErros.street = 'Vui lòng nhập địa chỉ cụ thể';
-  }
-  if (Object.keys(locationErros).length > 0) {
-    errors.location = locationErros;
+    if (!locationInfo.street || locationInfo.street.trim() === '') {
+      locationErros.street = 'Vui lòng nhập địa chỉ cụ thể';
+    }
+    if (Object.keys(locationErros).length > 0) {
+      errors.location = locationErros;
+    }
   }
 
   const organizerInfo = eventData.organizer || {};

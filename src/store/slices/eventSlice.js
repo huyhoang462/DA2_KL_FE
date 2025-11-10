@@ -24,6 +24,19 @@ const initialState = {
     startDate: '',
     endDate: '',
     shows: [],
+    payoutMethod: {
+      methodType: 'bank_account',
+      bankDetails: {
+        bankName: '',
+        accountNumber: '',
+        accountName: '',
+        bankBranch: '',
+      },
+      momoDetails: {
+        phoneNumber: '',
+        accountName: '',
+      },
+    },
   },
 };
 
