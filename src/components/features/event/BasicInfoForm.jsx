@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateEventField } from '../../../store/slices/eventSlice';
 import Input from '../../ui/Input';
-import { validateEmail, validatePhone } from '../../../utils/validation';
 import ImageUploader from '../../ui/ImageUploader';
 import RichTextEditor from '../../ui/RichTextEditor';
 import LocationInput from './LocationInput';
@@ -54,7 +53,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
         <div className="sm:col-span-6">
           <Input
-            id="name"
+            id="eventName"
             label="Tên sự kiện"
             placeholder="Ví dụ: Đại nhạc hội Mùa hè 2024"
             maxLength={100}
@@ -65,9 +64,9 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
         </div>
 
         <div className="sm:col-span-6">
-          <label className="text-text-secondary mb-2 block text-sm font-medium">
+          <p className="text-text-secondary mb-2 block text-sm font-medium">
             Ảnh bìa sự kiện
-          </label>
+          </p>
           <ImageUploader
             value={eventData.bannerImageUrl}
             onChange={handleBannerChange}
@@ -77,6 +76,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
         <div className="sm:col-span-3">
           {/* <DatePicker value={eventData.startDate} onChange={(date) => handleFieldChange('startDate', date)} /> */}
           <Input
+            id="eventStartDate"
             type="date"
             label="Ngày bắt đầu"
             value={eventData.startDate}
@@ -87,6 +87,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
         <div className="sm:col-span-3">
           {/* <DatePicker value={eventData.endDate} onChange={(date) => handleFieldChange('endDate', date)} /> */}
           <Input
+            id="eventEndDate"
             type="date"
             label="Ngày kết thúc"
             value={eventData.endDate}
@@ -96,12 +97,9 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
         </div>
 
         <div className="sm:col-span-6">
-          <label
-            htmlFor="description"
-            className="text-text-secondary mb-2 block text-sm font-medium"
-          >
+          <p className="text-text-secondary mb-2 block text-sm font-medium">
             Mô tả chi tiết
-          </label>
+          </p>
           <RichTextEditor
             value={eventData.description}
             onChange={(e) => handleFieldChange('description', e)}
@@ -117,11 +115,14 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
         </div>
 
         <div className="sm:col-span-3">
-          <label className="text-text-secondary mb-2 block text-sm font-medium">
+          <label
+            htmlFor="eventFormat"
+            className="text-text-secondary mb-2 block text-sm font-medium"
+          >
             Hình thức tổ chức
           </label>
           <select
-            id="format"
+            id="eventFormat"
             value={eventData.format}
             onChange={(e) => handleFieldChange('format', e.target.value)}
             className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none ${errors?.format ? 'border-destructive' : 'border-border-default'}`}
@@ -136,14 +137,17 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
           )}
         </div>
 
-        <div className="sm:col-span-6">
-          <LocationInput
-            value={eventData.location}
-            onChange={(field, value) =>
-              handleFieldChange(`location.${field}`, value)
-            }
-          />
-        </div>
+        {eventData.format === 'offline' && (
+          <div className="sm:col-span-6">
+            <LocationInput
+              value={eventData.location}
+              onChange={(field, value) =>
+                handleFieldChange(`location.${field}`, value)
+              }
+              error={errors?.location}
+            />
+          </div>
+        )}
         <div className="sm:col-span-6">
           <OrganizerInput
             value={eventData.organizer}

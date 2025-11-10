@@ -4,7 +4,7 @@ import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import { Plus, Trash2 } from 'lucide-react';
 import TicketTypeFormModal from './TicketTypeFormModal';
-
+import ConfirmModal from '../../ui/ConfirmModal';
 import {
   updateShowtimeField,
   removeShowtime,
@@ -41,20 +41,34 @@ const TicketTypePill = ({ ticket, onEdit, onRemove }) => (
   </div>
 );
 
-export default function ShowtimeItem({ showData, showIndex }) {
+export default function ShowtimeItem({
+  showData,
+  showIndex,
+  errors,
+  onChange,
+}) {
   const dispatch = useDispatch();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [editingTicket, setEditingTicket] = useState(null);
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    type: null,
+    data: null,
+  });
+
   const handleShowtimeChange = (fieldName, value) => {
+    onChange(fieldName);
     dispatch(updateShowtimeField({ showIndex, field: fieldName, value }));
   };
 
   const handleRemoveShow = () => {
-    if (window.confirm('Bạn có chắc muốn xóa suất diễn này?')) {
-      dispatch(removeShowtime(showIndex));
-    }
+    setConfirmState({
+      isOpen: true,
+      type: 'removeShow',
+      data: null,
+    });
   };
 
   const handleAddTicketClick = () => {
@@ -68,9 +82,27 @@ export default function ShowtimeItem({ showData, showIndex }) {
   };
 
   const handleRemoveTicket = (ticketId) => {
-    if (window.confirm('Bạn có chắc muốn xóa loại vé này?')) {
-      dispatch(removeTicketFromShowtime({ showIndex, ticketId }));
+    setConfirmState({
+      isOpen: true,
+      type: 'removeTicket',
+      data: { ticketId },
+    });
+  };
+
+  const onConfirmAction = () => {
+    if (confirmState.type === 'removeShow') {
+      dispatch(removeShowtime(showIndex));
+    } else if (confirmState.type === 'removeTicket') {
+      dispatch(
+        removeTicketFromShowtime({
+          showIndex,
+          ticketId: confirmState.data.ticketId,
+        })
+      );
     }
+  };
+  const onCancelConfirm = () => {
+    setConfirmState({ isOpen: false, type: null, data: null });
   };
 
   const handleSaveTicket = (ticketData) => {
@@ -92,27 +124,38 @@ export default function ShowtimeItem({ showData, showIndex }) {
     <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Input
+          id={`eventShowName-${showIndex}`}
           label="Tên suất diễn"
           placeholder="Ví dụ: Suất chiếu tối"
           value={showData.name}
           onChange={(e) => handleShowtimeChange('name', e.target.value)}
+          error={errors.name}
         />
         <Input
+          id={`eventShowStart-${showIndex}`}
           label="Thời gian bắt đầu"
           type="datetime-local"
           value={showData.startTime}
           onChange={(e) => handleShowtimeChange('startTime', e.target.value)}
+          error={errors.startTime}
         />
         <Input
+          id={`eventShowEnd-${showIndex}`}
           label="Thời gian kết thúc"
           type="datetime-local"
           value={showData.endTime}
           onChange={(e) => handleShowtimeChange('endTime', e.target.value)}
+          error={errors.endTime}
         />
       </div>
 
       <div className="mt-6">
         <h4 className="text-text-primary mb-2 font-semibold">Các loại vé</h4>
+        {showData.tickets.length === 0 && errors.tickets_general && (
+          <p className="text-destructive mb-2 text-sm">
+            {errors.tickets_general}
+          </p>
+        )}
         <div className="space-y-3">
           {showData.tickets?.map((ticket, ticketIndex) => (
             <TicketTypePill
@@ -145,6 +188,19 @@ export default function ShowtimeItem({ showData, showIndex }) {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveTicket}
         initialData={editingTicket}
+      />
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onCancel={onCancelConfirm}
+        onConfirm={onConfirmAction}
+        title={
+          confirmState.type === 'removeShow' ? 'Xóa suất diễn?' : 'Xóa loại vé?'
+        }
+        message={
+          confirmState.type === 'removeShow'
+            ? 'Hành động này không thể hoàn tác. Tất cả các loại vé trong suất diễn này cũng sẽ bị xóa.'
+            : 'Bạn có chắc chắn muốn xóa loại vé này không?'
+        }
       />
     </div>
   );

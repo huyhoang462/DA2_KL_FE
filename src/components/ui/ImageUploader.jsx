@@ -83,7 +83,11 @@ export default function ImageUploader({
         className
       )}
     >
-      <input {...getInputProps()} disabled={status === 'uploading'} />
+      <input
+        id="image-upload"
+        {...getInputProps()}
+        disabled={status === 'uploading'}
+      />
 
       {previewUrl ? (
         <>

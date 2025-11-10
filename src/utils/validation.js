@@ -49,6 +49,24 @@ export const validateStepOne = (eventData) => {
     errors.endDate = 'Ngày kết thúc không thể trước ngày bắt đầu.';
   }
 
+  const locationInfo = eventData.location || {};
+  const locationErros = {};
+
+  if (!locationInfo.province) {
+    locationErros.province = 'Vui lòng chọn tỉnh.';
+  }
+
+  if (!locationInfo.ward) {
+    locationErros.ward = 'Vui lòng chọn xã';
+  }
+
+  if (!locationInfo.street || locationInfo.street.trim() === '') {
+    locationErros.street = 'Vui lòng nhập địa chỉ cụ thể';
+  }
+  if (Object.keys(locationErros).length > 0) {
+    errors.location = locationErros;
+  }
+
   const organizerInfo = eventData.organizer || {};
   const organizerErrors = {};
 
@@ -76,6 +94,89 @@ export const validateStepOne = (eventData) => {
 
   if (Object.keys(organizerErrors).length > 0) {
     errors.organizer = organizerErrors;
+  }
+
+  return errors;
+};
+
+export const validateTicketType = (data) => {
+  const errors = {};
+  if (!data.name || data.name.trim().length < 3) {
+    errors.name = 'Tên vé phải có ít nhất 3 ký tự.';
+  }
+  if (!data.price || data.price < 0) {
+    errors.price = 'Giá vé không hợp lệ.';
+  }
+  if (!data.quantityTotal || data.quantityTotal < 1) {
+    errors.quantityTotal = 'Số lượng vé phải lớn hơn 0.';
+  }
+  if (data.minPurchase < 1) {
+    errors.minPurchase = 'Mua tối thiểu phải lớn hơn 0.';
+  }
+  if (data.maxPurchase < data.minPurchase) {
+    errors.maxPurchase = 'Mua tối đa phải lớn hơn hoặc bằng mức tối thiểu.';
+  }
+  return errors;
+};
+
+export const validateStepTwo = (eventData) => {
+  const errors = {};
+  const { shows, startDate, endDate } = eventData;
+
+  if (!shows || shows.length === 0) {
+    errors.shows_general = 'Sự kiện phải có ít nhất 1 suất diễn.';
+    return errors;
+  }
+
+  const showErrors = [];
+
+  const eventStartDate = startDate
+    ? new Date(startDate).setHours(0, 0, 0, 0)
+    : null;
+  const eventEndDate = endDate
+    ? new Date(endDate).setHours(23, 59, 59, 999)
+    : null;
+
+  shows.forEach((show, index) => {
+    const currentShowErrors = {};
+    const showStartTime = show.startTime ? new Date(show.startTime) : null;
+    const showEndTime = show.endTime ? new Date(show.endTime) : null;
+
+    if (!show.name || show.name.trim() === '') {
+      currentShowErrors.name = 'Vui lòng nhập tên suất diễn.';
+    }
+
+    if (!showStartTime) {
+      currentShowErrors.startTime = 'Vui lòng chọn thời gian bắt đầu.';
+    }
+    if (!showEndTime) {
+      currentShowErrors.endTime = 'Vui lòng chọn thời gian kết thúc.';
+    }
+
+    if (showStartTime && showEndTime && showStartTime >= showEndTime) {
+      currentShowErrors.endTime = 'Giờ kết thúc phải sau giờ bắt đầu.';
+    }
+    if (eventStartDate && showStartTime && showStartTime < eventStartDate) {
+      currentShowErrors.startTime =
+        'Không thể bắt đầu trước ngày bắt đầu của sự kiện.';
+    }
+    if (eventEndDate && showEndTime && showEndTime > eventEndDate) {
+      currentShowErrors.endTime =
+        'Không thể kết thúc sau ngày kết thúc của sự kiện.';
+    }
+
+    if (!show.tickets || show.tickets.length === 0) {
+      currentShowErrors.tickets_general =
+        'Suất diễn này phải có ít nhất 1 loại vé.';
+    }
+
+    if (Object.keys(currentShowErrors).length > 0) {
+      showErrors[index] = currentShowErrors;
+    }
+  });
+
+  if (showErrors.length > 0) {
+    errors.shows = showErrors;
   }
 
   return errors;

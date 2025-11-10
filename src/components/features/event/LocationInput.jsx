@@ -4,6 +4,7 @@ import { locationService } from '../../../services/thirdService';
 import Input from '../../ui/Input';
 
 const SelectLocation = ({
+  id,
   label,
   placeholder,
   options,
@@ -11,16 +12,21 @@ const SelectLocation = ({
   onChange,
   disabled,
   isLoading,
+  error,
 }) => (
   <div>
-    <label className="text-text-secondary mb-2 block text-sm font-medium">
+    <label
+      htmlFor={id}
+      className="text-text-secondary mb-2 block text-sm font-medium"
+    >
       {label}
     </label>
     <select
+      id={id}
       value={value}
       onChange={onChange}
       disabled={disabled || isLoading}
-      className="bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary border-border-default block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary border-border-default block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${error ? 'border-destructive' : 'border-border-default'}`}
     >
       <option value="">{isLoading ? 'Đang tải...' : placeholder}</option>
       {options?.map((option) => (
@@ -29,10 +35,11 @@ const SelectLocation = ({
         </option>
       ))}
     </select>
+    {error && <div className="text-destructive mt-1 text-xs">{error}</div>}
   </div>
 );
 
-export default function LocationInput({ value, onChange }) {
+export default function LocationInput({ value, onChange, error }) {
   const [selectedProvinceCode, setSelectedProvinceCode] = useState(
     value?.province || ''
   );
@@ -89,17 +96,20 @@ export default function LocationInput({ value, onChange }) {
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <div className="sm:col-span-1">
         <SelectLocation
+          id="eventProvince"
           label="Tỉnh / Thành phố"
           placeholder="-- Chọn Tỉnh / Thành phố --"
           options={provinces}
           value={value?.province?.code || ''}
           onChange={handleProvinceChange}
           isLoading={isLoadingProvinces}
+          error={error?.province}
         />
       </div>
 
       <div className="sm:col-span-1">
         <SelectLocation
+          id="eventWard"
           label="Xã / Phường"
           placeholder="-- Chọn Xã / Phường --"
           options={filteredWards}
@@ -107,17 +117,19 @@ export default function LocationInput({ value, onChange }) {
           onChange={handleWardChange}
           isLoading={isLoadingWards}
           disabled={!selectedProvinceCode || isLoadingProvinces}
+          error={error?.ward}
         />
       </div>
 
       <div className="sm:col-span-2">
         <Input
-          id="street"
+          id="eventStreet"
           label="Tên đường, Số nhà & Chi tiết địa chỉ"
           placeholder="Ví dụ: 123 Nguyễn Huệ, Tòa nhà Bitexco"
           value={value?.street || ''}
           onChange={(e) => onChange('street', e.target.value)}
           disabled={!value?.ward}
+          error={error?.street}
         />
       </div>
     </div>

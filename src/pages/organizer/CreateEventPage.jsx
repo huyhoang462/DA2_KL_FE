@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Stepper from '../../components/features/event/Stepper';
 import Button from '../../components/ui/Button';
@@ -9,7 +9,8 @@ import {
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import BasicInfoForm from '../../components/features/event/BasicInfoForm';
 import ShowsInfoForm from '../../components/features/event/ShowsInfoForm';
-import { validateStepOne } from '../../utils/validation';
+import { validateStepOne, validateStepTwo } from '../../utils/validation';
+import PaymentInfoForm from '../../components/features/event/PaymentInfoForm';
 
 const CreateEventPage = () => {
   const dispatch = useDispatch();
@@ -19,7 +20,7 @@ const CreateEventPage = () => {
 
   const [errors, setErrors] = useState({});
 
-  const handleFieldUpdate = (field, value) => {
+  const handleChangeStep1 = (field, value) => {
     dispatch(updateEventField({ field, value }));
 
     const errorKey = field.split('.')[0];
@@ -34,14 +35,41 @@ const CreateEventPage = () => {
       });
     }
   };
+  const handleChangeStep2 = (showIndex, field) => {
+    if (
+      errors.shows &&
+      errors.shows[showIndex] &&
+      errors.shows[showIndex][field]
+    ) {
+      setErrors((prevErrors) => {
+        const newShowErrors = [...prevErrors.shows];
+
+        const currentShowErrors = newShowErrors[showIndex]
+          ? { ...newShowErrors[showIndex] }
+          : {};
+
+        delete currentShowErrors[field];
+
+        newShowErrors[showIndex] =
+          Object.keys(currentShowErrors).length > 0
+            ? currentShowErrors
+            : undefined;
+
+        return {
+          ...prevErrors,
+          shows: newShowErrors,
+        };
+      });
+    }
+  };
 
   const handleNextStep = () => {
     let validationErrors = {};
     if (currentStep === 1) {
       validationErrors = validateStepOne(eventData);
+    } else if (currentStep === 2) {
+      validationErrors = validateStepTwo(eventData);
     }
-
-    console.log('ERR: ', validationErrors);
 
     setErrors(validationErrors);
 
@@ -58,22 +86,16 @@ const CreateEventPage = () => {
     }
   };
 
-  const handlePublish = () => {
-    console.log('Publishing event...');
-  };
-
   const renderCurrentStepComponent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <BasicInfoForm errors={errors} onFieldUpdate={handleFieldUpdate} />
+          <BasicInfoForm errors={errors} onFieldUpdate={handleChangeStep1} />
         );
       case 2:
-        return (
-          <ShowsInfoForm errors={errors} onFieldUpdate={handleFieldUpdate} />
-        );
+        return <ShowsInfoForm errors={errors} onChange={handleChangeStep2} />;
       case 3:
-        return <div>Component Xuất bản sẽ ở đây</div>;
+        return <PaymentInfoForm errors={errors} />;
       default:
         return <div>Component Form thông tin cơ bản sẽ ở đây</div>;
     }
@@ -93,17 +115,23 @@ const CreateEventPage = () => {
             <Button variant="ghost" size="sm">
               Lưu nháp
             </Button>
-            {currentStep > 1 && (
-              <Button
-                size="sm"
-                onClick={handlePrevStep}
-                className="hidden sm:flex"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            )}
-            <Button size="sm" onClick={handleNextStep}>
-              {currentStep < totalSteps && <ArrowRight className="h-4 w-4" />}
+
+            <Button
+              size="sm"
+              onClick={handlePrevStep}
+              disabled={currentStep === 1}
+              variant={currentStep === 1 ? 'disabled' : 'default'}
+              className="hidden sm:flex"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={handleNextStep}
+              disabled={currentStep > totalSteps}
+            >
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -115,17 +143,6 @@ const CreateEventPage = () => {
         </div>
 
         <div className="mb-12">{renderCurrentStepComponent()}</div>
-
-        <div className="border-border-default flex items-center justify-between border-t pt-6">
-          <div>
-            {currentStep > 1 && (
-              <Button variant="outline" onClick={handlePrevStep}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Quay lại
-              </Button>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

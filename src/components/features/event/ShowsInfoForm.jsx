@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import { addShowtime } from '../../../store/slices/eventSlice';
 import ShowtimeItem from './ShowtimeItem';
 
-export default function ShowsInfoForm() {
+export default function ShowsInfoForm({ errors, onChange }) {
   const dispatch = useDispatch();
   const shows = useSelector((state) => state.event.event.shows);
 
@@ -28,16 +28,13 @@ export default function ShowsInfoForm() {
           <h2 className="text-text-primary text-lg leading-7 font-semibold">
             Lịch diễn & Vé
           </h2>
-          <p className="text-text-secondary mt-1 text-sm">
-            Tạo các suất diễn và các loại vé tương ứng cho sự kiện của bạn.
-          </p>
         </div>
-        <Button onClick={handleAddShowtime}>
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm suất diễn
-        </Button>
       </div>
-
+      {errors.shows_general && (
+        <p className="text-destructive text-center text-sm">
+          {errors.shows_general}
+        </p>
+      )}
       <div className="space-y-6">
         {shows.length > 0 ? (
           shows.map((show, index) => (
@@ -45,16 +42,23 @@ export default function ShowsInfoForm() {
               key={show._id || index}
               showData={show}
               showIndex={index}
+              onChange={(fieldName) => onChange(index, fieldName)}
+              errors={errors.shows?.[index] || {}}
             />
           ))
         ) : (
-          <div className="border-border-default rounded-lg border-2 border-dashed py-12 text-center">
+          <div
+            className={`border-border-default rounded-lg border-2 border-dashed py-12 text-center`}
+          >
             <p className="text-text-secondary">Chưa có suất diễn nào.</p>
-            <p className="text-text-secondary text-sm">
-              Nhấn "Thêm suất diễn" để bắt đầu.
-            </p>
           </div>
         )}
+        <div className="w-full text-center">
+          <Button onClick={handleAddShowtime}>
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm suất diễn
+          </Button>
+        </div>
       </div>
     </div>
   );
