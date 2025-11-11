@@ -13,6 +13,11 @@ export const validatePhone = (phone) => {
   return re.test(phone);
 };
 
+export const validateBankNumber = (bankNumber) => {
+  const re = /^\d{8,14}$/;
+  return re.test(bankNumber?.trim());
+};
+
 export const validateStepOne = (eventData) => {
   const errors = {};
 
@@ -179,6 +184,40 @@ export const validateStepTwo = (eventData) => {
 
   if (showErrors.length > 0) {
     errors.shows = showErrors;
+  }
+
+  return errors;
+};
+
+export const validateStepThree = (eventData) => {
+  const errors = {};
+  const { payoutMethod } = eventData;
+  if (payoutMethod.methodType === 'bank_account') {
+    const bankErrors = {};
+    const { bankDetails } = payoutMethod;
+    if (!bankDetails.bankName || bankDetails.bankName.trim() === '')
+      bankErrors.bankName = 'Vui lòng chọn một ngân hàng.';
+    if (!bankDetails.accountNumber || bankDetails.accountNumber.trim() === '')
+      bankErrors.accountNumber = 'Vui lòng nhập số tài khoản.';
+    else if (!validateBankNumber(bankDetails.accountNumber))
+      bankErrors.accountNumber = 'Số tài khoản không hợp lệ';
+    if (!bankDetails.accountName || bankDetails.accountName.trim() === '')
+      bankErrors.accountName = 'Vui lòng nhập tên chủ tài khoản.';
+    if (Object.keys(bankErrors).length > 0) {
+      errors.bankDetails = bankErrors;
+    }
+  } else if (payoutMethod.methodType === 'momo') {
+    const momoErrors = {};
+    const { momoDetails } = payoutMethod;
+    if (!momoDetails.phoneNumber || momoDetails.phoneNumber.trim() === '')
+      momoErrors.phoneNumber = 'Vui lòng nhập số điện thoại.';
+    else if (!validatePhone(momoDetails.phoneNumber))
+      momoErrors.phoneNumber = 'Số điện thoại không hợp lệ.';
+    if (!momoDetails.accountName || momoDetails.accountName.trim() === '')
+      momoErrors.accountName = 'Vui lòng nhập tên chủ ví.';
+    if (Object.keys(momoErrors).length > 0) {
+      errors.momoDetails = momoErrors;
+    }
   }
 
   return errors;

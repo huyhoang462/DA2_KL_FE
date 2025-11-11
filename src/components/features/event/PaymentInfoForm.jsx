@@ -5,13 +5,12 @@ import BankTransferForm from './BankTransferForm';
 import MomoForm from './MomoForm';
 import PaymentMethodSelector from './PaymentMethodSelector';
 
-export default function PaymentInfoForm({ errors }) {
+export default function PaymentInfoForm({ errors, onChange }) {
   const dispatch = useDispatch();
 
   const payoutMethodData = useSelector(
     (state) => state.event.event.payoutMethod
   );
-  const eventData = useSelector((state) => state.event.event);
   const selectedMethod = payoutMethodData?.methodType || 'bank_account';
 
   const handleMethodChange = (method) => {
@@ -24,14 +23,15 @@ export default function PaymentInfoForm({ errors }) {
     let fullPath;
     if (selectedMethod === 'bank_account') {
       fullPath = `payoutMethod.bankDetails.${path}`;
+      onChange(`bankDetails.${path}`);
     } else if (selectedMethod === 'momo') {
       fullPath = `payoutMethod.momoDetails.${path}`;
+      onChange(`momoDetails.${path}`);
     }
 
     if (fullPath) {
       dispatch(updateEventField({ field: fullPath, value }));
     }
-    console.log('EVENT: ', eventData);
   };
 
   return (
@@ -54,18 +54,16 @@ export default function PaymentInfoForm({ errors }) {
         <div className="border-border-default border-t pt-8">
           {selectedMethod === 'bank_account' && (
             <BankTransferForm
-              // Truyền xuống chỉ object bankDetails
               data={payoutMethodData?.bankDetails}
               onChange={handleFieldChange}
-              errors={errors?.payoutMethod?.bankDetails || {}}
+              errors={errors?.bankDetails || {}}
             />
           )}
           {selectedMethod === 'momo' && (
             <MomoForm
-              // Truyền xuống chỉ object momoDetails
               data={payoutMethodData.momoDetails}
               onChange={handleFieldChange}
-              errors={errors?.payoutMethod?.momoDetails || {}}
+              errors={errors?.momoDetails || {}}
             />
           )}
         </div>

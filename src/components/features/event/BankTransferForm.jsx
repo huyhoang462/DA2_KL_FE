@@ -1,6 +1,6 @@
 import React from 'react';
 import Input from '../../ui/Input';
-// import BankSelect from './BankSelect'; // Component chọn ngân hàng sẽ fetch API
+import BankSelector from './BankSelector';
 
 export default function BankTransferForm({ data, onChange, errors }) {
   const handleChange = (e) => {
@@ -13,21 +13,15 @@ export default function BankTransferForm({ data, onChange, errors }) {
         Chi tiết tài khoản ngân hàng
       </h3>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {/* 
-            Component này sẽ fetch API từ VietQR hoặc nguồn tương tự 
-            để lấy danh sách các ngân hàng.
-            Tạm thời dùng Input.
-          */}
         <div className="sm:col-span-2">
-          <Input
-            label="Tên ngân hàng"
-            name="bankName"
+          <BankSelector
             value={data?.bankName || ''}
             onChange={handleChange}
             error={errors?.bankName}
           />
         </div>
         <Input
+          id="bankBranch"
           label="Chi nhánh (Tùy chọn)"
           name="bankBranch"
           value={data?.bankBranch || ''}
@@ -35,6 +29,7 @@ export default function BankTransferForm({ data, onChange, errors }) {
           error={errors?.bankBranch}
         />
         <Input
+          id="bankAcountNumber"
           label="Số tài khoản"
           name="accountNumber"
           value={data?.accountNumber || ''}
@@ -43,6 +38,7 @@ export default function BankTransferForm({ data, onChange, errors }) {
         />
         <div className="sm:col-span-2">
           <Input
+            id="bankAccountName"
             label="Tên chủ tài khoản"
             name="accountName"
             value={data?.accountName || ''}

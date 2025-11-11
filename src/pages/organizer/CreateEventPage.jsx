@@ -6,18 +6,40 @@ import {
   setCurrentStep,
   updateEventField,
 } from '../../store/slices/eventSlice';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import BasicInfoForm from '../../components/features/event/BasicInfoForm';
 import ShowsInfoForm from '../../components/features/event/ShowsInfoForm';
-import { validateStepOne, validateStepTwo } from '../../utils/validation';
+import {
+  validateStepOne,
+  validateStepThree,
+  validateStepTwo,
+} from '../../utils/validation';
 import PaymentInfoForm from '../../components/features/event/PaymentInfoForm';
+import { useNavigate } from 'react-router-dom';
+
+const createEventAPI = (eventData) => {
+  return new Promise((resolve, reject) => {
+    console.log('ĐANG GỌI API ĐỂ TẠO SỰ KIỆN:', eventData);
+    setTimeout(() => {
+      // Giả lập thành công sau 2 giây
+      if (Math.random() > 0.1) {
+        // 90% thành công
+        resolve({ success: true, eventId: '12345' });
+      } else {
+        // 10% thất bại
+        reject(new Error('Không thể kết nối đến máy chủ.'));
+      }
+    }, 2000);
+  });
+};
 
 const CreateEventPage = () => {
+  const nav = useNavigate();
   const dispatch = useDispatch();
   const currentStep = useSelector((state) => state.event.currentStep);
   const eventData = useSelector((state) => state.event.event);
   const totalSteps = 3;
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleChangeStep1 = (field, value) => {
@@ -62,19 +84,34 @@ const CreateEventPage = () => {
       });
     }
   };
+  const handleChangeStep3 = (field) => {
+    const errorKey = field.split('.')[0];
 
+    if (errors[errorKey]) {
+      setErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+
+        delete newErrors[errorKey];
+
+        return newErrors;
+      });
+    }
+  };
   const handleNextStep = () => {
     let validationErrors = {};
     if (currentStep === 1) {
       validationErrors = validateStepOne(eventData);
     } else if (currentStep === 2) {
       validationErrors = validateStepTwo(eventData);
+    } else if (currentStep === 3) {
+      validationErrors = validateStepThree(eventData);
     }
 
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
-      dispatch(setCurrentStep(currentStep + 1));
+      if (currentStep < 3) dispatch(setCurrentStep(currentStep + 1));
+      else handleSubmit();
     } else {
       console.log('Validation errors:', validationErrors);
     }
@@ -83,6 +120,24 @@ const CreateEventPage = () => {
     setErrors({});
     if (currentStep > 1) {
       dispatch(setCurrentStep(currentStep - 1));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await createEventAPI(eventData);
+      if (result.success) {
+        alert('Tạo sự kiện thành công!');
+        //nav(`/organizer/my-events/${result.eventId}`);
+      }
+    } catch (error) {
+      console.error('Lỗi khi tạo sự kiện:', error);
+      alert(error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -95,54 +150,56 @@ const CreateEventPage = () => {
       case 2:
         return <ShowsInfoForm errors={errors} onChange={handleChangeStep2} />;
       case 3:
-        return <PaymentInfoForm errors={errors} />;
+        return <PaymentInfoForm errors={errors} onChange={handleChangeStep3} />;
       default:
-        return <div>Component Form thông tin cơ bản sẽ ở đây</div>;
+        return (
+          <div className="w-full text-center text-5xl font-medium">ERROR</div>
+        );
     }
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="border-border-default bg-background-primary/80 sticky top-0 z-10 border-b backdrop-blur-sm">
-        <div className="mx-auto mt-14 flex h-16 items-center justify-between px-4 md:mt-0">
+    <div className="flex h-full flex-col pt-13 md:pt-0">
+      <header className="border-border-default bg-background-primary/80 sticky top-13 z-10 mb-4 border-b backdrop-blur-sm md:top-0">
+        <div className="mx-auto flex min-h-16 flex-wrap items-center justify-between gap-y-2 px-4 py-2 md:mt-0">
           <div className="flex items-center gap-4">
-            <div className="md:block">
+            <div className="block">
               <Stepper />
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              Lưu nháp
+            <Button variant="border" size="sm">
+              Lưu
             </Button>
 
             <Button
               size="sm"
               onClick={handlePrevStep}
-              disabled={currentStep === 1}
+              disabled={currentStep === 1 || isSubmitting}
               variant={currentStep === 1 ? 'disabled' : 'default'}
               className="hidden sm:flex"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
 
-            <Button
-              size="sm"
-              onClick={handleNextStep}
-              disabled={currentStep > totalSteps}
-            >
-              <ArrowRight className="h-4 w-4" />
+            <Button size="sm" onClick={handleNextStep} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : currentStep === 3 ? (
+                'Tạo'
+              ) : (
+                <ArrowRight className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto">
-        <div className="mb-6">
-          {/* Optional: show small breadcrumb or step title */}
-        </div>
-
-        <div className="mb-12">{renderCurrentStepComponent()}</div>
+      <div
+        className={`container mx-auto transition-opacity ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        <div className="mb-8">{renderCurrentStepComponent()}</div>
       </div>
     </div>
   );

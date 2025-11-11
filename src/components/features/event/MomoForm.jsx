@@ -11,6 +11,7 @@ export default function MomoForm({ data, onChange, errors }) {
       <h3 className="text-text-primary font-semibold">Chi tiết ví MoMo</h3>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Input
+          id="momoPhoneNumber"
           label="Số điện thoại MoMo"
           name="phoneNumber"
           type="tel"
@@ -19,6 +20,7 @@ export default function MomoForm({ data, onChange, errors }) {
           error={errors?.phoneNumber}
         />
         <Input
+          id="momoAcountName"
           label="Tên chủ ví"
           name="accountName"
           value={data?.accountName || ''}

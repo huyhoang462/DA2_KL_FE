@@ -15,7 +15,7 @@ const PaymentMethodSelector = ({ selectedMethod, onSelect }) => {
           type="button"
           onClick={() => onSelect(method.id)}
           className={cn(
-            'flex flex-col items-center justify-center rounded-lg border-2 p-6 transition-all',
+            'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-6 transition-all',
             selectedMethod === method.id
               ? 'border-primary bg-primary/10'
               : 'border-border-default hover:border-primary/50'
