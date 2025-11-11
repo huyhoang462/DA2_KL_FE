@@ -7,7 +7,7 @@ const MainLayout = () => {
     <div className="bg-background min-h-screen">
       <Header />
       <div className="pt-hheader">
-        <main>
+        <main className="mx-auto p-4">
           <Outlet />
         </main>
       </div>

@@ -4,7 +4,10 @@ const initialState = {
   currentStep: 1,
   event: {
     name: '',
-    bannerImageUrl: '',
+    bannerImageUrl: {
+      url: '',
+      publicId: '',
+    },
     description: '',
     format: 'offline',
     location: {

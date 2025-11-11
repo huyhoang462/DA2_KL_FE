@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateEventField } from '../../../store/slices/eventSlice';
 import Input from '../../ui/Input';
@@ -7,44 +6,81 @@ import RichTextEditor from '../../ui/RichTextEditor';
 import LocationInput from './LocationInput';
 import CategoryInput from './CategoryInput';
 import OrganizerInput from './OrganizerInput';
-
-const uploadToCloudinary = async (file) => {
-  console.log(`Bắt đầu upload file: ${file.name}`);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  console.log('Upload thành công!');
-  return `https://res.cloudinary.com/demo/image/upload/sample.jpg?timestamp=${Date.now()}`;
-};
+import useImageUpload from '../../../hooks/useImageUpload';
 
 export default function BasicInfoForm({ errors, onFieldUpdate }) {
   const dispatch = useDispatch();
   const eventData = useSelector((state) => state.event.event);
 
-  const [uploadStatus, setUploadStatus] = useState('idle');
+  const {
+    uploadImage,
+    deleteImage,
+    isUploading,
+    error: uploadError,
+  } = useImageUpload();
+
+  const bannerImage = eventData.bannerImageUrl || { url: '', publicId: '' };
 
   const handleFieldChange = (field, value) => {
     onFieldUpdate(field, value);
   };
 
   const handleBannerChange = async (file) => {
-    if (file) {
-      console.log('File đã được chọn:', file);
-      dispatch(
-        updateEventField({ field: 'bannerImageUrl', value: file.preview })
-      );
-      setUploadStatus('uploading');
-      try {
-        const imageUrl = await uploadToCloudinary(file);
-
-        dispatch(updateEventField({ field: 'bannerImage', value: imageUrl }));
-        setUploadStatus('success');
-      } catch (error) {
-        console.error('Upload failed:', error);
-        setUploadStatus('error');
-        dispatch(updateEventField({ field: 'bannerImage', value: '' }));
+    // A. XỬ LÝ KHI XÓA ẢNH
+    if (!file) {
+      // Nếu có ảnh cũ trên Cloudinary, gọi API để xóa nó
+      if (bannerImage.publicId) {
+        await deleteImage(bannerImage.publicId);
       }
-    } else {
-      dispatch(updateEventField({ field: 'bannerImageUrl', value: '' }));
-      setUploadStatus('idle');
+      // Cập nhật Redux store
+      dispatch(
+        updateEventField({
+          field: 'bannerImageUrl',
+          value: { url: '', publicId: '' },
+        })
+      );
+      return;
+    }
+
+    // B. XỬ LÝ KHI CHỌN ẢNH MỚI
+    // Nếu có ảnh cũ, xóa nó trước khi upload ảnh mới
+    if (bannerImage.publicId) {
+      await deleteImage(bannerImage.publicId);
+    }
+
+    // Hiển thị preview ngay lập tức
+    dispatch(
+      updateEventField({
+        field: 'bannerImageUrl',
+        value: { url: file.preview, publicId: '' },
+      })
+    );
+
+    try {
+      // Bắt đầu upload
+      const uploadedImage = await uploadImage(file);
+
+      if (uploadedImage) {
+        // Upload thành công, cập nhật Redux store với URL và publicId thật
+        dispatch(
+          updateEventField({
+            field: 'bannerImageUrl',
+            value: { url: uploadedImage.url, publicId: uploadedImage.publicId },
+          })
+        );
+      } else {
+        // Xử lý trường hợp upload thất bại nhưng hook không ném ra lỗi
+        throw new Error('Upload returned null');
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      // Nếu upload lỗi, xóa ảnh preview
+      dispatch(
+        updateEventField({
+          field: 'bannerImageUrl',
+          value: { url: '', publicId: '' },
+        })
+      );
     }
   };
 
@@ -68,10 +104,13 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             Ảnh bìa sự kiện
           </p>
           <ImageUploader
-            value={eventData.bannerImageUrl}
+            value={bannerImage.url}
             onChange={handleBannerChange}
-            status={uploadStatus}
+            status={isUploading ? 'uploading' : uploadError ? 'error' : 'idle'}
           />
+          {uploadError && (
+            <p className="text-destructive mt-2 text-sm">{uploadError}</p>
+          )}
         </div>
         <div className="sm:col-span-3">
           {/* <DatePicker value={eventData.startDate} onChange={(date) => handleFieldChange('startDate', date)} /> */}
