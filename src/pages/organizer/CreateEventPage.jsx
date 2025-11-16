@@ -16,22 +16,7 @@ import {
 } from '../../utils/validation';
 import PaymentInfoForm from '../../components/features/event/PaymentInfoForm';
 import { useNavigate } from 'react-router-dom';
-
-const createEventAPI = (eventData) => {
-  return new Promise((resolve, reject) => {
-    console.log('ĐANG GỌI API ĐỂ TẠO SỰ KIỆN:', eventData);
-    setTimeout(() => {
-      // Giả lập thành công sau 2 giây
-      if (Math.random() > 0.1) {
-        // 90% thành công
-        resolve({ success: true, eventId: '12345' });
-      } else {
-        // 10% thất bại
-        reject(new Error('Không thể kết nối đến máy chủ.'));
-      }
-    }, 2000);
-  });
-};
+import { createEvent } from '../../services/eventService';
 
 const CreateEventPage = () => {
   const nav = useNavigate();
@@ -128,7 +113,7 @@ const CreateEventPage = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await createEventAPI(eventData);
+      const result = await createEvent(eventData);
       if (result.success) {
         alert('Tạo sự kiện thành công!');
         //nav(`/organizer/my-events/${result.eventId}`);
