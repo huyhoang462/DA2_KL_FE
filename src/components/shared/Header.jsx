@@ -228,7 +228,7 @@ const Header = () => {
 
   return (
     <header className="bg-primary fixed top-0 left-0 z-50 w-full shadow transition-all duration-300">
-      <div className="h-hheader mx-auto flex items-center justify-between px-4">
+      <div className="h-hheader bg-primary container mx-auto flex items-center justify-between">
         <Link
           to="/"
           className="text-primary-foreground hover:text-primary-hover flex items-center gap-2 text-xl font-bold transition"

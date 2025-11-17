@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import Stepper from '../../components/features/event/Stepper';
+import Stepper from '../../components/features/createEvent/Stepper';
 import Button from '../../components/ui/Button';
 import {
   setCurrentStep,
   updateEventField,
 } from '../../store/slices/eventSlice';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import BasicInfoForm from '../../components/features/event/BasicInfoForm';
-import ShowsInfoForm from '../../components/features/event/ShowsInfoForm';
+import BasicInfoForm from '../../components/features/createEvent/BasicInfoForm';
+import ShowsInfoForm from '../../components/features/createEvent/ShowsInfoForm';
 import {
   validateStepOne,
   validateStepThree,
   validateStepTwo,
 } from '../../utils/validation';
-import PaymentInfoForm from '../../components/features/event/PaymentInfoForm';
+import PaymentInfoForm from '../../components/features/createEvent/PaymentInfoForm';
 import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../../services/eventService';
 

@@ -1,3 +1,4 @@
+// src/components/shared/EventCard.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin } from 'lucide-react';
@@ -21,11 +22,9 @@ export default function EventCard({ event, className }) {
   if (!event) return null;
 
   return (
-    <Link
-      to={`/event-detail/${event.id}`}
-      className={cn('group block', className)}
-    >
+    <Link to={`/event-detail/${event.id}`} className={cn('group block', className)}>
       <div className="bg-background-secondary hover:shadow-primary/20 overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:-translate-y-1">
+        {/* Phần hình ảnh (giữ nguyên) */}
         <div className="relative aspect-[16/9] overflow-hidden">
           <img
             src={event.bannerImageUrl}
