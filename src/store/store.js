@@ -1,6 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import eventReducer from './slices/eventSlice';
+import cartReducer from './slices/cartSlice';
 import storage from 'redux-persist/lib/storage';
 import {
   persistStore,
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   // Bọc authReducer bằng persistReducer với config riêng của nó
   auth: persistReducer(authPersistConfig, authReducer),
   event: eventReducer, // eventReducer sẽ được quản lý bởi rootPersistConfig
+  cart: cartReducer,
 });
 
 // Bọc rootReducer bằng rootPersistConfig

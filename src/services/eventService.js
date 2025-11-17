@@ -27,6 +27,7 @@ export const createEvent = async (data) => {
 export const getEventById = async (id) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events/${id}`);
+    console.log('Response data in getEventById:', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);

@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 
-export default function BigTicket({ event }) {
+export default function BigTicket({ event, onNav }) {
   const getMinPrice = (shows) => {
     if (!shows || shows.length === 0) return 0;
     const allTickets = shows.flatMap((show) => show.tickets);
+    console.log('allticket: ', allTickets);
+
     if (allTickets.length === 0) return 0;
     return Math.min(...allTickets.map((ticket) => ticket.price));
   };
@@ -69,7 +71,9 @@ export default function BigTicket({ event }) {
                 </div>
               </div>
             )}
-            <Button className="w-full">Mua vé ngay</Button>
+            <Link to={`/select-tickets/${event.id}`}>
+              <Button className="w-full">Mua vé ngay</Button>
+            </Link>
           </div>
         </div>
       </div>
