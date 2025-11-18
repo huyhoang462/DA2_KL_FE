@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { LayoutGrid, BarChart2, TicketCheck, UserCog } from 'lucide-react';
+import {
+  LayoutGrid,
+  BarChart2,
+  TicketCheck,
+  UserCog,
+  Pencil,
+} from 'lucide-react';
 import Sidebar from '../shared/SideBar';
 import MobileHeader from '../shared/MobileHeader';
 
 const dorganizerNavItems = [
+  { name: 'Tạo sự kiện mới', path: '/organizer/create-event', icon: Pencil },
   { name: 'Sự kiện của tôi', path: '/organizer/my-events', icon: LayoutGrid },
   {
     name: 'Tài khoản Check-in',

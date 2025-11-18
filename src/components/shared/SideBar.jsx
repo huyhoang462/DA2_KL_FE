@@ -1,8 +1,7 @@
-// src/components/shared/Sidebar.jsx
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '../../utils/lib';
-import { PlusSquare, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function Sidebar({
   navigationItems,
@@ -24,13 +23,6 @@ export default function Sidebar({
       </div>
       <div className="flex-1 overflow-auto py-2">
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-          <Link
-            to="/organizer/create-event"
-            className="bg-primary text-primary-foreground hover:bg-primary-hover mb-4 flex items-center justify-center gap-2 rounded-md py-2 font-semibold"
-          >
-            <PlusSquare className="h-5 w-5" />
-            Tạo sự kiện mới
-          </Link>
           {navigationItems.map((item) => (
             <NavLink
               key={item.name}

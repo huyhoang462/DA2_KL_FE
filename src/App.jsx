@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './components/layouts/MainLayout';
@@ -17,6 +17,11 @@ import { ToastContainer } from 'react-toastify';
 import OrganizerLayout from './components/layouts/OrganizerLayout';
 import CheckinAccountsPage from './pages/organizer/CheckinAccountsPage';
 import CreateEventPage from './pages/organizer/CreateEventPage';
+import EventLayout from './components/layouts/EventLayout';
+import OrgDashboardPage from './pages/organizer/OrgDashboardPage';
+import OrgOrdersPage from './pages/organizer/OrgOrdersPage';
+import OrgCheckInPage from './pages/organizer/OrgCheckInPage';
+import OrgEventDetail from './pages/organizer/OrgEventDetail';
 
 function App() {
   return (
@@ -38,9 +43,17 @@ function App() {
           <Route path="tickets" element={<MyTicketsPage />} />
         </Route>
         <Route path="/organizer" element={<OrganizerLayout />}>
+          <Route index element={<Navigate to="my-events" replace />} />
           <Route path="create-event" element={<CreateEventPage />} />
           <Route path="my-events" element={<MyEventsPage />} />
           <Route path="checkin-accounts" element={<CheckinAccountsPage />} />
+        </Route>
+        <Route path="/manage/:id" element={<EventLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<OrgDashboardPage />} />
+          <Route path="orders" element={<OrgOrdersPage />} />
+          <Route path="checkin" element={<OrgCheckInPage />} />
+          <Route path="detail" element={<OrgEventDetail />} />
         </Route>
       </Routes>
       <ToastContainer autoClose={2000} />

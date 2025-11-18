@@ -5,64 +5,69 @@ import Button from '../../ui/Button';
 
 const TicketItem = ({ ticket }) => {
   return (
-    <div className="px-4 py-3 border-b border-border-default last:border-b-0 bg-background">
-      <div className="flex ml-4 flex-col sm:flex-row justify-between sm:items-center gap-1">
-        <p className="font-semibold text-text-primary">{ticket.name}</p>
-        <p className="text-base font-bold text-primary">{ticket.price.toLocaleString()} VNĐ</p>
+    <div className="border-border-default bg-background border-b p-4 last:border-b-0">
+      <div className="ml-4 flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
+        <p className="text-text-primary font-semibold">{ticket.name}</p>
+        <p className="text-primary text-base font-bold">
+          {ticket.price.toLocaleString()} VNĐ
+        </p>
       </div>
       {ticket.description && (
-        <p className="text-text-secondary  ml-4 mt-1 text-sm">{ticket.description}</p>
+        <p className="text-text-secondary mt-1 ml-4 text-sm">
+          {ticket.description}
+        </p>
       )}
     </div>
   );
 };
 
 const ShowtimeAccordionItem = ({ show, isOpen, onToggle }) => {
-  const formattedStartTime = new Date(show.startTime).toLocaleTimeString('vi-VN', {
-    hour: '2-digit', minute: '2-digit'
-  });
+  const formattedStartTime = new Date(show.startTime).toLocaleTimeString(
+    'vi-VN',
+    {
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  );
   const formattedDate = new Date(show.startTime).toLocaleDateString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 
   return (
-    <div className="border border-border-default rounded-lg overflow-hidden bg-background-secondary">
-      
-      <div className="flex justify-between items-center px-4 py-3 bg-foreground">
-
+    <div className="border-border-default bg-background-secondary overflow-hidden rounded-lg border">
+      <div className="bg-foreground flex items-center justify-between px-4 py-3">
         <button
-          className="flex flex-col text-left flex-1 pr-3 transition"
+          className="flex flex-1 flex-col pr-3 text-left transition"
           onClick={onToggle}
           aria-expanded={isOpen}
         >
-          <p className="font-semibold text-lg text-text-primary">{show.name}</p>
-          <p className="text-sm text-text-secondary">
+          <p className="text-text-primary text-lg font-semibold">{show.name}</p>
+          <p className="text-text-secondary text-sm">
             {`${formattedStartTime} - ${formattedDate}`}
           </p>
         </button>
 
         <div className="flex items-center gap-2">
-          <Button className="px-3 py-1.5">
-            Mua vé
-          </Button>
+          <Button className="px-3 py-1.5">Mua vé</Button>
 
           <ChevronDown
             className={cn(
-              'h-4 w-4 text-text-secondary transition-transform duration-300',
+              'text-text-secondary h-4 w-4 transition-transform duration-300',
               isOpen ? 'rotate-180' : 'rotate-0'
             )}
           />
         </div>
-
       </div>
 
       <div
         className={cn(
-          "grid transition-all duration-500 ease-in-out",
+          'grid transition-all duration-500 ease-in-out',
           isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         )}
       >
-        <div className="overflow-hidden ">
+        <div className="overflow-hidden">
           {show.tickets.map((ticket) => (
             <TicketItem key={ticket._id} ticket={ticket} />
           ))}
@@ -72,17 +77,16 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle }) => {
   );
 };
 
-
 export default function ShowtimeList({ shows }) {
   const [openShowId, setOpenShowId] = useState(shows?.[0]?._id || null);
 
   const handleToggle = (showId) => {
-    setOpenShowId(prev => (prev === showId ? null : showId));
+    setOpenShowId((prev) => (prev === showId ? null : showId));
   };
 
   if (!shows || shows.length === 0) {
     return (
-      <div className="bg-background-secondary text-text-secondary text-center p-6 rounded-lg border border-border-default">
+      <div className="bg-background-secondary text-text-secondary border-border-default rounded-lg border p-6 text-center">
         Hiện chưa có thông tin về các suất diễn và vé cho sự kiện này.
       </div>
     );
@@ -90,7 +94,6 @@ export default function ShowtimeList({ shows }) {
 
   return (
     <div className="space-y-2">
-
       {shows.map((show) => (
         <ShowtimeAccordionItem
           key={show._id}
