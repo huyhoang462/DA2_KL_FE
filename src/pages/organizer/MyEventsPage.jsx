@@ -1,12 +1,9 @@
-// src/pages/dashboard/my-events/MyEventsPage.jsx
-
 import React, { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
-import { mockEvents } from '../../utils/mockData'; // Import data sự kiện tĩnh
+import { mockEvents } from '../../utils/mockData';
 import MyEventCard from '../../components/features/event/MyEventCard';
-import Input from '../../components/ui/Input'; // Component Input của bạn
+import Input from '../../components/ui/Input';
 
-// Định nghĩa bộ lọc dựa trên ENUM status của bạn
 const filters = [
   { label: 'Tất cả', value: 'all' },
   { label: 'Nháp', value: 'draft' },
@@ -22,21 +19,18 @@ export default function MyEventsPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Logic lọc và tìm kiếm
   const filteredEvents = useMemo(() => {
     return mockEvents.filter((event) => {
-      // Lọc theo trạng thái
       const matchesFilter =
         activeFilter === 'all' || event.status === activeFilter;
 
-      // Lọc theo từ khóa tìm kiếm
       const matchesSearch =
         searchTerm === '' ||
         event.name.toLowerCase().includes(searchTerm.toLowerCase());
 
       return matchesFilter && matchesSearch;
     });
-  }, [activeFilter, searchTerm, mockEvents]);
+  }, [activeFilter, searchTerm]);
 
   return (
     <div className="space-y-6 pt-6">

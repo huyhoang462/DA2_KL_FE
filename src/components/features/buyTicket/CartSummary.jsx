@@ -18,7 +18,7 @@ export default function CartSummary({ event }) {
       alert(validationError);
       return;
     }
-    // navigate('/payment', { state: { items: summaryItems, total: totalAmount, event } });
+    navigate(`/payment/${event.id}`);
     console.log('Proceed to checkout with:', {
       items: summaryItems,
       total: totalAmount,

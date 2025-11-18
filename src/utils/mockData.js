@@ -104,3 +104,43 @@ export const mockTickets = [
     price: 150000,
   },
 ];
+
+export const mockAdminPaymentMethods = [
+  {
+    id: 'payout_method_bank_123',
+    user: 'admin_user_id',
+    methodType: 'bank_account',
+    isDefault: true,
+    bankDetails: {
+      bankName: 'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
+      accountNumber: '9876543210',
+      accountName: 'CONG TY TNHH SHINE TICKET',
+      bankBranch: 'Chi nhánh TP. Hồ Chí Minh',
+    },
+    momoDetails: null,
+  },
+  {
+    id: 'payout_method_momo_456',
+    user: 'admin_user_id',
+    methodType: 'momo',
+    isDefault: false,
+    bankDetails: null,
+    momoDetails: {
+      phoneNumber: '0909123456',
+      accountName: 'CONG TY TNHH SHINE TICKET',
+    },
+  },
+  {
+    id: 'payout_method_bank_789',
+    user: 'admin_user_id',
+    methodType: 'bank_account',
+    isDefault: false,
+    bankDetails: {
+      bankName: 'Ngân hàng TMCP Kỹ thương Việt Nam (Techcombank)',
+      accountNumber: '1234567890',
+      accountName: 'CONG TY TNHH SHINE TICKET',
+      bankBranch: 'Hội sở chính',
+    },
+    momoDetails: null,
+  },
+];
