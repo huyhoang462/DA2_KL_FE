@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Search,
   Menu,
   UserIcon,
   ChevronDown,
@@ -16,6 +15,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import useClickOutside from '../../hooks/useClickOutside';
 import { logout } from '../../store/slices/authSlice';
+import SearchBar from '../features/search/SearchBar';
 
 const Header = () => {
   const auth = useSelector((state) => state.auth);
@@ -237,12 +237,13 @@ const Header = () => {
         </Link>
 
         <div className="relative hidden md:block">
-          <Search className="text-text-placeholder absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
+          {/* <Search className="text-text-placeholder absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Tìm kiếm sự kiện..."
             className="border-border-default bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary focus:ring-primary w-64 rounded-full border py-2 pr-4 pl-10 transition focus:ring-2 focus:outline-none lg:w-96"
-          />
+          /> */}
+          <SearchBar />
         </div>
 
         <div className="hidden items-center gap-4 md:flex">

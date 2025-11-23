@@ -25,9 +25,8 @@ export default function PaymentPage() {
   const cart = useSelector((state) => state.cart);
   const [orderId, setOrderId] = useState(null);
   const orderIdRef = useRef(null);
-  const effectRan = useRef(false); // Lá cờ để kiểm soát useEffect
+  const effectRan = useRef(false);
 
-  // --- DATA FETCHING ---
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['eventForPayment', id],
     queryFn: () => getEventById('691b3399fe38d6fbc82e1705'),
@@ -41,7 +40,6 @@ export default function PaymentPage() {
     }
   );
 
-  // --- LOGIC HỦY ĐƠN HÀNG ---
   const cancelOrderMutation = useMutation({
     mutationFn: (id) => orderService.cancelOrder(id),
     onSuccess: () =>
@@ -59,13 +57,11 @@ export default function PaymentPage() {
     navigate(`/event-detail/${id}`, { replace: true });
   }, [cancelOrderMutation, dispatch, id, navigate]);
 
-  // --- COUNTDOWN ---
   const { minutes, seconds } = useCountdown(10, () => {
     alert('Đã hết thời gian giữ vé.');
     handleTimeoutOrLeave();
   });
 
-  // --- LOGIC TẠO ĐƠN HÀNG ---
   const createOrderMutation = useMutation({
     mutationFn: (orderData) => orderService.createOrder(orderData),
     onSuccess: (data) => {
@@ -79,19 +75,14 @@ export default function PaymentPage() {
     },
   });
 
-  // --- EFFECT CHÍNH: Tạo đơn hàng và xử lý cleanup (Phiên bản AN TOÀN) ---
   useEffect(() => {
-    // 1. Điều kiện cần: Phải có đủ dữ liệu và giỏ hàng không rỗng
     if (!event || !cart.items || Object.keys(cart.items).length === 0) {
       return;
     }
 
-    // 2. Kiểm tra lá cờ: Chỉ chạy logic nếu đây là lần đầu tiên (hoặc lần thứ 2 trong StrictMode)
-    //    `effectRan.current` sẽ là `false` ở lần mount đầu, và `true` ở lần mount thứ hai.
-    //    Ở production, nó sẽ luôn là `false` ở lần mount duy nhất.
     if (effectRan.current === false) {
       const orderPayload = {
-        eventId: event.id, // Sửa lại thành eventId
+        eventId: event.id,
         items: Object.entries(cart.items).map(([ticketTypeId, quantity]) => ({
           ticketTypeId,
           quantity,
@@ -102,24 +93,16 @@ export default function PaymentPage() {
       createOrderMutation.mutate(orderPayload);
     }
 
-    // 3. Đánh dấu là effect đã chạy và đăng ký hàm cleanup
-    //    Hàm cleanup này sẽ được đăng ký trong CẢ HAI lần mount của StrictMode.
     return () => {
-      // Đánh dấu để lần mount tiếp theo của StrictMode biết mà không chạy lại logic tạo đơn hàng
       effectRan.current = true;
 
-      // Hàm cleanup sẽ chỉ thực thi logic hủy khi orderIdRef.current đã có giá trị.
-      // Ở lần unmount đầu tiên của StrictMode, orderIdRef.current có thể vẫn là null
-      // nên sẽ không có gì xảy ra, điều này an toàn.
-      // Chỉ khi component unmount thật sự, orderIdRef.current đã được set và logic hủy mới chạy.
       if (orderIdRef.current) {
         console.log('[CLEANUP] Component unmount, gửi yêu cầu hủy đơn hàng...');
         cancelOrderMutation.mutate(orderIdRef.current);
       }
     };
-  }, [event, cart.items]); // Chỉ phụ thuộc vào dữ liệu, không phụ thuộc vào các hàm mutate
+  }, [event, cart.items]);
 
-  // --- EFFECT XỬ LÝ RỜI TRANG (Tách riêng cho rõ ràng) ---
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (orderIdRef.current) {
@@ -132,7 +115,7 @@ export default function PaymentPage() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []); // Effect này không có phụ thuộc, chỉ chạy 1 lần lúc mount và cleanup 1 lần lúc unmount
+  }, []);
 
   const isLoading = isLoadingEvent || isLoadingAdminInfo;
   if (isLoading) {
