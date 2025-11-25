@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
+import TextArea from '../../ui/TextArea';
 import { validateTicketType } from '../../../utils/validation';
 
 export default function TicketTypeFormModal({
@@ -19,6 +20,7 @@ export default function TicketTypeFormModal({
     quantityTotal: '',
     minPurchase: 1,
     maxPurchase: 10,
+    description: '',
   });
 
   useEffect(() => {
@@ -31,6 +33,7 @@ export default function TicketTypeFormModal({
         quantityTotal: '',
         minPurchase: 1,
         maxPurchase: 10,
+        description: '',
       });
     }
   }, [initialData, isEditing, isOpen]);
@@ -63,7 +66,7 @@ export default function TicketTypeFormModal({
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-10 bg-black/50" />
-        <Dialog.Content className="border-border-default bg-background-secondary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border p-6 shadow-lg duration-200 sm:rounded-lg">
+        <Dialog.Content className="border-border-default bg-background-secondary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 gap-4 border p-6 shadow-lg duration-200 sm:rounded-lg">
           <Dialog.Title className="text-text-primary text-lg font-semibold">
             {isEditing ? 'Chỉnh sửa loại vé' : 'Thêm loại vé mới'}
           </Dialog.Title>
@@ -121,6 +124,14 @@ export default function TicketTypeFormModal({
                 error={modalErrors.maxPurchase}
               />
             </div>
+            <TextArea
+              id="ticketTypeDescription"
+              label="Mô tả"
+              name="description"
+              value={ticket.description}
+              onChange={handleChange}
+              error={modalErrors.description}
+            />
           </div>
 
           <Dialog.Close asChild>

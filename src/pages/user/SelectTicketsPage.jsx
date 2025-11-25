@@ -54,18 +54,20 @@ export default function SelectTicketsPage() {
 
   return (
     <div className="bg-background-primary text-text-primary min-h-[calc(100vh-64px)]">
-      <main className="container mx-auto px-4 py-4">
-        <div className="border-border-subtle mb-4 pb-4">
-          {/* <Link
+      <div className="border-border-subtle bg-background-secondary mx-auto mb-4 rounded-xl border-b py-6">
+        {/* <Link
             to={`/event-detail/${id}`}
             className="text-text-secondary hover:text-text-primary mb-6 inline-flex items-center gap-2 text-sm font-semibold"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Quay lại</span>
           </Link> */}
-          <h1 className="text-text-primary text-3xl font-bold md:text-4xl">
-            {event.name}
-          </h1>
+        <div className="container mx-auto flex flex-col px-4">
+          <div className="flex gap-4">
+            <h1 className="text-text-primary text-3xl font-bold md:text-4xl">
+              {event.name}
+            </h1>
+          </div>
           <div className="text-text-secondary mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
             <div className="flex items-center gap-2">
               <Calendar className="text-primary h-4 w-4" />
@@ -77,7 +79,8 @@ export default function SelectTicketsPage() {
             </div>
           </div>
         </div>
-
+      </div>
+      <main className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
           <div className="space-y-6 lg:col-span-2">
             {event.shows && event.shows.length > 0 ? (

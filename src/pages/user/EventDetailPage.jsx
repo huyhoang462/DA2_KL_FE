@@ -20,7 +20,7 @@ export default function EventDetailPage() {
     error,
   } = useQuery({
     queryKey: ['eventDetail', id],
-    queryFn: () => getEventById('691b3399fe38d6fbc82e1705'),
+    queryFn: () => getEventById(id),
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
   });

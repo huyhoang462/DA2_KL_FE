@@ -1,17 +1,16 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import useEmblaCarousel from 'embla-carousel-react';
-import Autoplay from 'embla-carousel-autoplay'; 
+import Autoplay from 'embla-carousel-autoplay';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { cn } from '../../../utils/lib'
+import { cn } from '../../../utils/lib';
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString("vi-VN", {
+  return new Date(dateString).toLocaleDateString('vi-VN', {
     weekday: 'long',
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 };
 
@@ -19,29 +18,43 @@ const DotButton = ({ selected, onClick }) => (
   <button
     className={cn(
       'h-2 w-2 rounded-full transition-all duration-300',
-      selected ? 'w-6 bg-primary' : 'bg-border-default hover:bg-border-default/80'
+      selected
+        ? 'bg-primary w-6'
+        : 'bg-border-default hover:bg-border-default/80'
     )}
     type="button"
     onClick={onClick}
   />
 );
 
-const formatPrice = (price) => (price === 0 ? "Miễn phí" : `${price.toLocaleString('vi-VN')} ₫`);
+const formatPrice = (price) =>
+  price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')} ₫`;
 
 export default function BannerCarousel({ events }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-      loop: true, 
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
       align: 'start',
-      
-  }, [Autoplay({ delay: 4000, stopOnInteraction: false })]); 
-  
+    },
+    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+  );
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
-  
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
-  const scrollTo = useCallback((index) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
-  
+
+  const scrollPrev = useCallback(
+    () => emblaApi && emblaApi.scrollPrev(),
+    [emblaApi]
+  );
+  const scrollNext = useCallback(
+    () => emblaApi && emblaApi.scrollNext(),
+    [emblaApi]
+  );
+  const scrollTo = useCallback(
+    (index) => emblaApi && emblaApi.scrollTo(index),
+    [emblaApi]
+  );
+
   useEffect(() => {
     if (!emblaApi) return;
 
@@ -51,12 +64,12 @@ export default function BannerCarousel({ events }) {
     const onInit = () => {
       setScrollSnaps(emblaApi.scrollSnapList());
       onSelect();
-    }
+    };
 
     emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onInit); 
-    
-    onInit(); 
+    emblaApi.on('reInit', onInit);
+
+    onInit();
 
     return () => {
       emblaApi.off('select', onSelect);
@@ -69,13 +82,16 @@ export default function BannerCarousel({ events }) {
   return (
     <div className="relative">
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex -ml-4">
+        <div className="-ml-4 flex">
           {events.map((event) => (
-            
-            
-            
-            <div className="flex-[0_0_100%] sm:flex-[0_0_50%] pl-4" key={event.id}>
-              <Link to={`/event/${event.id}`} className="block relative aspect-[16/8] w-full rounded-2xl overflow-hidden group">
+            <div
+              className="flex-[0_0_100%] pl-4 sm:flex-[0_0_50%]"
+              key={event.id}
+            >
+              <Link
+                to={`/event-detail/${event.id}`}
+                className="group relative block aspect-[16/8] w-full overflow-hidden rounded-2xl"
+              >
                 <img
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   src={event.bannerImageUrl}
@@ -83,11 +99,15 @@ export default function BannerCarousel({ events }) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
-                <div className="absolute bottom-0 left-0 p-4 lg:p-6 text-white w-full">
-                  <h2 className=" text-xl lg:text-2xl font-bold truncate mb-2">{event.name}</h2>
-                  <div className="flex items-center text-sm bg-black/30 backdrop-blur-sm p-2 rounded-lg w-fit">
-                    <span className="font-bold text-primary">{formatPrice(event.lowestPrice)}</span>
-                    <span className="mx-3 border-l border-gray-400 h-4"></span>
+                <div className="absolute bottom-0 left-0 w-full p-4 text-white lg:p-6">
+                  <h2 className="mb-2 truncate text-xl font-bold lg:text-2xl">
+                    {event.name}
+                  </h2>
+                  <div className="flex w-fit items-center rounded-lg bg-black/30 p-2 text-sm backdrop-blur-sm">
+                    <span className="text-primary font-bold">
+                      {formatPrice(event.lowestPrice)}
+                    </span>
+                    <span className="mx-3 h-4 border-l border-gray-400"></span>
                     <span>{formatDate(event.startDate)}</span>
                   </div>
                 </div>
@@ -96,24 +116,30 @@ export default function BannerCarousel({ events }) {
           ))}
         </div>
       </div>
-      
-      <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4">
-        <button onClick={scrollPrev} className="bg-background-secondary cursor-pointer hover:bg-primary p-2 rounded-full shadow-md  transition-colors">
-          <ArrowLeft className="h-5 w-5 text-text-primary" />
+
+      <div className="absolute -bottom-12 left-1/2 flex -translate-x-1/2 items-center gap-4">
+        <button
+          onClick={scrollPrev}
+          className="bg-background-secondary hover:bg-primary cursor-pointer rounded-full p-2 shadow-md transition-colors"
+        >
+          <ArrowLeft className="text-text-primary h-5 w-5" />
         </button>
 
         <div className="flex items-center justify-center gap-2">
-            {scrollSnaps.map((_, index) => (
-                <DotButton
-                key={index}
-                selected={index === selectedIndex}
-                onClick={() => scrollTo(index)}
-                />
-            ))}
+          {scrollSnaps.map((_, index) => (
+            <DotButton
+              key={index}
+              selected={index === selectedIndex}
+              onClick={() => scrollTo(index)}
+            />
+          ))}
         </div>
 
-        <button onClick={scrollNext} className="bg-background-secondary p-2 rounded-full shadow-md cursor-pointer hover:bg-primary transition-colors">
-          <ArrowRight className="h-5 w-5 text-text-primary" />
+        <button
+          onClick={scrollNext}
+          className="bg-background-secondary hover:bg-primary cursor-pointer rounded-full p-2 shadow-md transition-colors"
+        >
+          <ArrowRight className="text-text-primary h-5 w-5" />
         </button>
       </div>
     </div>

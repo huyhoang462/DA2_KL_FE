@@ -63,11 +63,11 @@ export default function TicketTypeCard({ ticket }) {
         <p className="text-primary mt-1 font-semibold">
           {ticket.price.toLocaleString()} VNĐ
         </p>
+        <p className="text-text-secondary mt-1 text-sm">{ticket.description}</p>
         {/*
-        <p className="text-sm text-text-secondary mt-1">{ticket.description}</p>
         <div className="mt-2 flex items-center gap-2 text-xs text-text-secondary">
-          <Info className="h-3 w-3" />
-          <span>Mua tối thiểu {ticket.minPurchase}, tối đa {ticket.maxPurchase}.</span>
+        <Info className="h-3 w-3" />
+        <span>Mua tối thiểu {ticket.minPurchase}, tối đa {ticket.maxPurchase}.</span>
         </div>
         */}
       </div>

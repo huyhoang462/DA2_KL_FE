@@ -25,17 +25,17 @@ export default function BigTicket({ event, onNav }) {
   return (
     <div className="mx-auto mb-8 w-full">
       <div className="text-text-primary bg-background-secondary flex flex-col overflow-hidden rounded-2xl md:grid md:grid-cols-5">
-        <div className="order-first md:order-last md:col-span-3">
+        <div className="border-border-default order-first md:order-last md:col-span-3 md:rounded-2xl md:border md:border-l-0">
           <img
-            className="aspect-video h-full w-full object-cover md:aspect-auto"
+            className="aspect-video h-full w-full object-cover md:aspect-auto md:rounded-2xl"
             src={event.bannerImageUrl}
             alt={event.name}
           />
         </div>
 
-        <div className="relative col-span-2 flex flex-col justify-between bg-[#e9ecef] p-6 md:p-8">
-          <div className="bg-background-primary absolute top-0 right-0 hidden h-16 w-16 translate-x-1/2 -translate-y-1/2 transform rounded-full md:block"></div>
-          <div className="bg-background-primary absolute right-0 bottom-0 hidden h-16 w-16 translate-x-1/2 translate-y-1/2 transform rounded-full md:block"></div>
+        <div className="bg-background-secondary border-border-default relative col-span-2 flex flex-col justify-between rounded-b-2xl border-x border-b p-6 md:rounded-2xl md:border md:border-r-0 md:p-8">
+          <div className="bg-background-primary border-border-default absolute top-0 right-0 hidden h-16 w-16 translate-x-1/2 -translate-y-1/2 transform rounded-full border md:block"></div>
+          <div className="bg-background-primary border-border-default absolute right-0 bottom-0 hidden h-16 w-16 translate-x-1/2 translate-y-1/2 transform rounded-full border md:block"></div>
 
           <div>
             <h1 className="text-xl font-bold break-words md:text-2xl lg:text-3xl">
@@ -72,7 +72,9 @@ export default function BigTicket({ event, onNav }) {
               </div>
             )}
             <Link to={`/select-tickets/${event.id}`}>
-              <Button className="w-full">Mua vé ngay</Button>
+              <Button className="w-full" size="lg">
+                Mua vé ngay
+              </Button>
             </Link>
           </div>
         </div>

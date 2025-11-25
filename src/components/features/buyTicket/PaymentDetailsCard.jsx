@@ -95,16 +95,17 @@ export default function PaymentDetailsCard({
       </h2>
 
       {/* Chọn phương thức */}
-      <div className="mb-6 space-y-2">
-        <label className="text-text-secondary text-sm font-medium">
+      <div className="mb-6 space-y-4">
+        <p className="text-text-secondary text-sm font-medium">
           Chọn phương thức thanh toán
-        </label>
+        </p>
+
         <div className="flex gap-4">
           {methods.map((method) => (
             <button
               key={method.id}
               onClick={() => setSelectedMethod(method)}
-              className={`flex items-center gap-2 rounded-md border-2 p-2 text-sm ${selectedMethod.id === method.id ? 'border-primary' : 'border-transparent'}`}
+              className={`bg-background-primary flex cursor-pointer items-center gap-2 rounded-md border-2 p-2 text-sm ${selectedMethod.id === method.id ? 'border-primary text-primary' : 'border-transparent'}`}
             >
               {method.methodType === 'bank_account' ? (
                 <Banknote />

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../../../utils/lib';
 import Button from '../../ui/Button';
+import { Link } from 'react-router-dom';
 
 const TicketItem = ({ ticket }) => {
   return (
-    <div className="border-border-default bg-background border-b p-4 last:border-b-0">
-      <div className="ml-4 flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
+    <div className="border-border-subtle bg-background border-t p-4 last:border-b-0">
+      <div className="mx-4 flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
         <p className="text-text-primary font-semibold">{ticket.name}</p>
         <p className="text-primary text-base font-bold">
           {ticket.price.toLocaleString()} VNĐ
@@ -37,8 +38,8 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle }) => {
 
   return (
     <div className="border-border-default bg-background-secondary overflow-hidden rounded-lg border">
-      <div className="bg-foreground flex items-center justify-between px-4 py-3">
-        <button
+      <div className="bg-background-secondary flex items-center justify-between px-4 py-3">
+        <div
           className="flex flex-1 flex-col pr-3 text-left transition"
           onClick={onToggle}
           aria-expanded={isOpen}
@@ -47,10 +48,12 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle }) => {
           <p className="text-text-secondary text-sm">
             {`${formattedStartTime} - ${formattedDate}`}
           </p>
-        </button>
+        </div>
 
         <div className="flex items-center gap-2">
-          <Button className="px-3 py-1.5">Mua vé</Button>
+          <Link to={`/select-tickets/${show.event}`}>
+            <Button className="px-3 py-1.5">Mua vé</Button>
+          </Link>
 
           <ChevronDown
             className={cn(

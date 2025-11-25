@@ -35,7 +35,7 @@ export default function Button({
       className={clsx(
         'inline-flex cursor-pointer items-center justify-center rounded-lg text-sm font-semibold whitespace-nowrap transition-colors',
         'ring-0 outline-none disabled:pointer-events-none',
-        variants[loading ? 'disabled' : variant],
+        variants[loading || disabled ? 'disabled' : variant],
         sizes[size],
         className
       )}

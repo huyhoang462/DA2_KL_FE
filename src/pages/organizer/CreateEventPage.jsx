@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Stepper from '../../components/features/createEvent/Stepper';
 import Button from '../../components/ui/Button';
+import NotificationModal from '../../components/ui/NotificationModal';
 import {
   setCurrentStep,
   updateEventField,
@@ -27,6 +28,11 @@ const CreateEventPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationType, setNotificationType] = useState('success');
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+
   const handleChangeStep1 = (field, value) => {
     dispatch(updateEventField({ field, value }));
 
@@ -35,13 +41,12 @@ const CreateEventPage = () => {
     if (errors[errorKey]) {
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
-
         delete newErrors[errorKey];
-
         return newErrors;
       });
     }
   };
+
   const handleChangeStep2 = (showIndex, field) => {
     if (
       errors.shows &&
@@ -50,7 +55,6 @@ const CreateEventPage = () => {
     ) {
       setErrors((prevErrors) => {
         const newShowErrors = [...prevErrors.shows];
-
         const currentShowErrors = newShowErrors[showIndex]
           ? { ...newShowErrors[showIndex] }
           : {};
@@ -69,19 +73,19 @@ const CreateEventPage = () => {
       });
     }
   };
+
   const handleChangeStep3 = (field) => {
     const errorKey = field.split('.')[0];
 
     if (errors[errorKey]) {
       setErrors((prevErrors) => {
         const newErrors = { ...prevErrors };
-
         delete newErrors[errorKey];
-
         return newErrors;
       });
     }
   };
+
   const handleNextStep = () => {
     let validationErrors = {};
     if (currentStep === 1) {
@@ -101,6 +105,7 @@ const CreateEventPage = () => {
       console.log('Validation errors:', validationErrors);
     }
   };
+
   const handlePrevStep = () => {
     setErrors({});
     if (currentStep > 1) {
@@ -114,15 +119,30 @@ const CreateEventPage = () => {
     setIsSubmitting(true);
     try {
       const result = await createEvent(eventData);
-      if (result.success) {
-        alert('Tạo sự kiện thành công!');
-        //nav(`/organizer/my-events/${result.eventId}`);
+
+      if (result.status === 201) {
+        setNotificationType('success');
+        setNotificationTitle('Thành công!');
+        setNotificationMessage(result.message);
+        setShowNotification(true);
       }
     } catch (error) {
       console.error('Lỗi khi tạo sự kiện:', error);
-      alert(error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+      setNotificationType('error');
+      setNotificationTitle('Thất bại!');
+      setNotificationMessage(
+        error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+      );
+      setShowNotification(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleNotificationClose = () => {
+    setShowNotification(false);
+    if (notificationType === 'success') {
+      nav('/organizer/my-events');
     }
   };
 
@@ -186,6 +206,15 @@ const CreateEventPage = () => {
       >
         <div className="mb-8">{renderCurrentStepComponent()}</div>
       </div>
+
+      <NotificationModal
+        isOpen={showNotification}
+        type={notificationType}
+        title={notificationTitle}
+        message={notificationMessage}
+        onClose={handleNotificationClose}
+        buttonText={notificationType === 'success' ? 'Ok' : 'Thử lại'}
+      />
     </div>
   );
 };

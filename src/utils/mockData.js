@@ -130,17 +130,17 @@ export const mockAdminPaymentMethods = [
       accountName: 'CONG TY TNHH SHINE TICKET',
     },
   },
-  {
-    id: 'payout_method_bank_789',
-    user: 'admin_user_id',
-    methodType: 'bank_account',
-    isDefault: false,
-    bankDetails: {
-      bankName: 'Ngân hàng TMCP Kỹ thương Việt Nam (Techcombank)',
-      accountNumber: '1234567890',
-      accountName: 'CONG TY TNHH SHINE TICKET',
-      bankBranch: 'Hội sở chính',
-    },
-    momoDetails: null,
-  },
+  // {
+  //   id: 'payout_method_bank_789',
+  //   user: 'admin_user_id',
+  //   methodType: 'bank_account',
+  //   isDefault: false,
+  //   bankDetails: {
+  //     bankName: 'Ngân hàng TMCP Kỹ thương Việt Nam (Techcombank)',
+  //     accountNumber: '1234567890',
+  //     accountName: 'CONG TY TNHH SHINE TICKET',
+  //     bankBranch: 'Hội sở chính',
+  //   },
+  //   momoDetails: null,
+  // },
 ];

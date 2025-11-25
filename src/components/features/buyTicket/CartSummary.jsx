@@ -37,13 +37,13 @@ export default function CartSummary({ event }) {
               <tbody>
                 {summaryItems.map((item) => (
                   <tr key={item.id}>
-                    <td className="text-text-primary py-1 text-left">
+                    <td className="text-text-primary py-2 text-left font-medium">
                       {item.name}{' '}
                       <span className="text-text-secondary">
                         x{item.quantity}
                       </span>
                     </td>
-                    <td className="text-text-secondary py-1 text-right font-medium">
+                    <td className="text-text-secondary py-2 text-right font-medium">
                       {item.subtotal.toLocaleString()} đ
                     </td>
                   </tr>
@@ -73,6 +73,9 @@ export default function CartSummary({ event }) {
         <Button
           className="w-full"
           size="lg"
+          variant={
+            totalQuantity === 0 || !!validationError ? 'disabled' : 'default'
+          }
           disabled={totalQuantity === 0 || !!validationError}
           onClick={handleCheckout}
         >

@@ -9,9 +9,8 @@ export default function Sidebar({
   setMobileOpen,
 }) {
   const baseLinkClasses =
-    'flex items-center gap-3 rounded-lg px-3 py-2 mb-1 text-text-secondary transition-all hover:text-text-primary hover:bg-background-secondary';
-  const activeLinkClasses =
-    'bg-background-secondary text-text-primary shadow-sm';
+    'flex items-center gap-3 rounded-lg px-3 py-2 mb-1 text-text-secondary transition-all hover:text-text-primary hover:bg-primary';
+  const activeLinkClasses = 'bg-primary text-text-primary shadow-sm';
 
   const sidebarContent = (
     <div className="flex h-full max-h-screen flex-col gap-2">

@@ -29,7 +29,7 @@ export default function PaymentPage() {
 
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['eventForPayment', id],
-    queryFn: () => getEventById('691b3399fe38d6fbc82e1705'),
+    queryFn: () => getEventById(id),
     enabled: !!id,
   });
 
@@ -137,20 +137,32 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="bg-background-primary min-h-screen">
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
+    <div className="bg-background-primary">
+      <header className="border-border-subtle bg-background-secondary container mx-auto rounded-xl border-b py-6">
+        <div className="flex flex-col items-center px-4">
+          <div className="mb-6">
             <TimerCard minutes={minutes} seconds={seconds} />
+          </div>
+          <p className="text-text-secondary text-sm">
+            Hoàn tất đơn hàng trong thời gian còn lại để giữ vé của bạn
+          </p>
+        </div>
+      </header>
+
+      <main className="container mx-auto py-8 pb-8 md:pb-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+          <div className="space-y-8 lg:col-span-3">
             <PaymentDetailsCard
               methods={adminPaymentMethods}
               orderId={orderId}
               isCreatingOrder={createOrderMutation.isPending}
             />
           </div>
-          <div className="space-y-8 lg:col-span-1">
-            <EventInfoCard event={event} />
-            <CartInfoCard event={event} />
+
+          <div className="lg:col-span-2">
+            <div className="sticky top-24 space-y-8">
+              <CartInfoCard event={event} />
+            </div>
           </div>
         </div>
       </main>
