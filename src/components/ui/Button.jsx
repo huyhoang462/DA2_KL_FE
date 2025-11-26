@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 const variants = {
   default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+  success: 'bg-success text-success-foreground hover:bg-success-hover',
   destructive:
     'bg-destructive text-destructive-foreground hover:bg-destructive-hover',
   outline: 'border border-border bg-transparent hover:bg-accent-hover',

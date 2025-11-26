@@ -49,7 +49,10 @@ const OrgCheckInPage = lazy(() => import('./pages/organizer/OrgCheckInPage'));
 const OrgEventDetail = lazy(() => import('./pages/organizer/OrgEventDetail'));
 
 // Admin Pages
-const AdminHomePage = lazy(() => import('./pages/admin/AdminHomePage'));
+const AdminHomePage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminEventApprovalsPage = lazy(
+  () => import('./pages/admin/AdminEventApprovalsPage')
+);
 
 // Protected Routes
 const ProtectedRoute = lazy(() => import('./components/auth/ProtectedRoute'));
@@ -117,6 +120,10 @@ function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminHomePage />} />
+              <Route
+                path="event-approvals"
+                element={<AdminEventApprovalsPage />}
+              />
             </Route>
           </Route>
         </Routes>
