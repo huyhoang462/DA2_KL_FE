@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { handleLogin } from '../../services/authService';
 import { useDispatch } from 'react-redux';
@@ -20,6 +20,9 @@ export default function LoginPage() {
 
   const nav = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +46,13 @@ export default function LoginPage() {
     try {
       const data = await handleLogin({ email, password });
       dispatch(login(data));
-      nav('/');
+      if (data.user.role === 'admin') {
+        nav('/admin/dashboard', { replace: true });
+      } else if (from) {
+        nav(from, { replace: true });
+      } else {
+        nav('/', { replace: true });
+      }
     } catch (err) {
       if (err?.status >= 400 && err?.status < 500) {
         setErrorMessage({

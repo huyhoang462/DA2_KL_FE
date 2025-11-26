@@ -18,12 +18,12 @@ const dorganizerNavItems = [
     path: '/organizer/checkin-accounts',
     icon: TicketCheck,
   },
-  {
-    name: 'Phân tích tổng quan',
-    path: '/organizer/analytics',
-    icon: BarChart2,
-  },
-  { name: 'Cài đặt tài khoản', path: '/organizer/settings', icon: UserCog },
+  // {
+  //   name: 'Phân tích tổng quan',
+  //   path: '/organizer/analytics',
+  //   icon: BarChart2,
+  // },
+  // { name: 'Cài đặt tài khoản', path: '/organizer/settings', icon: UserCog },
 ];
 
 const OrganizerLayout = () => {

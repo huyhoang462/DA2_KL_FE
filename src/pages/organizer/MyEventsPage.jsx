@@ -110,7 +110,7 @@ export default function MyEventsPage() {
           <p className="text-text-secondary mt-1 text-sm">
             {searchTerm
               ? 'Không có sự kiện nào khớp với tìm kiếm của bạn.'
-              : 'Bạn chưa tạo sự kiện nào trong mục này.'}
+              : 'Bạn chưa có sự kiện nào trong mục này.'}
           </p>
         </div>
       )}

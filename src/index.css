@@ -169,3 +169,41 @@ h5,
 h6 {
   @apply select-none;
 }
+
+@keyframes reveal {
+  from {
+    mask-position: 0% 0%;
+  }
+  to {
+    mask-position: 100% 0%;
+  }
+}
+
+@keyframes breath {
+  0%,
+  100% {
+    box-shadow:
+      0 0 15px 0px hsl(var(--color-primary) / 0.2),
+      0 0 40px 0px hsl(var(--color-primary) / 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px 5px hsl(var(--color-primary) / 0.3),
+      0 0 60px 5px hsl(var(--color-primary) / 0.2);
+  }
+}
+
+/* Class tiện ích */
+.animate-reveal {
+  mask-image: linear-gradient(
+    90deg,
+    transparent 20%,
+    black 50%,
+    transparent 80%
+  );
+  mask-size: 300% 100%;
+  animation: reveal 2s infinite ease-in-out;
+}
+.animate-breath {
+  animation: breath 4s infinite ease-in-out;
+}
