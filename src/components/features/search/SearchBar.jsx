@@ -1,144 +1,120 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search } from 'lucide-react';
-import { useDebounce } from '../../../hooks/useDebounce';
-
+import React, { useMemo, useState } from 'react';
+import { Search, LoaderCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSearch } from '../../../hooks/useSearch';
+import useClickOutside from '../../../hooks/useClickOutside';
 import SearchSuggestions from './SearchSuggestions';
 
-const searchService = {
-  getSuggestions: async (query) => {
-    console.log(`[MOCK] Fetching suggestions for: ${query}`);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const mockData = [
-      { id: '1', name: 'Đại nhạc hội mùa hè' },
-      { id: '2', name: 'Workshop làm gốm' },
-      { id: '3', name: 'Hội thảo AI & Blockchain' },
-      { id: '4', name: 'Sự kiện âm nhạc ngoài trời' },
-    ];
-    return mockData.filter((item) =>
-      item.name.toLowerCase().includes(query.toLowerCase())
-    );
-  },
-};
-
 const SearchBar = () => {
-  const [value, setValue] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const {
+    query,
+    setQuery,
+    results,
+    isLoading,
+    showSuggestions,
+    setShowSuggestions,
+  } = useSearch();
+  const navigate = useNavigate();
+
+  const flatSuggestions = useMemo(() => {
+    const keywordItems = results.keywords.map((kw) => ({
+      type: 'keyword',
+      value: kw,
+    }));
+    const eventItems = results.events.map((evt) => ({
+      type: 'event',
+      value: evt,
+    }));
+    return [...keywordItems, ...eventItems];
+  }, [results]);
+
+  console.log('FLAT: ', flatSuggestions);
+
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  const debouncedValue = useDebounce(value, 300);
-  const navigate = useNavigate();
-  const inputRef = useRef(null);
+  const searchContainerRef = useClickOutside(() => {
+    setShowSuggestions(false);
+  });
 
-  useEffect(() => {
-    if (!debouncedValue.trim()) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    const fetchSuggestions = async () => {
-      try {
-        const data = await searchService.getSuggestions(debouncedValue);
-        setSuggestions(data);
-        setShowSuggestions(true);
-      } catch (error) {
-        console.error('Error fetching suggestions:', error);
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
-    };
-    fetchSuggestions();
-  }, [debouncedValue]);
-
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (suggestions.length === 0) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev + 1) % suggestions.length);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setHighlightedIndex(
-          (prev) => (prev - 1 + suggestions.length) % suggestions.length
-        );
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (highlightedIndex !== -1) {
-          handleSelectSuggestion(suggestions[highlightedIndex].name);
-        } else {
-          onSubmit(e);
-        }
-      } else if (e.key === 'Escape') {
-        setShowSuggestions(false);
-        setHighlightedIndex(-1);
-        inputRef.current?.blur();
-      }
-    },
-    [suggestions, highlightedIndex]
-  );
-
-  const handleSelectSuggestion = useCallback(
-    (selectedValue) => {
-      setValue(selectedValue);
-      navigate(`/search?query=${selectedValue.trim()}`);
-      setShowSuggestions(false);
-      setHighlightedIndex(-1);
-      inputRef.current?.blur();
-    },
-    [navigate]
-  );
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    if (!value.trim()) return;
-
-    navigate(`/search?query=${value.trim()}`);
+  const handleSelect = (item) => {
     setShowSuggestions(false);
     setHighlightedIndex(-1);
-    inputRef.current?.blur();
+    if (item.type === 'keyword') {
+      setQuery(item.value);
+      navigate(`/search?query=${item.value.trim()}`);
+    } else if (item.type === 'event') {
+      navigate(`/event-detail/${item.value._id}`);
+    }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (inputRef.current && !inputRef.current.contains(event.target)) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setShowSuggestions(false);
+    navigate(`/search?query=${query.trim()}`);
+  };
+
+  const handleKeyDown = (e) => {
+    if (flatSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev + 1) % flatSuggestions.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(
+          (prev) => (prev - 1 + flatSuggestions.length) % flatSuggestions.length
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && flatSuggestions[highlightedIndex]) {
+          handleSelect(flatSuggestions[highlightedIndex]);
+        } else {
+          handleSubmit(e);
+        }
+        break;
+      case 'Escape':
         setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
-    <div className="relative hidden md:block">
-      <form onSubmit={onSubmit}>
-        <Search className="text-text-placeholder absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
+    <div className="relative hidden md:block" ref={searchContainerRef}>
+      <form onSubmit={handleSubmit}>
+        <Search className="text-text-placeholder absolute top-1/2 left-3 z-10 h-5 w-5 -translate-y-1/2" />
+        {isLoading && (
+          <LoaderCircle className="text-text-placeholder absolute top-1/2 right-3 h-5 w-5 -translate-y-1/2 animate-spin" />
+        )}
         <input
-          ref={inputRef}
           type="text"
           placeholder="Tìm kiếm sự kiện..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
+          value={query}
+          spellCheck={false}
+          onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
-            if (suggestions.length > 0) setShowSuggestions(true);
+            if (results.keywords.length > 0 || results.events.length > 0) {
+              setShowSuggestions(true);
+            }
           }}
           onKeyDown={handleKeyDown}
-          className="border-border-default bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary focus:ring-primary w-64 rounded-full border py-2 pr-4 pl-10 transition focus:ring-2 focus:outline-none lg:w-96"
+          className="border-border-default bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary focus:ring-primary w-64 rounded-full border py-2 pr-10 pl-10 transition focus:ring-2 focus:outline-none lg:w-96"
         />
       </form>
 
-      {/* Chỉ hiển thị SearchSuggestions khi showSuggestions là true */}
-      {showSuggestions && suggestions.length > 0 && (
-        <SearchSuggestions
-          list={suggestions}
-          onSelect={handleSelectSuggestion}
-          highlightedIndex={highlightedIndex}
-        />
-      )}
+      {showSuggestions &&
+        (results.keywords.length > 0 || results.events.length > 0) && (
+          <SearchSuggestions
+            onSelect={handleSelect}
+            highlightedIndex={highlightedIndex}
+            flatSuggestions={flatSuggestions}
+          />
+        )}
     </div>
   );
 };

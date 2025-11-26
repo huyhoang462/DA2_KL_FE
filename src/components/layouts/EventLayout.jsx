@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import Sidebar from '../shared/SideBar';
 import MobileHeader from '../shared/MobileHeader';
+import { useQuery } from '@tanstack/react-query';
+import { getEventById } from '../../services/eventService';
 
 const Breadcrumbs = ({ eventName }) => (
   <nav className="text-text-secondary hidden items-center space-x-2 text-sm md:flex">
@@ -26,7 +28,12 @@ export default function EventLayout() {
   const { id } = useParams();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  const event = { name: 'Đại nhạc hội Mùa hè 2024' };
+  const { data: event } = useQuery({
+    queryKey: ['eventDetail', id],
+    queryFn: () => getEventById(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const eventNavItems = [
     {

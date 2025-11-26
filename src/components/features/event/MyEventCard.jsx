@@ -88,7 +88,7 @@ export default function MyEventCard({ event }) {
               <MapPin className="h-4 w-4 flex-shrink-0" />
               <span>
                 {event.format === 'offline'
-                  ? event.location.address
+                  ? event.location.address || event.location.province.name
                   : 'Sự kiện online'}
               </span>
             </div>
@@ -97,11 +97,13 @@ export default function MyEventCard({ event }) {
           <div className="border-border-subtle mt-4 flex items-center space-x-6 border-t pt-4">
             <div>
               <p className="text-text-secondary text-xs">Vé đã bán</p>
-              <p className="text-text-primary font-semibold">1,234 / 2,000</p>
+              <p className="text-text-primary font-semibold">
+                {event?.totalTicketsSold} / {event?.totalTicketsAvailable}
+              </p>
             </div>
             <div>
-              <p className="text-text-secondary text-xs">Doanh thu</p>
-              <p className="text-text-primary font-semibold">123,456,000 đ</p>
+              {/* <p className="text-text-secondary text-xs">Doanh thu</p>
+              <p className="text-text-primary font-semibold">123,456,000 đ</p> */}
             </div>
           </div>
         </div>

@@ -1,260 +1,153 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { searchService } from '../../services/searchService';
+import { useQuery } from '@tanstack/react-query';
+import { X } from 'lucide-react';
+
 import SearchFilter from '../../components/features/search/SearchFilter';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import ErrorDisplay from '../../components/ui/ErrorDisplay';
-import EventCard from '../../components/features/search/EventCard';
+import EventCardSkeleton from '../../components/ui/EventCardSkeleton';
+import { searchEvents } from '../../services/searchService';
+import EventCard from '../../components/ui/EventCard';
 
-const FilterTag = ({ label, onRemove }) => (
-  <div className="bg-foreground text-text-primary flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium shadow-sm">
-    <span className="truncate">{label}</span>
-    <button
-      onClick={onRemove}
-      className="text-text-secondary hover:text-destructive transition-colors"
-      aria-label={`Remove filter: ${label}`}
-    >
-      ✕
-    </button>
-  </div>
+const DEFAULT_FILTERS = {
+  q: '',
+  category: [],
+  cityCode: '',
+  minPrice: 0,
+  maxPrice: 5000000,
+  startDate: '',
+  endDate: '',
+};
+
+const parseUrlToFilters = (searchParams) => ({
+  q: searchParams.get('query') || '',
+  category: searchParams.get('category')?.split(',').filter(Boolean) || [],
+  cityCode: searchParams.get('city') || '',
+  minPrice: parseInt(searchParams.get('minPrice')) || 0,
+  maxPrice: parseInt(searchParams.get('maxPrice')) || 5000000,
+  startDate: searchParams.get('startDate') || '',
+  endDate: searchParams.get('endDate') || '',
+});
+
+const filtersToUrl = (filters) => {
+  const params = new URLSearchParams();
+  if (filters.q) params.set('query', filters.q);
+  if (filters.category.length)
+    params.set('category', filters.category.join(','));
+  if (filters.cityCode) params.set('city', filters.cityCode);
+  if (filters.minPrice > 0) params.set('minPrice', filters.minPrice.toString());
+  if (filters.maxPrice < 5000000)
+    params.set('maxPrice', filters.maxPrice.toString());
+  if (filters.startDate) params.set('startDate', filters.startDate);
+  if (filters.endDate) params.set('endDate', filters.endDate);
+  return params;
+};
+
+const ClearButton = ({ onClick, children, className = '' }) => (
+  <button
+    onClick={onClick}
+    className={`bg-background-secondary text-text-secondary hover:bg-destructive/10 hover:text-destructive border-border-default flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${className}`}
+  >
+    <X className="h-3 w-3" />
+    <span>{children}</span>
+  </button>
 );
+
 export default function SearchPage() {
-  const [params, setParams] = useSearchParams();
-
-  const query = params.get('query') || '';
-
-  const [filters, setFilters] = useState({
-    dateFrom: params.get('dateFrom') || '',
-    dateTo: params.get('dateTo') || '',
-    locations: params.get('locations')
-      ? params.get('locations').split(',')
-      : [],
-    categories: params.get('categories')
-      ? params.get('categories').split(',')
-      : [],
-    priceRange: params.get('price')
-      ? params.get('price').split('-').map(Number)
-      : [0, 5000000],
-  });
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['searchResults', query, filters],
-    queryFn: ({ pageParam }) =>
-      searchService.searchEvents({
-        query,
-        filters,
-        pageParam,
-        pageSize: 10,
-      }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-  });
-
-  const updateURL = useCallback(
-    (newFilters) => {
-      const newParams = new URLSearchParams();
-
-      if (query) newParams.set('query', query);
-      if (newFilters.dateFrom) newParams.set('dateFrom', newFilters.dateFrom);
-      if (newFilters.dateTo) newParams.set('dateTo', newFilters.dateTo);
-      if (newFilters.locations.length > 0)
-        newParams.set('locations', newFilters.locations.join(','));
-      if (newFilters.categories.length > 0)
-        newParams.set('categories', newFilters.categories.join(','));
-      if (
-        newFilters.priceRange[0] !== 0 ||
-        newFilters.priceRange[1] !== 5000000
-      )
-        newParams.set('price', newFilters.priceRange.join('-'));
-
-      setParams(newParams, { replace: true });
-    },
-    [query, setParams]
-  );
-
-  const handleApplyFilters = useCallback(
-    (newFilters) => {
-      setFilters(newFilters);
-      updateURL(newFilters);
-    },
-    [updateURL]
-  );
-
-  const handleResetFilters = useCallback(() => {
-    const emptyFilters = {
-      dateFrom: '',
-      dateTo: '',
-      locations: [],
-      categories: [],
-      priceRange: [0, 5000000],
-    };
-    setFilters(emptyFilters);
-    updateURL(emptyFilters);
-  }, [updateURL]);
-
-  const handleRemoveSingleFilter = useCallback(
-    (key, value) => {
-      setFilters((prevFilters) => {
-        const updated = { ...prevFilters };
-        if (key === 'locations' || key === 'categories') {
-          updated[key] = updated[key].filter((v) => v !== value);
-        } else if (key === 'priceRange') {
-          updated.priceRange = [0, 5000000];
-        } else {
-          updated[key] = '';
-        }
-        updateURL(updated);
-        return updated;
-      });
-    },
-    [updateURL]
-  );
-
-  const loaderRef = useRef(null);
-  const handleObserver = useCallback(
-    (entries) => {
-      const target = entries[0];
-      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState(() => parseUrlToFilters(searchParams));
 
   useEffect(() => {
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: '20px',
-      threshold: 1.0,
-    });
+    setSearchParams(filtersToUrl(filters), { replace: true });
+  }, [filters, setSearchParams]);
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
+  useEffect(() => {
+    const newFilters = parseUrlToFilters(searchParams);
+    setFilters((prev) =>
+      JSON.stringify(prev) === JSON.stringify(newFilters) ? prev : newFilters
+    );
+  }, [searchParams]);
 
-    return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current);
-      }
-    };
-  }, [loaderRef, handleObserver]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['searchResults', filters],
+    queryFn: () => searchEvents(filters),
+    placeholderData: (prev) => prev,
+  });
 
-  const allEvents = data?.pages.flatMap((page) => page.items) || [];
-  const totalResults = data?.pages[0]?.totalCount || 0;
+  // Handlers
+  const handleApplyFilters = (newFilters) =>
+    setFilters((prev) => ({ ...prev, ...newFilters }));
+
+  const handleClearQuery = () => setFilters((prev) => ({ ...prev, q: '' }));
+
+  const handleClearFilters = () =>
+    setFilters((prev) => ({ ...prev, ...DEFAULT_FILTERS, q: prev.q }));
+
+  const handleClearAll = () => setFilters(DEFAULT_FILTERS);
+
+  const hasActiveFilters =
+    filters.category.length > 0 ||
+    filters.cityCode ||
+    filters.minPrice > 0 ||
+    filters.maxPrice < 5000000 ||
+    filters.startDate ||
+    filters.endDate;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* FILTER BUTTON & SEARCH QUERY */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-text-secondary text-base">
-          {totalResults > 0 ? (
-            <span className="text-text-primary font-semibold">
-              {totalResults}
-            </span>
+    <div className="bg-background-primary min-h-[calc(100vh-64px)]">
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-text-primary text-2xl font-bold">
+              Kết quả tìm kiếm cho{' '}
+              <span className="text-primary">
+                {filters.q ? `"${filters.q}"` : ''}
+              </span>
+            </h1>
+            <SearchFilter
+              initialFilters={filters}
+              onApply={handleApplyFilters}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {filters.q && (
+                <ClearButton onClick={handleClearQuery}>
+                  {filters.q}
+                </ClearButton>
+              )}
+
+              {hasActiveFilters && (
+                <ClearButton onClick={handleClearFilters}>Bộ lọc</ClearButton>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {isLoading ? (
+            [...Array(8)].map((_, index) => (
+              <EventCardSkeleton key={`search-skeleton-${index}`} />
+            ))
+          ) : data?.events?.length > 0 ? (
+            data.events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))
           ) : (
-            'Không có'
-          )}{' '}
-          kết quả cho{' '}
-          {query && (
-            <span className="text-text-primary font-semibold">"{query}"</span>
+            <div className="col-span-full">
+              <div className="bg-background-secondary text-text-secondary border-border-default rounded-lg border-2 border-dashed py-20 text-center">
+                <div className="mb-2 text-lg font-medium">
+                  Không tìm thấy sự kiện phù hợp
+                </div>
+                <div className="text-sm opacity-75">
+                  {filters.q
+                    ? `Không có kết quả cho "${filters.q}". Thử tìm kiếm với từ khóa khác.`
+                    : 'Thử điều chỉnh bộ lọc để tìm thêm sự kiện.'}
+                </div>
+              </div>
+            </div>
           )}
         </div>
-        <SearchFilter
-          initialFilters={filters}
-          searchQuery={query}
-          onApply={handleApplyFilters}
-          onReset={handleResetFilters}
-          onRemoveSingleFilter={handleRemoveSingleFilter}
-        />
-      </div>
-
-      {/* HIỂN THỊ CÁC TAG LỌC ĐANG CHỌN */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        {filters.locations.map((loc) => (
-          <FilterTag
-            key={`loc-${loc}`}
-            label={loc}
-            onRemove={() => handleRemoveSingleFilter('locations', loc)}
-          />
-        ))}
-        {filters.categories.map((cat) => (
-          <FilterTag
-            key={`cat-${cat}`}
-            label={cat}
-            onRemove={() => handleRemoveSingleFilter('categories', cat)}
-          />
-        ))}
-        {filters.dateFrom && (
-          <FilterTag
-            label={`Từ ${filters.dateFrom}`}
-            onRemove={() => handleRemoveSingleFilter('dateFrom')}
-          />
-        )}
-        {filters.dateTo && (
-          <FilterTag
-            label={`Đến ${filters.dateTo}`}
-            onRemove={() => handleRemoveSingleFilter('dateTo')}
-          />
-        )}
-        {(filters.priceRange[0] !== 0 || filters.priceRange[1] !== 5000000) && (
-          <FilterTag
-            label={`${filters.priceRange[0].toLocaleString()}đ - ${filters.priceRange[1].toLocaleString()}đ`}
-            onRemove={() => handleRemoveSingleFilter('priceRange')}
-          />
-        )}
-      </div>
-
-      {/* HIỂN THỊ KẾT QUẢ */}
-      {isLoading ? (
-        <div className="flex h-40 items-center justify-center">
-          <LoadingSpinner />
-        </div>
-      ) : isError ? (
-        <ErrorDisplay
-          message={error?.message || 'Đã có lỗi khi tải kết quả tìm kiếm.'}
-        />
-      ) : allEvents.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {allEvents.map((eventItem) => (
-            <EventCard key={eventItem.id} event={eventItem} />
-          ))}
-        </div>
-      ) : (
-        <div className="border-border-dashed bg-background-secondary flex flex-col items-center justify-center rounded-lg border p-12 text-center">
-          <h3 className="text-text-primary text-lg font-semibold">
-            Không tìm thấy sự kiện
-          </h3>
-          <p className="text-text-secondary mt-1 text-sm">
-            {query
-              ? `Không có sự kiện nào khớp với "${query}"`
-              : 'Vui lòng nhập từ khóa tìm kiếm.'}
-          </p>
-        </div>
-      )}
-
-      {/* Loader cho Infinite Scroll */}
-      <div ref={loaderRef} className="py-4">
-        {isFetchingNextPage && (
-          <div className="flex h-20 items-center justify-center">
-            <LoadingSpinner />
-          </div>
-        )}
-        {!hasNextPage && !isFetchingNextPage && allEvents.length > 0 && (
-          <p className="text-text-secondary mt-4 text-center text-sm">
-            Bạn đã xem hết các sự kiện.
-          </p>
-        )}
-      </div>
+      </main>
     </div>
   );
 }

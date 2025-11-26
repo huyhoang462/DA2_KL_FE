@@ -1,24 +1,43 @@
-export const searchService = {
-  async getSuggestions(query) {
-    return [
-      { id: "sg-1", name: "Concert BlackPink" },
-      { id: "sg-2", name: "Hội chợ Ẩm thực Sài Gòn" },
-      { id: "sg-3", name: "Workshop UI/UX 2025" },
-    ].filter((x) => x.name.toLowerCase().includes(query.toLowerCase()));
-  },
+import axios from 'axios';
+import { API_BASE_URL } from '../constants/apiConstants';
+import { extractError } from '../utils/extractError';
 
-  async searchEvents({ query, filters, page }) {
-    const mockData = Array.from({ length: 20 }).map((_, i) => ({
-      id: `p${page}-i${i}-${Math.random()}`,
-      name: `Sự kiện mẫu ${i + 1} cho từ khóa: ${query}," id: ${Math.random()}`,
-      price: 150000,
-      location: "HCM",
-      date: "2025-05-01",
-    }));
+export const searchSuggestions = async (query) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/events/search?q=${query}`
+    );
+    console.log('SUGGESTIONS: ', response.data);
 
-    return {
-      items: mockData,
-      hasMore: page < 5,
-    };
-  },
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const searchEvents = async (filters) => {
+  try {
+    const params = new URLSearchParams();
+
+    if (filters.q) params.append('q', filters.q);
+    if (filters.category?.length) {
+      filters.category.forEach((cat) => params.append('category', cat));
+    }
+    if (filters.cityCode) params.append('city', filters.cityCode);
+    if (filters.minPrice > 0) params.append('minPrice', filters.minPrice);
+    if (filters.maxPrice < 5000000) params.append('maxPrice', filters.maxPrice);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+
+    const response = await axios.get(
+      `${API_BASE_URL}/events/search/events?${params.toString()}`
+    );
+
+    console.log('SEARCH with filters:', filters);
+    console.log('SEARCH response:', response.data);
+
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
 };

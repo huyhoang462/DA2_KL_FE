@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
-import { mockEvents } from '../../utils/mockData';
+import { getEventsByUserId } from '../../services/eventService';
 import MyEventCard from '../../components/features/event/MyEventCard';
+import MyEventCardSkeleton from '../../components/features/event/MyEventCardSkeleton';
 import Input from '../../components/ui/Input';
+import { useSelector } from 'react-redux';
 
 const filters = [
   { label: 'Tất cả', value: 'all' },
@@ -19,8 +22,36 @@ export default function MyEventsPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const userId = useSelector((state) => state.auth.user?.id);
+  const authState = useSelector((state) => state.auth);
+
+  React.useEffect(() => {
+    console.log('=== AUTH STATE ===');
+    console.log('Full auth state:', authState);
+    console.log('User:', authState.user);
+    console.log('User ID:', authState.user?.id);
+  }, [authState]);
+
+  const {
+    data: userEvents,
+    isLoading: isLoadingEvents,
+    error: errorEvents,
+  } = useQuery({
+    queryKey: ['events', 'user', userId],
+    queryFn: () => getEventsByUserId(userId),
+    enabled: !!userId,
+  });
+
+  React.useEffect(() => {
+    console.log('=== USER EVENTS ===');
+    console.log('UserId:', userId);
+    console.log('Loading:', isLoadingEvents);
+    console.log('Error:', errorEvents);
+    console.log('Data:', userEvents);
+  }, [userId, userEvents, isLoadingEvents, errorEvents]);
+
   const filteredEvents = useMemo(() => {
-    return mockEvents.filter((event) => {
+    return userEvents?.filter((event) => {
       const matchesFilter =
         activeFilter === 'all' || event.status === activeFilter;
 
@@ -30,7 +61,7 @@ export default function MyEventsPage() {
 
       return matchesFilter && matchesSearch;
     });
-  }, [activeFilter, searchTerm]);
+  }, [activeFilter, searchTerm, userEvents]);
 
   return (
     <div className="space-y-6 pt-6">
@@ -59,14 +90,20 @@ export default function MyEventsPage() {
         </div>
       </div>
 
-      {filteredEvents.length > 0 ? (
+      {isLoadingEvents ? (
+        <div className="grid grid-cols-1 gap-6">
+          {[...Array(4)].map((_, index) => (
+            <MyEventCardSkeleton key={`my-events-skeleton-${index}`} />
+          ))}
+        </div>
+      ) : filteredEvents?.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">
           {filteredEvents.map((event) => (
             <MyEventCard key={event.id} event={event} />
           ))}
         </div>
       ) : (
-        <div className="border-border-dashed bg-background-secondary flex flex-col items-center justify-center rounded-lg border p-12 text-center">
+        <div className="border-border-default bg-background-secondary flex flex-col items-center justify-center rounded-lg border p-12 text-center">
           <h3 className="text-text-primary text-lg font-semibold">
             Không tìm thấy sự kiện
           </h3>

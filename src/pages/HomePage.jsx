@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import BannerCarousel from '../components/features/event/BannerCarousel';
+import BannerCarouselSkeleton from '../components/ui/BannerCarouselSkeleton';
 import EventCard from '../components/ui/EventCard';
+import EventCardSkeleton from '../components/ui/EventCardSkeleton';
 import { cleanUp, getAllEvents } from '../services/eventService';
-import Button from '../components/ui/Button';
 
 const HomePage = () => {
   const {
@@ -33,25 +34,34 @@ const HomePage = () => {
 
   return (
     <div className="container mx-auto pb-8">
-      {/* <Button onClick={handleCleanup}> Cleanup</Button> */}
       <section className="mb-12">
         <h2 className="text-text-primary mb-6 text-2xl font-bold">
           Sự kiện nổi bật
         </h2>
-        <BannerCarousel events={allEvents} />
+        {isLoadingAll ? (
+          <BannerCarouselSkeleton />
+        ) : (
+          <BannerCarousel events={allEvents} />
+        )}
       </section>
 
       <section>
         <h2 className="text-text-primary mb-6 text-3xl font-bold">
           Đang chờ bạn khám phá
         </h2>
+
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {allEvents?.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+          {isLoadingAll
+            ? [...Array(8)].map((_, index) => (
+                <EventCardSkeleton key={`skeleton-${index}`} />
+              ))
+            : allEvents?.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
         </div>
       </section>
     </div>
   );
 };
+
 export default HomePage;

@@ -157,3 +157,15 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary-hover);
 }
+
+a,
+p,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply select-none;
+}

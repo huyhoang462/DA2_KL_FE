@@ -1,14 +1,23 @@
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, title, onClose, children, xButton }) => {
+const Modal = ({
+  isOpen,
+  title,
+  onClose,
+  children,
+  xButton,
+  maxWidth = 'max-w-sm',
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-background-secondary relative w-full max-w-sm rounded-lg p-6 shadow-xl">
+      <div
+        className={`bg-background-secondary relative w-full ${maxWidth} rounded-lg p-6 shadow-xl`}
+      >
         {xButton && (
           <button
-            className="hover:text-primary text-text-primary absolute top-3 right-3 cursor-pointer"
+            className="hover:text-primary text-text-primary absolute top-4 right-4 cursor-pointer"
             onClick={onClose}
             aria-label="Đóng"
           >
