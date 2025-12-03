@@ -2,7 +2,7 @@ import React from 'react';
 import Input from '../../ui/Input';
 import clsx from 'clsx';
 
-export default function OrganizerInput({ value, onChange, error }) {
+export default function OrganizerInput({ value, onChange, error, disabled }) {
   const handleChange = (e) => {
     const { name, value: value } = e.target;
     onChange(name, value);
@@ -20,6 +20,7 @@ export default function OrganizerInput({ value, onChange, error }) {
           onChange={handleChange}
           error={error?.name}
           required
+          disabled={disabled}
         />
       </div>
 
@@ -33,6 +34,7 @@ export default function OrganizerInput({ value, onChange, error }) {
           value={value?.email || ''}
           onChange={handleChange}
           error={error?.email}
+          disabled={disabled}
         />
       </div>
 
@@ -46,6 +48,7 @@ export default function OrganizerInput({ value, onChange, error }) {
           value={value?.phone || ''}
           onChange={handleChange}
           error={error?.phone}
+          disabled={disabled}
         />
       </div>
 
@@ -62,11 +65,12 @@ export default function OrganizerInput({ value, onChange, error }) {
           rows={3}
           spellCheck={false}
           className={clsx(
-            'bg-background-secondary text-text-primary border-border-default placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none'
+            'bg-background-secondary text-text-primary border-border-default placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-80'
           )}
           placeholder="Một vài dòng giới thiệu về ban tổ chức..."
           value={value?.description || ''}
           onChange={handleChange}
+          disabled={disabled}
         />
       </div>
     </div>

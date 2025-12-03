@@ -41,12 +41,12 @@ const HomePage = () => {
         {isLoadingAll ? (
           <BannerCarouselSkeleton />
         ) : (
-          <BannerCarousel events={allEvents} />
+          <BannerCarousel events={allEvents.slice(0, 6)} />
         )}
       </section>
 
       <section>
-        <h2 className="text-text-primary mb-6 text-3xl font-bold">
+        <h2 className="text-text-primary mb-6 text-2xl font-bold">
           Đang chờ bạn khám phá
         </h2>
 

@@ -26,7 +26,7 @@ const SelectLocation = ({
       value={value}
       onChange={onChange}
       disabled={disabled || isLoading}
-      className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary border-border-default block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${error ? 'border-destructive' : 'border-border-default'}`}
+      className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary border-border-default block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-80 ${error ? 'border-destructive' : 'border-border-default'}`}
     >
       <option value="">{isLoading ? 'Đang tải...' : placeholder}</option>
       {options?.map((option) => (
@@ -39,7 +39,7 @@ const SelectLocation = ({
   </div>
 );
 
-export default function LocationInput({ value, onChange, error }) {
+export default function LocationInput({ value, onChange, error, disabled }) {
   const [selectedProvinceCode, setSelectedProvinceCode] = useState(
     value?.province || ''
   );
@@ -104,6 +104,7 @@ export default function LocationInput({ value, onChange, error }) {
           onChange={handleProvinceChange}
           isLoading={isLoadingProvinces}
           error={error?.province}
+          disabled={disabled}
         />
       </div>
 
@@ -116,7 +117,7 @@ export default function LocationInput({ value, onChange, error }) {
           value={value?.ward?.code || ''}
           onChange={handleWardChange}
           isLoading={isLoadingWards}
-          disabled={!selectedProvinceCode || isLoadingProvinces}
+          disabled={disabled || !selectedProvinceCode || isLoadingProvinces}
           error={error?.ward}
         />
       </div>
@@ -128,7 +129,7 @@ export default function LocationInput({ value, onChange, error }) {
           placeholder="Ví dụ: 123 Nguyễn Huệ, Tòa nhà Bitexco"
           value={value?.street || ''}
           onChange={(e) => onChange('street', e.target.value)}
-          disabled={!value?.ward}
+          disabled={disabled}
           error={error?.street}
         />
       </div>

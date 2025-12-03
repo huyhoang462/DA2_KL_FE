@@ -108,18 +108,34 @@ const eventSlice = createSlice({
         showIndex
       ].tickets.filter((t) => t._id !== ticketId);
     },
-
-    clearEvents: (state) => {
-      state.event = {};
+    clearPayoutMethod: (state) => {
+      state.event.payoutMethod = {
+        methodType: 'bank_account',
+        bankDetails: {
+          bankName: '',
+          accountNumber: '',
+          accountName: '',
+          bankBranch: '',
+        },
+        momoDetails: {
+          phoneNumber: '',
+          accountName: '',
+        },
+      };
+    },
+    clearEvent: (state) => {
+      state.event = initialState.event;
+      state.currentStep = 1;
     },
   },
 });
 
 export const {
   setEvent,
-  clearEvents,
+  clearEvent,
   setCurrentStep,
   updateEventField,
+  clearPayoutMethod,
   setEventShows,
   addShowtime,
   removeShowtime,

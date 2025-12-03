@@ -1,7 +1,11 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/apiConstants';
 import { extractError } from '../utils/extractError';
+import { mockAdminPaymentMethods } from '../utils/mockData';
 
+export const getAdminPaymentMethods = async () => {
+  return mockAdminPaymentMethods;
+};
 export const getPendingEvents = async ({ page = 1, limit = 10 }) => {
   try {
     const params = new URLSearchParams({

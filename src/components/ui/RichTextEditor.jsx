@@ -18,156 +18,139 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/lib';
 
-const Toolbar = ({ editor }) => {
+const Toolbar = ({ editor, disabled }) => {
+  // ✅ Add disabled prop
   if (!editor) return null;
 
   const addImage = useCallback(() => {
+    // ✅ Block image upload when disabled
+    if (disabled) return;
+
     const url = window.prompt('Nhập URL của ảnh:');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
-  }, [editor]);
+  }, [editor, disabled]);
+
+  // ✅ Button component để reuse logic
+  const ToolbarButton = ({
+    onClick,
+    isActive,
+    children,
+    disabled: buttonDisabled,
+  }) => (
+    <button
+      type="button"
+      onClick={buttonDisabled ? undefined : onClick} // ✅ Disable onClick
+      disabled={buttonDisabled} // ✅ HTML disabled attribute
+      className={cn(
+        'rounded-md p-1.5 transition-colors',
+        buttonDisabled
+          ? 'cursor-not-allowed opacity-40' // ✅ Disabled styling
+          : 'hover:bg-foreground cursor-pointer',
+        isActive && !buttonDisabled ? 'bg-primary/20 text-primary' : ''
+      )}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <div className="border-border-default bg-background-secondary flex flex-wrap items-center gap-1 rounded-t-md border-b p-2">
-      <button
-        type="button"
+    <div
+      className={cn(
+        'border-border-default bg-background-secondary flex flex-wrap items-center gap-1 rounded-t-md border-b p-2',
+        disabled && 'opacity-60' // ✅ Gray out entire toolbar when disabled
+      )}
+    >
+      <ToolbarButton
         onClick={() => editor.chain().focus().setParagraph().run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive('paragraph')
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive('paragraph')}
+        disabled={disabled}
       >
         <Pilcrow className="h-4 w-4" />
-      </button>
+      </ToolbarButton>
 
-      <button
-        type="button"
+      <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive('bold')
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive('bold')}
+        disabled={disabled}
       >
         <Bold className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
+      </ToolbarButton>
+
+      <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive('italic')
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive('italic')}
+        disabled={disabled}
       >
         <Italic className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
+      </ToolbarButton>
+
+      <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive('heading', { level: 2 })
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive('heading', { level: 2 })}
+        disabled={disabled}
       >
         <Heading2 className="h-4 w-4" />
-      </button>
+      </ToolbarButton>
 
-      <button
-        type="button"
+      <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive('bulletList')
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive('bulletList')}
+        disabled={disabled}
       >
         <List className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
+      </ToolbarButton>
+
+      <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive('orderedList')
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive('orderedList')}
+        disabled={disabled}
       >
         <ListOrdered className="h-4 w-4" />
-      </button>
+      </ToolbarButton>
 
-      <button
-        type="button"
+      <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive({ textAlign: 'left' })
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        disabled={disabled}
       >
         <AlignLeft className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
+      </ToolbarButton>
+
+      <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign('center').run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive({ textAlign: 'center' })
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        disabled={disabled}
       >
         <AlignCenter className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
+      </ToolbarButton>
+
+      <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign('right').run()}
-        className={cn(
-          'cursor-pointer rounded-md p-1.5 transition-colors',
-          editor.isActive({ textAlign: 'right' })
-            ? 'bg-primary/20 text-primary'
-            : 'hover:bg-foreground'
-        )}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        disabled={disabled}
       >
         <AlignRight className="h-4 w-4" />
-      </button>
+      </ToolbarButton>
 
-      {/* Nút chèn ảnh */}
-      <button
-        type="button"
-        onClick={addImage}
-        className="hover:bg-foreground cursor-pointer rounded-md p-1.5 transition-colors"
-      >
+      <ToolbarButton onClick={addImage} isActive={false} disabled={disabled}>
         <ImageIcon className="h-4 w-4" />
-      </button>
+      </ToolbarButton>
     </div>
   );
 };
 
 const uploadImage = async (file) => {
   console.log('File đã được paste hoặc thả vào, bắt đầu upload:', file.name);
-  // --- LOGIC UPLOAD CLOUDINARY SẼ Ở ĐÂY ---
-  // 1. Hiển thị placeholder loading (phần nâng cao)
-  // 2. Gọi API upload
-  // 3. Chờ URL trả về
-  await new Promise((resolve) => setTimeout(resolve, 1500)); // Giả lập mạng
-  // 4. Trả về URL thật
+  await new Promise((resolve) => setTimeout(resolve, 1500));
   const url = `https://res.cloudinary.com/demo/image/upload/docs/models.jpg?t=${Date.now()}`;
   console.log('Upload thành công, URL:', url);
   return url;
 };
 
-export default function RichTextEditor({ value, onChange }) {
+export default function RichTextEditor({ value, onChange, disabled = false }) {
+  // ✅ Add disabled prop with default
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -183,11 +166,18 @@ export default function RichTextEditor({ value, onChange }) {
       }),
     ],
     content: value,
+    editable: !disabled, // ✅ Make editor non-editable when disabled
     editorProps: {
       attributes: {
-        class: 'tiptap-content',
+        class: cn(
+          'tiptap-content',
+          disabled && 'opacity-80 cursor-not-allowed' // ✅ Visual feedback when disabled
+        ),
       },
       handlePaste(view, event, slice) {
+        // ✅ Block paste when disabled
+        if (disabled) return false;
+
         const files = (event.clipboardData || event.dataTransfer)?.files;
         if (!files || files.length === 0) {
           return false;
@@ -215,18 +205,29 @@ export default function RichTextEditor({ value, onChange }) {
         return true;
       },
       handleDrop(view, event, slice, moved) {
-        // Tương tự handlePaste, nhưng cho sự kiện kéo-thả
-        // Code xử lý gần như y hệt, bạn có thể tách ra thành hàm chung
-        // ... (Tạm thời bỏ qua để giữ sự đơn giản) ...
+        // ✅ Block drop when disabled
+        if (disabled) return false;
+
+        // Drop image logic would go here
         return false;
       },
     },
     onUpdate({ editor }) {
-      onChange(editor.getHTML());
+      // ✅ Block onChange when disabled
+      if (!disabled) {
+        onChange(editor.getHTML());
+      }
     },
   });
 
   const [, setRenderTrigger] = useState(0);
+
+  // ✅ Update editor editable state when disabled prop changes
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!disabled);
+    }
+  }, [editor, disabled]);
 
   useEffect(() => {
     if (!editor) {
@@ -247,12 +248,23 @@ export default function RichTextEditor({ value, onChange }) {
   }, [editor]);
 
   return (
-    <div className="border-border-default focus-within:border-primary bg-background-secondary rounded-md border">
-      <Toolbar editor={editor} />
+    <div
+      className={cn(
+        'border-border-default bg-background-secondary rounded-md border',
+        disabled
+          ? 'cursor-not-allowed opacity-75' // ✅ Disabled container styling
+          : 'focus-within:border-primary'
+      )}
+    >
+      <Toolbar editor={editor} disabled={disabled} />
+
       <EditorContent
         editor={editor}
         spellCheck="false"
-        className="min-h-[200px] p-4"
+        className={cn(
+          'min-h-[200px] p-4',
+          disabled && 'pointer-events-none' // ✅ Block all pointer events when disabled
+        )}
       />
     </div>
   );

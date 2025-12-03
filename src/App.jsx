@@ -1,5 +1,3 @@
-// src/App.jsx
-
 import React, { Suspense, lazy } from 'react';
 import {
   BrowserRouter,
@@ -21,11 +19,9 @@ const OrganizerLayout = lazy(
 const EventLayout = lazy(() => import('./components/layouts/EventLayout'));
 const AdminLayout = lazy(() => import('./components/layouts/AdminLayout'));
 
-// Auth Pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
 
-// Public/User Pages
 const HomePage = lazy(() => import('./pages/HomePage'));
 const EventDetailPage = lazy(() => import('./pages/user/EventDetailPage'));
 const SearchPage = lazy(() => import('./pages/user/SearchPage'));
@@ -35,7 +31,6 @@ const ProfilePage = lazy(() => import('./pages/user/ProfilePage'));
 const MyOrderPage = lazy(() => import('./pages/user/MyOrdersPage'));
 const MyTicketsPage = lazy(() => import('./pages/user/MyTicketsPage'));
 
-// Organizer Pages
 const CreateEventPage = lazy(() => import('./pages/organizer/CreateEventPage'));
 const MyEventsPage = lazy(() => import('./pages/organizer/MyEventsPage'));
 const CheckinAccountsPage = lazy(
@@ -48,13 +43,23 @@ const OrgOrdersPage = lazy(() => import('./pages/organizer/OrgOrdersPage'));
 const OrgCheckInPage = lazy(() => import('./pages/organizer/OrgCheckInPage'));
 const OrgEventDetail = lazy(() => import('./pages/organizer/OrgEventDetail'));
 
-// Admin Pages
-const AdminHomePage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminDashboardPage = lazy(
+  () => import('./pages/admin/AdminDashboardPage')
+);
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminEventsPage = lazy(() => import('./pages/admin/AdminEventsPage'));
 const AdminEventApprovalsPage = lazy(
   () => import('./pages/admin/AdminEventApprovalsPage')
 );
+const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
+const AdminTransactionsPage = lazy(
+  () => import('./pages/admin/AdminTransactionsPage')
+);
+const AdminCategoriesPage = lazy(
+  () => import('./pages/admin/AdminCategoriesPage')
+);
+const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 
-// Protected Routes
 const ProtectedRoute = lazy(() => import('./components/auth/ProtectedRoute'));
 
 const UserPublicWrapper = () => {
@@ -68,13 +73,10 @@ const UserPublicWrapper = () => {
 function App() {
   return (
     <BrowserRouter>
-      {/* Bọc toàn bộ Routes trong Suspense */}
       <Suspense fallback={<FullScreenLoader />}>
         <Routes>
-          {/* Các route giữ nguyên cấu trúc */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-
           <Route element={<MainLayout />}>
             <Route element={<UserPublicWrapper />}>
               <Route path="/" element={<HomePage />} />
@@ -91,7 +93,6 @@ function App() {
               <Route path="/payment/:id" element={<PaymentPage />} />
             </Route>
           </Route>
-
           <Route element={<ProtectedRoute allowedRoles={['user', 'staff']} />}>
             <Route path="/user" element={<AccountLayout />}>
               <Route path="profile" element={<ProfilePage />} />
@@ -115,17 +116,23 @@ function App() {
               <Route path="detail" element={<OrgEventDetail />} />
             </Route>
           </Route>
-
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<AdminHomePage />} />
+              <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="events" element={<AdminEventsPage />} />
               <Route
                 path="event-approvals"
                 element={<AdminEventApprovalsPage />}
               />
+              <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="transactions" element={<AdminTransactionsPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
             </Route>
           </Route>
+          ``
         </Routes>
       </Suspense>
       <ToastContainer autoClose={2000} />

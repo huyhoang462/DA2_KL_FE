@@ -13,7 +13,7 @@ const QuantitySelector = ({ ticket, quantity, onQuantityChange }) => {
       <button
         onClick={() => onQuantityChange(-1)}
         disabled={quantity === 0}
-        className="border-border-default hover:text-primary text-text-secondary hover:bg-foreground flex h-9 w-9 cursor-pointer items-center justify-center rounded-l-md border border-r-0 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="border-border-default hover:text-primary text-text-secondary hover:bg-foreground flex h-9 w-9 cursor-pointer items-center justify-center rounded-l-md border border-r-0 transition-colors disabled:cursor-not-allowed disabled:opacity-80"
       >
         <Minus className="h-4 w-4" />
       </button>
@@ -23,7 +23,7 @@ const QuantitySelector = ({ ticket, quantity, onQuantityChange }) => {
       <button
         onClick={() => onQuantityChange(1)}
         disabled={quantity >= maxAllowed}
-        className="border-border-default text-text-secondary hover:text-primary hover:bg-foreground flex h-9 w-9 cursor-pointer items-center justify-center rounded-r-md border border-l-0 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="border-border-default text-text-secondary hover:text-primary hover:bg-foreground flex h-9 w-9 cursor-pointer items-center justify-center rounded-r-md border border-l-0 transition-colors disabled:cursor-not-allowed disabled:opacity-80"
       >
         <Plus className="h-4 w-4" />
       </button>

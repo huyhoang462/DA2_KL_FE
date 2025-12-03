@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Banknote, Copy, Smartphone, Check } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { orderService } from '../../../services/orderService';
+import { cn } from '../../../utils/lib';
 // import { toast } from 'react-hot-toast';
 
 export default function PaymentDetailsCard({
@@ -105,12 +106,31 @@ export default function PaymentDetailsCard({
             <button
               key={method.id}
               onClick={() => setSelectedMethod(method)}
-              className={`bg-background-primary flex cursor-pointer items-center gap-2 rounded-md border-2 p-2 text-sm ${selectedMethod.id === method.id ? 'border-primary text-primary' : 'border-transparent'}`}
+              className={cn(
+                'flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 p-2 transition-all',
+                selectedMethod.id === method.id
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border-default hover:border-primary/50'
+              )}
             >
               {method.methodType === 'bank_account' ? (
-                <Banknote />
+                <Banknote
+                  className={cn(
+                    '',
+                    selectedMethod.id === method.id
+                      ? 'text-primary'
+                      : 'text-text-secondary'
+                  )}
+                />
               ) : (
-                <Smartphone />
+                <Smartphone
+                  className={cn(
+                    '',
+                    selectedMethod.id === method.id
+                      ? 'text-primary'
+                      : 'text-text-secondary'
+                  )}
+                />
               )}
               {method.methodType === 'bank_account' ? 'Ngân hàng' : 'MoMo'}
             </button>

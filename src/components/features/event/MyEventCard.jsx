@@ -41,6 +41,7 @@ export default function MyEventCard({ event }) {
     { label: 'Tổng quan', path: `/manage/${event.id}/dashboard` },
     { label: 'Đơn hàng', path: `/manage/${event.id}/orders` },
     { label: 'Check-in', path: `/manage/${event.id}/checkin` },
+    { label: 'Chi tiết', path: `/manage/${event.id}/detail` },
   ];
 
   const handleCardClick = () => {

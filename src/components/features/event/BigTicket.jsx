@@ -52,7 +52,7 @@ export default function BigTicket({ event, onNav }) {
                 <MapPin className="text-primary mt-0.5 mr-3 inline h-5 w-5 flex-shrink-0" />
                 <div className="text-sm md:text-base">
                   <span className="text-text-primary block">
-                    {event.location.address}
+                    {event.location?.address || 'Sự kiện online'}
                   </span>
                 </div>
               </div>

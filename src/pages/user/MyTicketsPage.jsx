@@ -54,7 +54,7 @@ export default function MyTicketsPage() {
           <select
             value={activeFilter}
             onChange={(e) => setActiveFilter(e.target.value)}
-            className="border-border-default bg-background-secondary placeholder:text-muted-foreground focus:ring-none focus:border-primary w-full rounded-md border px-3 py-2.5 text-sm focus:border-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="border-border-default bg-background-secondary placeholder:text-muted-foreground focus:ring-none focus:border-primary w-full rounded-md border px-3 py-2.5 text-sm focus:border-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-80"
           >
             {filters.map((filter) => (
               <option key={filter.value} value={filter.value}>

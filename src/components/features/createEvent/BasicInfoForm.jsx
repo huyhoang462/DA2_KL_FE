@@ -1,5 +1,3 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { updateEventField } from '../../../store/slices/eventSlice';
 import Input from '../../ui/Input';
 import ImageUploader from '../../ui/ImageUploader';
 import RichTextEditor from '../../ui/RichTextEditor';
@@ -7,11 +5,14 @@ import LocationInput from './LocationInput';
 import CategoryInput from './CategoryInput';
 import OrganizerInput from './OrganizerInput';
 import useImageUpload from '../../../hooks/useImageUpload';
+import { is } from 'date-fns/locale/is';
 
-export default function BasicInfoForm({ errors, onFieldUpdate }) {
-  const dispatch = useDispatch();
-  const eventData = useSelector((state) => state.event.event);
-
+export default function BasicInfoForm({
+  value: eventData,
+  onChange,
+  errors,
+  isEditable = true,
+}) {
   const {
     uploadImage,
     deleteImage,
@@ -22,65 +23,32 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
   const bannerImage = eventData.bannerImageUrl || { url: '', publicId: '' };
 
   const handleFieldChange = (field, value) => {
-    onFieldUpdate(field, value);
+    if (!isEditable) return;
+    onChange(field, value);
   };
 
   const handleBannerChange = async (file) => {
-    // A. XỬ LÝ KHI XÓA ẢNH
     if (!file) {
-      // Nếu có ảnh cũ trên Cloudinary, gọi API để xóa nó
-      if (bannerImage.publicId) {
-        await deleteImage(bannerImage.publicId);
-      }
-      // Cập nhật Redux store
-      dispatch(
-        updateEventField({
-          field: 'bannerImageUrl',
-          value: { url: '', publicId: '' },
-        })
-      );
+      if (bannerImage.publicId) await deleteImage(bannerImage.publicId);
+      onChange('bannerImageUrl', { url: '', publicId: '' });
       return;
     }
 
-    // B. XỬ LÝ KHI CHỌN ẢNH MỚI
-    // Nếu có ảnh cũ, xóa nó trước khi upload ảnh mới
-    if (bannerImage.publicId) {
-      await deleteImage(bannerImage.publicId);
-    }
+    if (bannerImage.publicId) await deleteImage(bannerImage.publicId);
 
-    // Hiển thị preview ngay lập tức
-    dispatch(
-      updateEventField({
-        field: 'bannerImageUrl',
-        value: { url: file.preview, publicId: '' },
-      })
-    );
+    onChange('bannerImageUrl', { url: file.preview, publicId: '' });
 
     try {
-      // Bắt đầu upload
       const uploadedImage = await uploadImage(file);
-
       if (uploadedImage) {
-        // Upload thành công, cập nhật Redux store với URL và publicId thật
-        dispatch(
-          updateEventField({
-            field: 'bannerImageUrl',
-            value: { url: uploadedImage.url, publicId: uploadedImage.publicId },
-          })
-        );
-      } else {
-        // Xử lý trường hợp upload thất bại nhưng hook không ném ra lỗi
-        throw new Error('Upload returned null');
+        onChange('bannerImageUrl', {
+          url: uploadedImage.url,
+          publicId: uploadedImage.publicId,
+        });
       }
     } catch (error) {
       console.error('Upload failed:', error);
-      // Nếu upload lỗi, xóa ảnh preview
-      dispatch(
-        updateEventField({
-          field: 'bannerImageUrl',
-          value: { url: '', publicId: '' },
-        })
-      );
+      onChange('bannerImageUrl', { url: '', publicId: '' });
     }
   };
 
@@ -96,6 +64,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             value={eventData.name}
             onChange={(e) => handleFieldChange('name', e.target.value)}
             error={errors?.name}
+            disabled={!isEditable}
           />
         </div>
 
@@ -104,6 +73,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             Ảnh bìa sự kiện
           </p>
           <ImageUploader
+            disabled={!isEditable}
             value={bannerImage.url}
             onChange={handleBannerChange}
             status={isUploading ? 'uploading' : uploadError ? 'error' : 'idle'}
@@ -121,6 +91,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             value={eventData.startDate}
             onChange={(e) => handleFieldChange('startDate', e.target.value)}
             error={errors?.startDate}
+            disabled={!isEditable}
           />
         </div>
         <div className="sm:col-span-3">
@@ -132,6 +103,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             value={eventData.endDate}
             onChange={(e) => handleFieldChange('endDate', e.target.value)}
             error={errors?.endDate}
+            disabled={!isEditable}
           />
         </div>
 
@@ -142,6 +114,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
           <RichTextEditor
             value={eventData.description}
             onChange={(e) => handleFieldChange('description', e)}
+            disabled={!isEditable}
           />
         </div>
 
@@ -150,6 +123,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             value={eventData.category}
             onChange={(e) => handleFieldChange('category', e.target.value)}
             error={errors?.category}
+            disabled={!isEditable}
           />
         </div>
 
@@ -164,7 +138,8 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
             id="eventFormat"
             value={eventData.format}
             onChange={(e) => handleFieldChange('format', e.target.value)}
-            className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none ${errors?.format ? 'border-destructive' : 'border-border-default'}`}
+            disabled={!isEditable}
+            className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-80 ${errors?.format ? 'border-destructive' : 'border-border-default'}`}
           >
             <option value="offline">Offline (Tại địa điểm)</option>
             <option value="online">Online</option>
@@ -176,7 +151,9 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
           )}
         </div>
 
-        {eventData.format === 'offline' && (
+        {eventData.format === 'online' ? (
+          <></>
+        ) : (
           <div className="sm:col-span-6">
             <LocationInput
               value={eventData.location}
@@ -184,6 +161,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
                 handleFieldChange(`location.${field}`, value)
               }
               error={errors?.location}
+              disabled={!isEditable}
             />
           </div>
         )}
@@ -194,6 +172,7 @@ export default function BasicInfoForm({ errors, onFieldUpdate }) {
               handleFieldChange(`organizer.${field}`, value)
             }
             error={errors?.organizer}
+            disabled={!isEditable}
           />
         </div>
       </div>

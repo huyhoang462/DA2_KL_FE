@@ -37,7 +37,7 @@ export default function Input({
         disabled={disabled}
         spellCheck={false}
         className={clsx(
-          'bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none',
+          'bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-80',
           error ? 'border-destructive' : 'border-border-default',
           inputClassName
         )}

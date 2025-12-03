@@ -1,42 +1,53 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import set from 'lodash.set';
+
 import Stepper from '../../components/features/createEvent/Stepper';
 import Button from '../../components/ui/Button';
 import NotificationModal from '../../components/ui/NotificationModal';
+import BasicInfoForm from '../../components/features/createEvent/BasicInfoForm';
+import ShowsInfoForm from '../../components/features/createEvent/ShowsInfoForm';
+import PaymentInfoForm from '../../components/features/createEvent/PaymentInfoForm';
+
 import {
   setCurrentStep,
   updateEventField,
+  clearEvent,
+  clearPayoutMethod,
 } from '../../store/slices/eventSlice';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import BasicInfoForm from '../../components/features/createEvent/BasicInfoForm';
-import ShowsInfoForm from '../../components/features/createEvent/ShowsInfoForm';
 import {
   validateStepOne,
-  validateStepThree,
   validateStepTwo,
+  validateStepThree,
 } from '../../utils/validation';
-import PaymentInfoForm from '../../components/features/createEvent/PaymentInfoForm';
-import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../../services/eventService';
 
 const CreateEventPage = () => {
   const nav = useNavigate();
   const dispatch = useDispatch();
+
   const currentStep = useSelector((state) => state.event.currentStep);
   const eventData = useSelector((state) => state.event.event);
+
   const totalSteps = 3;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-
   const [showNotification, setShowNotification] = useState(false);
-  const [notificationType, setNotificationType] = useState('success');
-  const [notificationTitle, setNotificationTitle] = useState('');
-  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationInfo, setNotificationInfo] = useState({
+    type: 'success',
+    title: '',
+    message: '',
+  });
 
-  const handleChangeStep1 = (field, value) => {
+  const handleFieldChange = (field, value) => {
     dispatch(updateEventField({ field, value }));
 
-    const errorKey = field.split('.')[0];
+    let errorKey;
+    if (field.startsWith('payoutMethod')) {
+      errorKey = field.split('.')[1];
+    } else errorKey = field.split('.')[0];
 
     if (errors[errorKey]) {
       setErrors((prevErrors) => {
@@ -46,7 +57,6 @@ const CreateEventPage = () => {
       });
     }
   };
-
   const handleChangeStep2 = (showIndex, field) => {
     if (
       errors.shows &&
@@ -74,18 +84,6 @@ const CreateEventPage = () => {
     }
   };
 
-  const handleChangeStep3 = (field) => {
-    const errorKey = field.split('.')[0];
-
-    if (errors[errorKey]) {
-      setErrors((prevErrors) => {
-        const newErrors = { ...prevErrors };
-        delete newErrors[errorKey];
-        return newErrors;
-      });
-    }
-  };
-
   const handleNextStep = () => {
     let validationErrors = {};
     if (currentStep === 1) {
@@ -99,8 +97,11 @@ const CreateEventPage = () => {
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
-      if (currentStep < 3) dispatch(setCurrentStep(currentStep + 1));
-      else handleSubmit();
+      if (currentStep < totalSteps) {
+        dispatch(setCurrentStep(currentStep + 1));
+      } else {
+        handleSubmit();
+      }
     } else {
       console.log('Validation errors:', validationErrors);
     }
@@ -115,24 +116,22 @@ const CreateEventPage = () => {
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-
+    console.log('Submitting event data:', eventData);
     setIsSubmitting(true);
     try {
       const result = await createEvent(eventData);
-
-      if (result.status === 201) {
-        setNotificationType('success');
-        setNotificationTitle('Thành công!');
-        setNotificationMessage(result.message);
-        setShowNotification(true);
-      }
+      setNotificationInfo({
+        type: 'success',
+        title: 'Thành công!',
+        message: 'Sự kiện của bạn đã được tạo và gửi đi xét duyệt.',
+      });
+      setShowNotification(true);
     } catch (error) {
-      console.error('Lỗi khi tạo sự kiện:', error);
-      setNotificationType('error');
-      setNotificationTitle('Thất bại!');
-      setNotificationMessage(
-        error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.'
-      );
+      setNotificationInfo({
+        type: 'error',
+        title: 'Thất bại!',
+        message: error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+      });
       setShowNotification(true);
     } finally {
       setIsSubmitting(false);
@@ -141,7 +140,8 @@ const CreateEventPage = () => {
 
   const handleNotificationClose = () => {
     setShowNotification(false);
-    if (notificationType === 'success') {
+    if (notificationInfo.type === 'success') {
+      dispatch(clearEvent());
       nav('/organizer/my-events');
     }
   };
@@ -150,12 +150,28 @@ const CreateEventPage = () => {
     switch (currentStep) {
       case 1:
         return (
-          <BasicInfoForm errors={errors} onFieldUpdate={handleChangeStep1} />
+          <BasicInfoForm
+            value={eventData}
+            onChange={handleFieldChange}
+            errors={errors}
+          />
         );
       case 2:
-        return <ShowsInfoForm errors={errors} onChange={handleChangeStep2} />;
+        return (
+          <ShowsInfoForm
+            value={eventData.shows}
+            onChange={handleFieldChange}
+            errors={errors}
+          />
+        );
       case 3:
-        return <PaymentInfoForm errors={errors} onChange={handleChangeStep3} />;
+        return (
+          <PaymentInfoForm
+            value={eventData.payoutMethod}
+            onChange={handleFieldChange}
+            errors={errors}
+          />
+        );
       default:
         return (
           <div className="w-full text-center text-5xl font-medium">ERROR</div>
@@ -165,6 +181,7 @@ const CreateEventPage = () => {
 
   return (
     <div className="flex h-full flex-col pt-13 md:pt-0">
+      {/* Header giữ nguyên */}
       <header className="border-border-default bg-background-primary/80 sticky top-13 z-10 mb-4 border-b backdrop-blur-sm md:top-0">
         <div className="mx-auto flex min-h-16 flex-wrap items-center justify-between gap-y-2 px-4 py-2 md:mt-0">
           <div className="flex items-center gap-4">
@@ -172,48 +189,47 @@ const CreateEventPage = () => {
               <Stepper />
             </div>
           </div>
-
           <div className="flex items-center gap-2">
-            <Button variant="border" size="sm">
-              Lưu
+            <Button variant="outline" size="sm">
+              Lưu nháp
             </Button>
-
             <Button
               size="sm"
               onClick={handlePrevStep}
               disabled={currentStep === 1 || isSubmitting}
-              variant={currentStep === 1 ? 'disabled' : 'default'}
               className="hidden sm:flex"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-
             <Button size="sm" onClick={handleNextStep} disabled={isSubmitting}>
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : currentStep === 3 ? (
-                'Tạo'
+              ) : currentStep === totalSteps ? (
+                'Gửi duyệt'
               ) : (
-                <ArrowRight className="h-4 w-4" />
+                <>
+                  Tiếp theo <ArrowRight className="ml-2 h-4 w-4" />
+                </>
               )}
             </Button>
           </div>
         </div>
       </header>
 
+      {/* Main content giữ nguyên */}
       <div
         className={`container mx-auto transition-opacity ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
       >
         <div className="mb-8">{renderCurrentStepComponent()}</div>
       </div>
 
+      {/* Notification Modal giữ nguyên */}
       <NotificationModal
         isOpen={showNotification}
-        type={notificationType}
-        title={notificationTitle}
-        message={notificationMessage}
+        type={notificationInfo.type}
+        title={notificationInfo.title}
+        message={notificationInfo.message}
         onClose={handleNotificationClose}
-        buttonText={notificationType === 'success' ? 'Ok' : 'Thử lại'}
       />
     </div>
   );

@@ -13,12 +13,14 @@ import { cn } from '../../utils/lib';
 export default function ImageUploader({
   value,
   onChange,
+  disabled = false,
   className,
   status = 'idle',
 }) {
   // onDrop là hàm sẽ được gọi khi người dùng thả file hoặc chọn file
   const onDrop = useCallback(
     (acceptedFiles) => {
+      if (disabled) return;
       // react-dropzone có thể nhận nhiều file, nhưng ta chỉ lấy file đầu tiên
       if (acceptedFiles && acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
@@ -30,7 +32,7 @@ export default function ImageUploader({
         onChange(fileWithPreview);
       }
     },
-    [onChange]
+    [onChange, disabled]
   );
 
   // Cấu hình cho dropzone
@@ -43,6 +45,9 @@ export default function ImageUploader({
       'image/webp': [],
     },
     multiple: false, // Chỉ cho phép chọn 1 file
+    disabled, // ✅ Disable dropzone khi component disabled
+    noClick: disabled, // ✅ Không cho click khi disabled
+    noDrag: disabled,
   });
 
   // Tạo URL preview một cách an toàn
@@ -59,6 +64,7 @@ export default function ImageUploader({
   // Hàm xử lý khi nhấn nút xóa ảnh
   const handleRemoveImage = (e) => {
     e.stopPropagation(); // Ngăn sự kiện click lan ra dropzone
+    if (disabled) return;
     onChange(null); // Thông báo cho cha rằng ảnh đã bị xóa
   };
 
@@ -75,8 +81,11 @@ export default function ImageUploader({
     <div
       {...getRootProps()}
       className={cn(
-        'group border-border-default relative flex aspect-[16/7] w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors',
-        'hover:border-primary hover:bg-foreground',
+        'group border-border-default relative flex aspect-[16/7] w-full items-center justify-center rounded-lg border-2 border-dashed transition-colors',
+        // ✅ Conditional styling based on disabled state
+        disabled
+          ? 'cursor-not-allowed opacity-90' // Disabled styling
+          : 'hover:border-primary hover:bg-foreground cursor-pointer', // Active styling
         isDragActive && 'border-primary bg-primary/10',
         previewUrl && 'border-solid',
         status === 'uploading' && 'cursor-not-allowed opacity-75',
@@ -86,7 +95,7 @@ export default function ImageUploader({
       <input
         id="image-upload"
         {...getInputProps()}
-        disabled={status === 'uploading'}
+        disabled={disabled || status === 'uploading'}
       />
 
       {previewUrl ? (
@@ -96,20 +105,27 @@ export default function ImageUploader({
             alt="Preview"
             className="h-full w-full rounded-md object-cover"
           />
+          {disabled && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/30">
+              <p className="text-sm font-medium text-white">
+                Không thể chỉnh sửa
+              </p>
+            </div>
+          )}
           {status === 'uploading' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-md bg-black/70 transition-opacity">
               <LoaderCircle className="h-8 w-8 animate-spin text-white" />
               <p className="mt-2 text-sm text-white">Đang tải lên...</p>
             </div>
           )}
-          {status !== 'uploading' && (
+          {!disabled && status !== 'uploading' && (
             <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
               <p className="text-sm text-white">
                 Nhấn hoặc kéo ảnh khác để thay thế
               </p>
             </div>
           )}
-          {status !== 'uploading' && (
+          {!disabled && status !== 'uploading' && (
             <button
               type="button"
               onClick={handleRemoveImage}
@@ -123,13 +139,27 @@ export default function ImageUploader({
       ) : (
         // --- Giao diện khi chưa có ảnh ---
         <div className="text-text-secondary text-center">
-          <UploadCloud className="mx-auto h-12 w-12" />
+          <UploadCloud
+            className={cn('mx-auto h-12 w-12', disabled && 'opacity-50')}
+          />
           <p className="mt-4 text-sm">
-            <span className="text-primary font-semibold">Nhấn để tải lên</span>{' '}
-            hoặc kéo và thả
+            {disabled ? (
+              <span className="font-medium">Không thể tải lên ảnh</span>
+            ) : (
+              <>
+                <span className="text-primary font-semibold">
+                  Nhấn để tải lên
+                </span>{' '}
+                hoặc kéo và thả
+              </>
+            )}
           </p>
-          <p className="text-xs">PNG, JPG, GIF (tối đa 10MB)</p>
-          <p className="text-xs">Tỷ lệ khuyến nghị: 16:7</p>
+          {!disabled && (
+            <>
+              <p className="text-xs">PNG, JPG, GIF (tối đa 10MB)</p>
+              <p className="text-xs">Tỷ lệ khuyến nghị: 16:7</p>
+            </>
+          )}
         </div>
       )}
     </div>

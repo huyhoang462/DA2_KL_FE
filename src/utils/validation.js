@@ -29,7 +29,7 @@ export const validateStepOne = (eventData) => {
     errors.description = 'Mô tả cần chi tiết hơn, ít nhất 20 ký tự.';
   }
 
-  if (!eventData.bannerImage) {
+  if (!eventData.bannerImageUrl) {
     errors.bannerImage = 'Vui lòng tải lên ảnh bìa cho sự kiện.';
   }
 

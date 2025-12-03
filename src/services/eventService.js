@@ -45,6 +45,30 @@ export const createEvent = async (data) => {
   }
 };
 
+export const updateEvent = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(
+      `${API_BASE_URL}/events/${id}`,
+      data
+    );
+
+    return response;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const deleteEvent = async (id) => {
+  try {
+    const response = await axiosInstance.delete(`${API_BASE_URL}/events/${id}`);
+    console.log('DELETE trả về: ', response);
+
+    return response;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 export const getEventById = async (id) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events/${id}`);

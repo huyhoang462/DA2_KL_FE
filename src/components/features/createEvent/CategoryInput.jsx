@@ -22,7 +22,7 @@ export default function CategoryInput({ value, onChange, disabled, error }) {
         value={value}
         onChange={onChange}
         disabled={disabled || isLoadingCategories}
-        className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${error ? 'border-destructive' : 'border-border-default'}`}
+        className={`bg-background-secondary text-text-primary placeholder-text-placeholder focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-80 ${error ? 'border-destructive' : 'border-border-default'}`}
       >
         <option value="">
           {isLoadingCategories ? 'Đang tải thể loại...' : 'Chọn một thể loại'}
