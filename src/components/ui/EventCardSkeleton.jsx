@@ -10,7 +10,7 @@ export default function EventCardSkeleton() {
       <div className="relative aspect-[16/9] overflow-hidden">
         <SkeletonBar className="h-full w-full" />
 
-        <div className="absolute top-2 right-2 rounded-full bg-gray-500 px-2 py-1 backdrop-blur-sm">
+        <div className="absolute top-2 right-2 rounded-full bg-gray-300 px-2 py-1 backdrop-blur-sm">
           <SkeletonBar className="h-3 w-16" />
         </div>
       </div>

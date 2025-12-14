@@ -28,8 +28,6 @@ const SearchBar = () => {
     return [...keywordItems, ...eventItems];
   }, [results]);
 
-  console.log('FLAT: ', flatSuggestions);
-
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const searchContainerRef = useClickOutside(() => {

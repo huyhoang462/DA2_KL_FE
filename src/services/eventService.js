@@ -6,7 +6,6 @@ import axiosInstance from '../api/axios';
 export const getAllEvents = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events`);
-    console.log('ALL EVENTS: ', response.data);
 
     return response.data;
   } catch (error) {
@@ -72,7 +71,6 @@ export const deleteEvent = async (id) => {
 export const getEventById = async (id) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events/${id}`);
-    console.log('Response data in getEventById:', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);
@@ -82,7 +80,6 @@ export const getEventById = async (id) => {
 export const getEventsByUserId = async (userId) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events/user/${userId}`);
-    console.log('Lấy events của user:', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);

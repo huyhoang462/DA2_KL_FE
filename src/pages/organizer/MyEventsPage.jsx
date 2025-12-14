@@ -25,13 +25,6 @@ export default function MyEventsPage() {
   const userId = useSelector((state) => state.auth.user?.id);
   const authState = useSelector((state) => state.auth);
 
-  React.useEffect(() => {
-    console.log('=== AUTH STATE ===');
-    console.log('Full auth state:', authState);
-    console.log('User:', authState.user);
-    console.log('User ID:', authState.user?.id);
-  }, [authState]);
-
   const {
     data: userEvents,
     isLoading: isLoadingEvents,
@@ -41,14 +34,6 @@ export default function MyEventsPage() {
     queryFn: () => getEventsByUserId(userId),
     enabled: !!userId,
   });
-
-  React.useEffect(() => {
-    console.log('=== USER EVENTS ===');
-    console.log('UserId:', userId);
-    console.log('Loading:', isLoadingEvents);
-    console.log('Error:', errorEvents);
-    console.log('Data:', userEvents);
-  }, [userId, userEvents, isLoadingEvents, errorEvents]);
 
   const filteredEvents = useMemo(() => {
     return userEvents?.filter((event) => {

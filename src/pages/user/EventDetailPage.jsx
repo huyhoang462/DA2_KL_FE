@@ -1,3 +1,4 @@
+// src/pages/user/EventDetailPage.jsx
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -44,7 +45,8 @@ export default function EventDetailPage() {
 
           <div className="sticky top-20 space-y-6">
             <h2 className="text-xl font-bold">Chọn vé của bạn</h2>
-            <ShowtimeList shows={event.shows} />
+            {/* ✅ Pass eventId to ShowtimeList */}
+            <ShowtimeList shows={event.shows} eventId={event._id || event.id} />
           </div>
         </div>
       </div>

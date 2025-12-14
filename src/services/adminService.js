@@ -16,7 +16,6 @@ export const getPendingEvents = async ({ page = 1, limit = 10 }) => {
     const response = await axios.get(
       `${API_BASE_URL}/events/pending?${params}`
     );
-    console.log('Pending Events:', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);

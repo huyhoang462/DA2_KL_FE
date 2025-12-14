@@ -14,12 +14,6 @@ export default function MobileCartSummary({ event }) {
       alert(validationError);
       return;
     }
-
-    console.log('Proceed to checkout with:', {
-      items: summaryItems,
-      total: totalAmount,
-      event,
-    });
   };
 
   if (totalQuantity === 0) {

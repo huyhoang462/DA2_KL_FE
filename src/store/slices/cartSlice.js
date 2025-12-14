@@ -12,10 +12,10 @@ const cartSlice = createSlice({
   reducers: {
     // Action được gọi khi bắt đầu chọn vé cho một sự kiện
     startNewCart: (state, action) => {
-      const { eventId } = action.payload;
+      const { id } = action.payload;
       // Nếu là sự kiện mới, reset giỏ hàng
-      if (state.eventId !== eventId) {
-        state.eventId = eventId;
+      if (state.eventId !== id) {
+        state.eventId = id;
         state.items = {};
       }
     },

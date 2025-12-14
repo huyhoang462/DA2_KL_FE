@@ -479,17 +479,6 @@ export default function OrgEventDetail() {
 
         setFirstData(firstDataCopy);
         setEditData(editDataCopy);
-
-        console.log('✅ First data (immutable):', firstDataCopy);
-        console.log('✅ Edit data (mutable):', editDataCopy);
-        console.log(
-          '✅ Are they same reference?',
-          firstDataCopy === editDataCopy
-        );
-        console.log(
-          '✅ Are location same reference?',
-          firstDataCopy.location === editDataCopy.location
-        );
       } catch (error) {
         console.error('❌ Error preparing data:', error);
       }

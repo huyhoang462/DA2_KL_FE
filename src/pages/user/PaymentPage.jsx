@@ -1,31 +1,35 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSelector, useDispatch } from 'react-redux';
+import QRCode from 'react-qr-code';
+import { listenForPaymentResult } from '../../utils/broadcastChannel';
 
 import { getEventById } from '../../services/eventService';
 import { orderService } from '../../services/orderService';
-import { getAdminPaymentMethods } from '../../services/adminService';
 import { clearCart } from '../../store/slices/cartSlice';
 import useCountdown from '../../hooks/useCountdown';
 
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
-import EventInfoCard from '../../components/features/buyTicket/EventInfoCard';
-import CartInfoCard from '../../components/features/buyTicket/CartInfoCard';
-import PaymentDetailsCard from '../../components/features/buyTicket/PaymentDetailsCard';
 import TimerCard from '../../components/features/buyTicket/TimerCard';
+import CartInfoCard from '../../components/features/buyTicket/CartInfoCard';
+import Button from '../../components/ui/Button';
 
 export default function PaymentPage() {
-  const { id } = useParams();
+  const { id, showId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const queryClient = useQueryClient();
-
   const cart = useSelector((state) => state.cart);
+
+  const hasInitialized = useRef(false);
+  const pollingInterval = useRef(null);
+
+  const [paymentUrl, setPaymentUrl] = useState('');
   const [orderId, setOrderId] = useState(null);
-  const orderIdRef = useRef(null);
-  const effectRan = useRef(false);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [expiresAt, setExpiresAt] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending');
 
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['eventForPayment', id],
@@ -33,94 +37,132 @@ export default function PaymentPage() {
     enabled: !!id,
   });
 
-  const { data: adminPaymentMethods, isLoading: isLoadingAdminInfo } = useQuery(
-    {
-      queryKey: ['adminPaymentMethods'],
-      queryFn: () => getAdminPaymentMethods(),
+  const handleTimeout = () => {
+    setPaymentStatus('expired');
+    if (pollingInterval.current) {
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = null;
     }
-  );
+  };
 
-  const cancelOrderMutation = useMutation({
-    mutationFn: (id) => orderService.cancelOrder(id),
-    onSuccess: () =>
-      console.log(`[CLEANUP] Đã hủy đơn hàng ${orderIdRef.current}`),
-    onError: (error) =>
-      console.error(`[CLEANUP ERROR] Lỗi khi hủy đơn hàng:`, error),
-  });
+  const getTimeLeft = () => {
+    if (!expiresAt) return 15 * 60;
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    return Math.max(0, Math.floor((expires - now) / 1000));
+  };
 
-  const handleTimeoutOrLeave = useCallback(() => {
-    if (orderIdRef.current) {
-      cancelOrderMutation.mutate(orderIdRef.current);
-      orderIdRef.current = null;
-    }
-    dispatch(clearCart());
-    navigate(`/event-detail/${id}`, { replace: true });
-  }, [cancelOrderMutation, dispatch, id, navigate]);
+  const { minutes, seconds } = useCountdown(getTimeLeft(), handleTimeout);
 
-  const { minutes, seconds } = useCountdown(10, () => {
-    alert('Đã hết thời gian giữ vé.');
-    handleTimeoutOrLeave();
-  });
-
-  const createOrderMutation = useMutation({
-    mutationFn: (orderData) => orderService.createOrder(orderData),
+  const createPaymentMutation = useMutation({
+    mutationFn: (orderData) => orderService.createPayment(orderData),
     onSuccess: (data) => {
-      console.log('[SUCCESS] Tạo đơn hàng thành công, ID:', data.orderId);
+      console.log('[SUCCESS] Tạo link thanh toán thành công:', data);
+      setPaymentUrl(data.paymentUrl);
       setOrderId(data.orderId);
-      orderIdRef.current = data.orderId;
+      setTotalAmount(data.totalAmount);
+      setExpiresAt(data.expiresAt);
+      startPolling(data.orderId);
     },
     onError: (error) => {
-      alert(error.message || 'Không thể giữ vé. Vui lòng thử lại.');
-      navigate(`/checkout/${id}/select-tickets`);
+      console.error('[ERROR] Lỗi khi tạo link thanh toán:', error);
+      alert(
+        error.message || 'Không thể tạo phiên thanh toán. Vui lòng thử lại.'
+      );
+      navigate(`/event-detail/${id}`);
     },
   });
 
-  useEffect(() => {
-    if (!event || !cart.items || Object.keys(cart.items).length === 0) {
-      return;
-    }
+  const startPolling = (orderIdToCheck) => {
+    if (pollingInterval.current) clearInterval(pollingInterval.current);
 
-    if (effectRan.current === false) {
+    pollingInterval.current = setInterval(async () => {
+      try {
+        const response = await orderService.getOrderStatus(orderIdToCheck);
+        const { status } = response;
+        if (
+          status === 'paid' ||
+          status === 'failed' ||
+          status === 'cancelled'
+        ) {
+          setPaymentStatus(status);
+          clearInterval(pollingInterval.current);
+          pollingInterval.current = null;
+        }
+      } catch (error) {
+        console.error('[POLLING ERROR]', error);
+      }
+    }, 5000);
+  };
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    const unsubscribe = listenForPaymentResult((result) => {
+      console.log('[BROADCAST] Nhận được kết quả:', result);
+      if (result.orderId === orderId) {
+        setPaymentStatus(result.status);
+        if (pollingInterval.current) {
+          clearInterval(pollingInterval.current);
+          pollingInterval.current = null;
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [orderId]);
+
+  useEffect(() => {
+    if (
+      event &&
+      cart.items &&
+      Object.keys(cart.items).length > 0 &&
+      !hasInitialized.current &&
+      !createPaymentMutation.isPending
+    ) {
+      hasInitialized.current = true;
       const orderPayload = {
         eventId: event.id,
+        showId: showId,
         items: Object.entries(cart.items).map(([ticketTypeId, quantity]) => ({
           ticketTypeId,
           quantity,
         })),
       };
-
-      console.log('[EFFECT] Gửi yêu cầu tạo đơn hàng...');
-      createOrderMutation.mutate(orderPayload);
+      createPaymentMutation.mutate(orderPayload);
     }
-
-    return () => {
-      effectRan.current = true;
-
-      if (orderIdRef.current) {
-        console.log('[CLEANUP] Component unmount, gửi yêu cầu hủy đơn hàng...');
-        cancelOrderMutation.mutate(orderIdRef.current);
-      }
-    };
-  }, [event, cart.items]);
+  }, [event, cart.items, showId, createPaymentMutation]);
 
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (orderIdRef.current) {
-        e.preventDefault();
-        e.returnValue = 'Bạn có chắc muốn rời đi? Đơn hàng của bạn sẽ bị hủy.';
-      }
-    };
+    if (paymentStatus === 'paid') {
+      console.log('🎉 Payment successful for order:', orderId);
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+      // Clear cart
+      dispatch(clearCart());
+
+      // Stop polling
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+        pollingInterval.current = null;
+      }
+
+      // Navigate to tickets page sau 2 giây
+      setTimeout(() => {
+        navigate(`/user/tickets`); // Hoặc `/order/${orderId}` để xem chi tiết
+      }, 2000);
+    }
+  }, [paymentStatus, dispatch, navigate, orderId]);
+
+  useEffect(() => {
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (pollingInterval.current) clearInterval(pollingInterval.current);
     };
   }, []);
 
-  const isLoading = isLoadingEvent || isLoadingAdminInfo;
-  if (isLoading) {
+  // --- RENDER LOGIC ---
+  if (isLoadingEvent) {
     return (
-      <div className="bg-background-primary flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -132,9 +174,135 @@ export default function PaymentPage() {
     );
   }
 
-  if (!event || !adminPaymentMethods || adminPaymentMethods.length === 0) {
-    return <ErrorDisplay message="Không thể tải thông tin thanh toán." />;
+  if (!event) {
+    return <ErrorDisplay message="Không thể tải thông tin sự kiện." />;
   }
+
+  // --- QR CODE COMPONENT ---
+  const QRCodeDisplay = () => (
+    <div className="border-border-default bg-background-secondary flex flex-col items-center gap-4 rounded-lg border p-6 text-center">
+      <div className="text-center">
+        <p className="text-text-primary text-sm font-semibold">
+          Mã đơn hàng: <span className="text-primary">{orderId}</span>
+        </p>
+        <p className="mb-2 text-sm font-medium text-blue-800">
+          🏦 Thanh toán qua VNPay
+        </p>
+        <Button
+          onClick={() =>
+            window.open(paymentUrl, '_blank', 'noopener,noreferrer')
+          }
+          variant="default"
+        >
+          Mở trang thanh toán VNPay
+        </Button>
+      </div>
+
+      <p className="text-text-secondary text-xs">
+        Sau khi thanh toán thành công, trang sẽ tự động cập nhật
+      </p>
+    </div>
+  );
+
+  // --- RENDER CONTENT ---
+  const renderContent = () => {
+    if (createPaymentMutation.isPending) {
+      return (
+        <div className="flex items-center justify-center py-10">
+          <LoadingSpinner />
+          <span className="ml-4">Đang tạo đơn hàng và giữ vé cho bạn...</span>
+        </div>
+      );
+    }
+
+    if (createPaymentMutation.isError) {
+      return (
+        <div className="text-destructive py-10 text-center">
+          <p>Có lỗi xảy ra khi tạo đơn hàng</p>
+          <button
+            onClick={() => navigate(`/event-detail/${id}`)}
+            className="bg-primary mt-4 rounded px-4 py-2 text-white"
+          >
+            Quay lại
+          </button>
+        </div>
+      );
+    }
+
+    if (paymentStatus === 'paid') {
+      return (
+        <div className="bg-background-primary flex h-screen flex-col items-center justify-center px-4 text-center">
+          <div className="max-w-md">
+            <div className="bg-success/10 border-success text-success mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4">
+              <svg
+                className="h-16 w-16"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={3}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h1 className="text-success mb-4 text-3xl font-bold">
+              Thanh toán thành công!
+            </h1>
+            <p className="text-text-secondary mb-2">
+              Mã đơn hàng:{' '}
+              <span className="text-primary font-mono font-semibold">
+                {orderId}
+              </span>
+            </p>
+            <p className="text-text-secondary mb-6">
+              Vé của bạn đã được tạo và gửi vào tài khoản.
+              <br />
+              Đang chuyển hướng đến trang vé...
+            </p>
+            <LoadingSpinner />
+          </div>
+        </div>
+      );
+    }
+
+    if (paymentStatus === 'failed') {
+      return (
+        <div className="text-destructive py-10 text-center">
+          <h2 className="mb-4 text-2xl font-bold">❌ Thanh toán thất bại</h2>
+          <p>Vui lòng thử lại hoặc chọn phương thức thanh toán khác</p>
+          <button
+            onClick={() => navigate(`/event-detail/${id}`)}
+            className="bg-primary mt-4 rounded px-4 py-2 text-white"
+          >
+            Thử lại
+          </button>
+        </div>
+      );
+    }
+
+    if (paymentStatus === 'expired') {
+      return (
+        <div className="text-destructive py-10 text-center">
+          <h2 className="mb-4 text-2xl font-bold">
+            ⏰ Phiên thanh toán đã hết hạn
+          </h2>
+          <p>Vui lòng tạo đơn hàng mới</p>
+          <button
+            onClick={() => navigate(`/event-detail/${id}`)}
+            className="bg-primary mt-4 rounded px-4 py-2 text-white"
+          >
+            Tạo đơn hàng mới
+          </button>
+        </div>
+      );
+    }
+
+    // Default: hiển thị QR code
+    return <QRCodeDisplay />;
+  };
 
   return (
     <div className="bg-background-primary">
@@ -144,20 +312,14 @@ export default function PaymentPage() {
             <TimerCard minutes={minutes} seconds={seconds} />
           </div>
           <p className="text-text-secondary text-sm">
-            Hoàn tất đơn hàng trong thời gian còn lại để giữ vé của bạn
+            Hoàn tất thanh toán trong thời gian còn lại để giữ vé của bạn
           </p>
         </div>
       </header>
 
       <main className="container mx-auto py-8 pb-8 md:pb-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
-          <div className="space-y-8 lg:col-span-3">
-            <PaymentDetailsCard
-              methods={adminPaymentMethods}
-              orderId={orderId}
-              isCreatingOrder={createOrderMutation.isPending}
-            />
-          </div>
+          <div className="space-y-8 lg:col-span-3">{renderContent()}</div>
 
           <div className="lg:col-span-2">
             <div className="sticky top-24 space-y-8">

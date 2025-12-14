@@ -9,13 +9,13 @@ import { Provider } from 'react-redux';
 
 const queryClient = new QueryClient();
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <Web3Provider>
-          <App />
-        </Web3Provider>
-      </QueryClientProvider>
-    </Provider>
-  </StrictMode>
+  // <StrictMode>
+  <Provider store={store}>
+    <QueryClientProvider client={queryClient}>
+      <Web3Provider>
+        <App />
+      </Web3Provider>
+    </QueryClientProvider>
+  </Provider>
+  //</StrictMode>
 );

@@ -10,6 +10,7 @@ import { ToastContainer } from 'react-toastify';
 import { useAuth } from './hooks/useAuth';
 
 import FullScreenLoader from './components/ui/FullScreenLoader';
+import VnpayReturnPage from './pages/user/VNPayReturnPage';
 
 const MainLayout = lazy(() => import('./components/layouts/MainLayout'));
 const AccountLayout = lazy(() => import('./components/layouts/AccountLayout'));
@@ -77,6 +78,9 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route element={<ProtectedRoute allowedRoles={['user', 'staff']} />}>
+            <Route path="/payment/vnpay-return" element={<VnpayReturnPage />} />
+          </Route>
           <Route element={<MainLayout />}>
             <Route element={<UserPublicWrapper />}>
               <Route path="/" element={<HomePage />} />
@@ -87,10 +91,10 @@ function App() {
               element={<ProtectedRoute allowedRoles={['user', 'staff']} />}
             >
               <Route
-                path="/select-tickets/:id"
+                path="/select-tickets/:id/:showId"
                 element={<SelectTicketsPage />}
               />
-              <Route path="/payment/:id" element={<PaymentPage />} />
+              <Route path="/payment/:id/:showId" element={<PaymentPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute allowedRoles={['user', 'staff']} />}>

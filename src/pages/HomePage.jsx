@@ -17,12 +17,12 @@ const HomePage = () => {
     enabled: true,
   });
 
-  useEffect(() => {
-    console.log('=== ALL EVENTS ===');
-    console.log('Loading:', isLoadingAll);
-    console.log('Error:', errorAll);
-    console.log('Data:', allEvents);
-  }, [allEvents, isLoadingAll, errorAll]);
+  // useEffect(() => {
+  //   console.log('=== ALL EVENTS ===');
+  //   console.log('Loading:', isLoadingAll);
+  //   console.log('Error:', errorAll);
+  //   console.log('Data:', allEvents);
+  // }, [allEvents, isLoadingAll, errorAll]);
 
   const handleCleanup = async () => {
     try {

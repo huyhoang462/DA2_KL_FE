@@ -7,7 +7,6 @@ export const searchSuggestions = async (query) => {
     const response = await axios.get(
       `${API_BASE_URL}/events/search?q=${query}`
     );
-    console.log('SUGGESTIONS: ', response.data);
 
     return response.data;
   } catch (error) {
@@ -32,9 +31,6 @@ export const searchEvents = async (filters) => {
     const response = await axios.get(
       `${API_BASE_URL}/events/search/events?${params.toString()}`
     );
-
-    console.log('SEARCH with filters:', filters);
-    console.log('SEARCH response:', response.data);
 
     return response.data;
   } catch (error) {

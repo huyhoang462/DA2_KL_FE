@@ -7,7 +7,7 @@ import useCartSummary from '../../../hooks/useCartSummary';
 
 // import { toast } from 'react-hot-toast';
 
-export default function CartSummary({ event }) {
+export default function CartSummary({ event, selectedShow }) {
   const navigate = useNavigate();
   const { summaryItems, totalAmount, totalQuantity, validationError } =
     useCartSummary(event);
@@ -18,12 +18,7 @@ export default function CartSummary({ event }) {
       alert(validationError);
       return;
     }
-    navigate(`/payment/${event.id}`);
-    console.log('Proceed to checkout with:', {
-      items: summaryItems,
-      total: totalAmount,
-      event,
-    });
+    navigate(`/payment/${event.id}/${selectedShow?._id}`);
   };
 
   return (

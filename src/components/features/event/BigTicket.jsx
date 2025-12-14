@@ -1,3 +1,4 @@
+// src/components/features/event/BigTicket.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin } from 'lucide-react';
@@ -7,13 +8,13 @@ export default function BigTicket({ event, onNav }) {
   const getMinPrice = (shows) => {
     if (!shows || shows.length === 0) return 0;
     const allTickets = shows.flatMap((show) => show.tickets);
-    console.log('allticket: ', allTickets);
 
     if (allTickets.length === 0) return 0;
     return Math.min(...allTickets.map((ticket) => ticket.price));
   };
 
   const minPrice = getMinPrice(event.shows);
+  const hasMultipleShows = event.shows && event.shows.length > 1;
 
   const formattedDate = new Date(event.startDate).toLocaleDateString('vi-VN', {
     weekday: 'long',
@@ -21,6 +22,25 @@ export default function BigTicket({ event, onNav }) {
     month: '2-digit',
     year: 'numeric',
   });
+
+  // ✅ Handler for scroll to showtime list when multiple shows
+  const handleScrollToShowtimes = () => {
+    const showtimeSection = document.querySelector('[data-showtime-list]');
+    if (showtimeSection) {
+      showtimeSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  };
+
+  // ✅ Get single show ID for direct navigation
+  const getSingleShowId = () => {
+    if (event.shows && event.shows.length === 1) {
+      return event.shows[0]._id || event.shows[0].id;
+    }
+    return null;
+  };
 
   return (
     <div className="mx-auto mb-8 w-full">
@@ -71,11 +91,23 @@ export default function BigTicket({ event, onNav }) {
                 </div>
               </div>
             )}
-            <Link to={`/select-tickets/${event.id}`}>
-              <Button className="w-full" size="lg">
-                Mua vé ngay
+
+            {/* ✅ Conditional button based on number of shows */}
+            {hasMultipleShows ? (
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleScrollToShowtimes}
+              >
+                Chọn suất diễn
               </Button>
-            </Link>
+            ) : (
+              <Link to={`/select-tickets/${event._id}/${getSingleShowId()}`}>
+                <Button className="w-full" size="lg">
+                  Mua vé ngay
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
