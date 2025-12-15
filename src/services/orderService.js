@@ -18,6 +18,17 @@ const createPayment = async (orderPayload) => {
   }
 };
 
+const getMyOrders = async () => {
+  try {
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/orders/my-orders`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 // Kiểm tra trạng thái đơn hàng
 const getOrderStatus = async (orderId) => {
   try {
@@ -38,10 +49,8 @@ const finalizeOrder = async (orderData) => {
   return response.data;
 };
 export const orderService = {
-  createPayment, // Đổi tên từ createOrder
-  getOrderStatus, // Thêm function này
+  createPayment,
+  getOrderStatus,
   finalizeOrder,
-  // // Alias để tương thích với code cũ
-  // createVnpayUrl: createPayment,
-  // createOrder: createPayment,
+  getMyOrders,
 };

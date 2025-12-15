@@ -1,5 +1,6 @@
 // src/pages/dashboard/check-in-staff/partials/StaffFormModal.jsx
 import React, { useState, useEffect } from 'react';
+import { User, Mail, Lock, Info } from 'lucide-react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -34,6 +35,10 @@ export default function StaffFormModal({
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: null });
+    }
   };
 
   const validate = () => {
@@ -74,42 +79,116 @@ export default function StaffFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Chỉnh sửa tài khoản' : 'Tạo tài khoản nhân viên mới'}
+      title={
+        isEditMode
+          ? 'Chỉnh sửa thông tin nhân viên'
+          : 'Tạo tài khoản nhân viên mới'
+      }
+      size="md"
+      maxWidth="max-w-lg"
     >
       <form onSubmit={handleSubmit}>
-        <div className="space-y-4 p-6">
-          <Input
-            label="Họ và tên"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            error={errors.fullName}
-          />
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            error={errors.email}
-          />
-          <Input
-            label={
-              isEditMode ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu'
-            }
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            error={errors.password}
-          />
+        <div className="space-y-6 p-6">
+          {/* Description */}
+          <div className="bg-primary/5 border-primary/20 flex items-start gap-3 rounded-lg border p-4">
+            <Info className="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
+            <div>
+              <p className="text-text-primary text-sm font-medium">
+                {isEditMode
+                  ? 'Cập nhật thông tin tài khoản nhân viên'
+                  : 'Tạo tài khoản mới cho nhân viên check-in'}
+              </p>
+              <p className="text-text-secondary mt-1 text-xs">
+                {isEditMode
+                  ? 'Chỉ cập nhật những trường cần thiết. Để trống mật khẩu nếu không muốn thay đổi.'
+                  : 'Nhân viên sẽ sử dụng email và mật khẩu này để đăng nhập và thực hiện check-in.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Full Name */}
+          <div>
+            <label className="text-text-primary mb-2 block text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Họ và tên
+                <span className="text-destructive">*</span>
+              </div>
+            </label>
+            <Input
+              name="fullName"
+              placeholder="Nhập họ và tên nhân viên"
+              value={formData.fullName}
+              onChange={handleChange}
+              error={errors.fullName}
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="text-text-primary mb-2 block text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+                <span className="text-destructive">*</span>
+              </div>
+            </label>
+            <Input
+              name="email"
+              type="email"
+              placeholder="nhân viên@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              disabled={isEditMode} // Cannot change email in edit mode
+            />
+            {isEditMode && (
+              <p className="text-text-secondary mt-1 text-xs">
+                Email không thể thay đổi
+              </p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="text-text-primary mb-2 block text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                {isEditMode ? 'Mật khẩu mới' : 'Mật khẩu'}
+                {!isEditMode && <span className="text-destructive">*</span>}
+              </div>
+            </label>
+            <Input
+              name="password"
+              type="password"
+              placeholder={
+                isEditMode
+                  ? 'Để trống nếu không muốn đổi mật khẩu'
+                  : 'Nhập mật khẩu (tối thiểu 6 ký tự)'
+              }
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+            />
+          </div>
         </div>
-        <div className="border-border-default bg-background-primary flex items-center justify-end gap-4 border-t p-4">
-          <Button type="button" variant="ghost" onClick={onClose}>
+
+        {/* Footer */}
+        <div className="border-border-default bg-background-primary flex items-center justify-end gap-3 border-t p-4">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            disabled={isSaving}
+          >
             Hủy
           </Button>
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+            {isSaving
+              ? 'Đang lưu...'
+              : isEditMode
+                ? 'Cập nhật'
+                : 'Tạo tài khoản'}
           </Button>
         </div>
       </form>

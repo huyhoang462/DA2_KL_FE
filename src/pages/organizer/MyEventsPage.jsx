@@ -21,6 +21,8 @@ const filters = [
 export default function MyEventsPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const userId = useSelector((state) => state.auth.user?.id);
   const authState = useSelector((state) => state.auth);
@@ -47,6 +49,20 @@ export default function MyEventsPage() {
       return matchesFilter && matchesSearch;
     });
   }, [activeFilter, searchTerm, userEvents]);
+
+  // Pagination
+  const totalPages = Math.ceil((filteredEvents?.length || 0) / ITEMS_PER_PAGE);
+  const paginatedEvents = useMemo(() => {
+    if (!filteredEvents) return [];
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredEvents.slice(startIndex, endIndex);
+  }, [filteredEvents, currentPage]);
+
+  // Reset to page 1 when filter or search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, searchTerm]);
 
   return (
     <div className="space-y-6 pt-6">
@@ -82,10 +98,87 @@ export default function MyEventsPage() {
           ))}
         </div>
       ) : filteredEvents?.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6">
-          {filteredEvents.map((event) => (
-            <MyEventCard key={event.id} event={event} />
-          ))}
+        <div className="space-y-6">
+          <p className="text-text-secondary text-sm">
+            Hiển thị{' '}
+            <span className="font-semibold">
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+            </span>
+            -
+            <span className="font-semibold">
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredEvents.length)}
+            </span>{' '}
+            trong tổng số{' '}
+            <span className="font-semibold">{filteredEvents.length}</span> sự
+            kiện
+          </p>
+
+          <div className="grid grid-cols-1 gap-6">
+            {paginatedEvents.map((event) => (
+              <MyEventCard key={event.id} event={event} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="border-border-default text-text-primary hover:bg-background-secondary disabled:text-text-tertiary rounded-lg border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Trước
+              </button>
+
+              <div className="flex gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNum = index + 1;
+                  if (
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-primary text-primary-foreground'
+                            : 'border-border-default text-text-primary hover:bg-background-secondary border'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (
+                    pageNum === currentPage - 2 ||
+                    pageNum === currentPage + 2
+                  ) {
+                    return (
+                      <span
+                        key={pageNum}
+                        className="text-text-tertiary px-2 py-2 text-sm"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="border-border-default text-text-primary hover:bg-background-secondary disabled:text-text-tertiary rounded-lg border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Sau
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="border-border-default bg-background-secondary flex flex-col items-center justify-center rounded-lg border p-12 text-center">

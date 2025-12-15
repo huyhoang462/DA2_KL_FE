@@ -158,6 +158,10 @@ body {
   background: var(--color-primary-hover);
 }
 
+button {
+  cursor: pointer;
+}
+
 a,
 p,
 div,

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import { userService } from '../../services/userService';
+import { getEventsByUserId } from '../../services/eventService';
 import Button from '../../components/ui/Button';
 import { Plus } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -13,6 +15,7 @@ import AssignEventsModal from '../../components/features/organizer/AssignEventsM
 
 export default function CheckinAccountsPage() {
   const queryClient = useQueryClient();
+  const userId = useSelector((state) => state.auth.user?.id);
 
   // State để quản lý modals và dữ liệu đang được chỉnh sửa
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -21,6 +24,13 @@ export default function CheckinAccountsPage() {
   const [editingStaff, setEditingStaff] = useState(null); // null: tạo mới, object: sửa
   const [assigningStaff, setAssigningStaff] = useState(null); // Nhân viên đang được gán event
   const [deletingStaff, setDeletingStaff] = useState(null); // Nhân viên đang được xóa
+
+  // 0. Fetch events (reuse cached data from MyEventsPage if available)
+  const { data: userEvents = [], isLoading: isLoadingEvents } = useQuery({
+    queryKey: ['events', 'user', userId],
+    queryFn: () => getEventsByUserId(userId),
+    enabled: !!userId,
+  });
 
   // 1. Fetch danh sách nhân viên
   const {
@@ -181,6 +191,8 @@ export default function CheckinAccountsPage() {
           isOpen={isAssignModalOpen}
           onClose={() => setIsAssignModalOpen(false)}
           staffMember={assigningStaff}
+          allEvents={userEvents}
+          isLoadingEvents={isLoadingEvents}
         />
       )}
     </div>

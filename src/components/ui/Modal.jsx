@@ -24,7 +24,7 @@ const Modal = ({
             <X className="h-5 w-5" />
           </button>
         )}
-        <h2 className="text-text-primary mb-4 text-lg font-bold">{title}</h2>
+        <h2 className="text-text-primary mb-2 text-lg font-bold">{title}</h2>
         {children}
       </div>
     </div>
