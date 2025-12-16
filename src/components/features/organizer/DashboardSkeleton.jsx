@@ -20,32 +20,87 @@ const SkeletonMetric = () => (
 export default function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Skeleton cho Key Metrics */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <SkeletonMetric />
-        <SkeletonMetric />
-        <SkeletonMetric />
+      {/* Skeleton cho Event Info Header */}
+      <div className="border-border-default bg-background-secondary rounded-lg border p-4">
+        <SkeletonBar className="mb-2 h-6 w-1/2" />
+        <SkeletonBar className="h-4 w-1/4" />
       </div>
 
-      {/* Skeleton cho 2 Chart */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm lg:col-span-3">
-          <SkeletonBar className="mb-6 h-5 w-1/3" />
-          <SkeletonBar className="h-80 w-full" />
+      {/* Skeleton cho Key Metrics - 4 cards */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <SkeletonMetric />
         </div>
-        <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm lg:col-span-2">
-          <SkeletonBar className="mb-6 h-5 w-1/2" />
-          <SkeletonBar className="h-80 w-full" />
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <SkeletonMetric />
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <SkeletonMetric />
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <SkeletonMetric />
+        </div>
+      </div>
+
+      {/* Skeleton cho Charts Grid */}
+      <div className="flex flex-col gap-6">
+        {/* Revenue Chart */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <SkeletonBar className="mb-2 h-5 w-1/3" />
+          <div className="mb-6 flex flex-wrap gap-4">
+            <SkeletonBar className="h-4 w-40" />
+            <SkeletonBar className="h-4 w-36" />
+            <SkeletonBar className="h-4 w-32" />
+          </div>
+          <SkeletonBar className="h-[320px] w-full" />
+        </div>
+
+        {/* Ticket Breakdown Card */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <SkeletonBar className="mb-4 h-5 w-1/2" />
+          <div className="mb-6 grid grid-cols-4 gap-4">
+            <div className="rounded-lg bg-gray-50 p-3">
+              <SkeletonBar className="mx-auto mb-2 h-5 w-5" />
+              <SkeletonBar className="mx-auto mb-1 h-6 w-12" />
+              <SkeletonBar className="mx-auto h-3 w-16" />
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <SkeletonBar className="mx-auto mb-2 h-5 w-5" />
+              <SkeletonBar className="mx-auto mb-1 h-6 w-12" />
+              <SkeletonBar className="mx-auto h-3 w-16" />
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <SkeletonBar className="mx-auto mb-2 h-5 w-5" />
+              <SkeletonBar className="mx-auto mb-1 h-6 w-12" />
+              <SkeletonBar className="mx-auto h-3 w-16" />
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <SkeletonBar className="mx-auto mb-2 h-5 w-5" />
+              <SkeletonBar className="mx-auto mb-1 h-6 w-12" />
+              <SkeletonBar className="mx-auto h-3 w-16" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <SkeletonBar className="h-[320px] w-full" />
+            <div className="space-y-3">
+              <SkeletonBar className="h-20 w-full" />
+              <SkeletonBar className="h-20 w-full" />
+              <SkeletonBar className="h-20 w-full" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Skeleton cho Recent Orders */}
       <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
-        <SkeletonBar className="mb-6 h-5 w-1/4" />
+        <div className="mb-4 flex items-center justify-between">
+          <SkeletonBar className="h-5 w-1/4" />
+          <SkeletonBar className="h-4 w-20" />
+        </div>
         <div className="space-y-4">
-          <SkeletonBar className="h-10 w-full" />
-          <SkeletonBar className="h-10 w-full" />
-          <SkeletonBar className="h-10 w-full" />
+          <SkeletonBar className="h-16 w-full" />
+          <SkeletonBar className="h-16 w-full" />
+          <SkeletonBar className="h-16 w-full" />
         </div>
       </div>
     </div>

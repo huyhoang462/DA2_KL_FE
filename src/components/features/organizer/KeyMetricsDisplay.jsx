@@ -35,30 +35,37 @@ const MetricItem = ({ icon: Icon, label, value, trend, subValue }) => (
 export default function KeyMetricsDisplay({ data }) {
   const salesRate = ((data.ticketsSold / data.totalTickets) * 100).toFixed(1);
   const avgOrderValue =
-    data.orderCount > 0 ? data.grossRevenue / data.orderCount : 0;
+    data.totalOrders > 0 ? data.totalRevenue / data.totalOrders : 0;
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <MetricItem
         icon={DollarSign}
         label="Tổng doanh thu"
-        value={`${data.grossRevenue.toLocaleString('vi-VN')}đ`}
-        trend="+12.5%"
-        subValue={`Trung bình: ${avgOrderValue.toLocaleString('vi-VN')}đ/đơn`}
+        value={`${data.totalRevenue.toLocaleString('vi-VN')}đ`}
+        subValue={`TB/đơn: ${data.revenuePerOrder.toLocaleString('vi-VN')}đ`}
       />
       <MetricItem
         icon={Ticket}
         label="Vé đã bán"
-        value={`${data.ticketsSold.toLocaleString('vi-VN')}`}
-        trend={`${salesRate}%`}
-        subValue={`Còn lại: ${(data.totalTickets - data.ticketsSold).toLocaleString('vi-VN')} vé`}
+        value={`${data.ticketsSold.toLocaleString('vi-VN')} / ${data.totalTickets.toLocaleString('vi-VN')}`}
+        subValue={`Tỷ lệ: ${salesRate}%`}
       />
       <MetricItem
         icon={ShoppingCart}
-        label="Tổng đơn hàng"
-        value={data.orderCount.toLocaleString('vi-VN')}
-        trend="+8.3%"
-        subValue={`Trung bình: ${(data.ticketsSold / data.orderCount || 0).toFixed(1)} vé/đơn`}
+        label="Đơn hàng"
+        value={data.totalOrders.toLocaleString('vi-VN')}
+        subValue={
+          data.pendingOrders > 0
+            ? `${data.pendingOrders} đang chờ`
+            : 'Không có đơn chờ'
+        }
+      />
+      <MetricItem
+        icon={TrendingUp}
+        label="Tỷ lệ chuyển đổi"
+        value={`${data.conversionRate}%`}
+        subValue={`TB: ${data.avgTicketsPerOrder} vé/đơn`}
       />
     </div>
   );

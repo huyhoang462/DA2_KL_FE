@@ -5,6 +5,28 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 export default function RecentOrdersCard({ data, eventId }) {
+  // Safety check for data
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-text-primary text-base font-semibold">
+            Đơn hàng gần đây
+          </h3>
+          <Link
+            to={`/manage/event/${eventId}/orders`}
+            className="text-primary text-sm font-medium hover:underline"
+          >
+            Xem tất cả
+          </Link>
+        </div>
+        <div className="flex h-32 items-center justify-center text-gray-500">
+          Chưa có đơn hàng nào
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">

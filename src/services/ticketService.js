@@ -15,3 +15,16 @@ export const getMyTickets = async () => {
     throw extractError(error);
   }
 };
+
+export const getTicketTypesByShowId = async (showId) => {
+  try {
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/tickets/show/${showId}/ticket-types`
+    );
+
+    console.log('TICKETTYPE của SHOW trả về: ', response.data);
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};

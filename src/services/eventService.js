@@ -85,3 +85,33 @@ export const getEventsByUserId = async (userId) => {
     throw extractError(error);
   }
 };
+
+// Dashboard APIs
+export const getDashboardOverview = async (eventId) => {
+  try {
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/events/${eventId}/dashboard/overview`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getRevenueChart = async (eventId, params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+    if (params.groupBy) queryParams.append('groupBy', params.groupBy);
+
+    const url = `${API_BASE_URL}/events/${eventId}/dashboard/revenue-chart${
+      queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
+
+    const response = await axiosInstance.get(url);
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};

@@ -14,7 +14,7 @@ import { Calendar, TrendingUp, DollarSign } from 'lucide-react';
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-lg backdrop-blur-sm">
+      <div className="border-border-default rounded-lg border bg-white px-4 py-3 shadow-lg backdrop-blur-sm">
         <div className="mb-2 flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
           <p className="text-sm font-medium text-gray-900">{`${label}`}</p>
@@ -30,43 +30,85 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function RevenueChart({ data }) {
+export default function RevenueChart({ data, summary, groupBy }) {
+  // Safety check for data
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="border-border-default rounded-xl border bg-white p-6">
+        <h3 className="mb-2 text-lg font-semibold text-gray-900">
+          Doanh thu theo {groupBy === 'hour' ? 'giờ' : 'ngày'}
+        </h3>
+        <div className="text-text-secondary flex h-[320px] items-center justify-center">
+          Chưa có dữ liệu doanh thu
+        </div>
+      </div>
+    );
+  }
+
   const formattedData = data.map((item) => ({
     ...item,
     date: new Date(item.date).toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
+      ...(groupBy === 'hour' && { hour: '2-digit', minute: '2-digit' }),
     }),
   }));
 
-  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
-  const avgDaily = totalRevenue / data.length;
-  const maxRevenue = Math.max(...data.map((item) => item.revenue));
+  const totalRevenue =
+    summary?.totalRevenue || data.reduce((sum, item) => sum + item.revenue, 0);
+  const avgDaily = summary?.avgDailyRevenue || totalRevenue / data.length;
+  const maxRevenue =
+    summary?.peakDate?.revenue || Math.max(...data.map((item) => item.revenue));
+  const peakDate = summary?.peakDate?.date
+    ? new Date(summary.peakDate.date).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+      })
+    : null;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="border-border-default rounded-xl border bg-white p-6 shadow-sm">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">
-            Doanh thu theo thời gian
+          <h3 className="text-text-primary mb-2 text-lg font-semibold">
+            Doanh thu theo {groupBy === 'hour' ? 'giờ' : 'ngày'}
           </h3>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              <span>Trung bình: {avgDaily.toLocaleString('vi-VN')}đ/ngày</span>
+              <span>
+                Trung bình: {avgDaily.toLocaleString('vi-VN')}đ/
+                {groupBy === 'hour' ? 'giờ' : 'ngày'}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              <span>Cao nhất: {maxRevenue.toLocaleString('vi-VN')}đ</span>
+              <span>
+                Cao nhất: {maxRevenue.toLocaleString('vi-VN')}đ
+                {peakDate && ` (${peakDate})`}
+              </span>
             </div>
+            {summary?.totalOrders && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Tổng: {summary.totalOrders} đơn, {summary.totalTickets} vé
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[320px] w-full">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={300}
+          minHeight={320}
+        >
           <BarChart
             data={formattedData}
             margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
