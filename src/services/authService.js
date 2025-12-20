@@ -3,6 +3,24 @@ import axios from 'axios';
 import axiosInstance from '../api/axios';
 import { extractError } from '../utils/extractError';
 
+// [MỚI] API để đồng bộ ví từ Frontend xuống Backend
+export const handleSyncWallet = async ({ walletAddress }) => {
+  try {
+    // API này cần xác thực (accessToken) nên dùng axiosInstance
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/auth/sync-wallet`,
+      {
+        walletAddress,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Sync wallet error:', error);
+    // Không throw lỗi ở đây để tránh làm gián đoạn trải nghiệm người dùng
+    // nếu việc lưu ví thất bại ngầm
+    return null;
+  }
+};
 export const handleLogin = async ({ email, password }) => {
   try {
     const response = await axiosInstance.post(`${API_BASE_URL}/auth/login`, {

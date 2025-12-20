@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { handleLogin } from '../../services/authService';
+import { handleLogin, handleSyncWallet } from '../../services/authService';
 import { useDispatch } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
 import Button from '../../components/ui/Button';
@@ -9,8 +9,12 @@ import Input from '../../components/ui/Input';
 import { validateEmail } from '../../utils/validation';
 import InputPassword from '../../components/ui/InputPassword';
 import ForgotPasswordModal from '../../components/features/auth/FogotPasswordModal';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function LoginPage() {
+  const privyData = usePrivy();
+  const { authenticated, ready, user: privyUser } = privyData;
+  console.log('🔍 [LoginPage] PRIVY OBJECT:', privyData);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState({});
@@ -43,9 +47,20 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    let data = null;
     try {
-      const data = await handleLogin({ email, password });
+      data = await handleLogin({ email, password });
+      console.log('🔥 [LoginPage] DỮ LIỆU BACKEND TRẢ VỀ:', data);
       dispatch(login(data));
+      console.log(
+        '✅ [LoginPage] Đã dispatch login, chờ PrivyJwtSyncWrapper gửi token cho Privy'
+      );
+      console.log('ℹ️ [LoginPage] Trạng thái Privy ngay sau login:', {
+        ready,
+        authenticated,
+        hasPrivyUser: !!privyUser,
+      });
+      // 2. (Tạm thời) Không gọi loginWithCustomToken vì SDK v3 không còn hàm này
       if (data.user.role === 'admin') {
         nav('/admin/dashboard', { replace: true });
       } else if (from) {
@@ -54,6 +69,8 @@ export default function LoginPage() {
         nav('/', { replace: true });
       }
     } catch (err) {
+      console.error('🔴 LỖI KHI KÍCH HOẠT VÍ:', err);
+      console.log('🔴 Token gây lỗi:', data?.privyToken);
       if (err?.status >= 400 && err?.status < 500) {
         setErrorMessage({
           error: err.message || 'Email hoặc mật khẩu không đúng!',
