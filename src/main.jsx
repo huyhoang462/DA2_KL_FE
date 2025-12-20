@@ -1,4 +1,5 @@
 import { StrictMode } from 'react';
+import { Buffer } from 'buffer';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
@@ -9,6 +10,11 @@ import { Provider } from 'react-redux';
 
 // 1. Import PrivyProvider
 import { PrivyProvider } from '@privy-io/react-auth';
+
+// Polyfill Buffer cho bundle của Privy (tránh lỗi "Buffer is not defined")
+if (!window.Buffer) {
+  window.Buffer = Buffer;
+}
 
 const queryClient = new QueryClient();
 
