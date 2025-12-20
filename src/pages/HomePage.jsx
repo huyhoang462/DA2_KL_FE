@@ -1,65 +1,118 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import BannerCarousel from '../components/features/event/BannerCarousel';
 import BannerCarouselSkeleton from '../components/ui/BannerCarouselSkeleton';
-import EventCard from '../components/ui/EventCard';
-import EventCardSkeleton from '../components/ui/EventCardSkeleton';
-import { cleanUp, getAllEvents } from '../services/eventService';
+import EventSection from '../components/features/event/EventSection';
+import {
+  getAllEvents,
+  getNewEvents,
+  getThisWeekendEvents,
+  getTrendingEvents,
+  getSellingFastEvents,
+  getEventsByCategory,
+} from '../services/eventService';
+
+// Category IDs
+const CATEGORIES = {
+  MUSIC: '68ebc64c62eda4433ee01537',
+  STAGE_ART: '68ebc84ab18508fd0c6d88c2',
+  SPORTS: '68ebc854b18508fd0c6d88c5',
+  WORKSHOP: '68ebc85eb18508fd0c6d88c8',
+  OTHER: '68ebc863b18508fd0c6d88cb',
+};
 
 const HomePage = () => {
-  const {
-    data: allEvents,
-    isLoading: isLoadingAll,
-    error: errorAll,
-  } = useQuery({
+  const { data: allEvents, isLoading: isLoadingAll } = useQuery({
     queryKey: ['events', 'all'],
     queryFn: getAllEvents,
     enabled: true,
   });
 
-  // useEffect(() => {
-  //   console.log('=== ALL EVENTS ===');
-  //   console.log('Loading:', isLoadingAll);
-  //   console.log('Error:', errorAll);
-  //   console.log('Data:', allEvents);
-  // }, [allEvents, isLoadingAll, errorAll]);
-
-  const handleCleanup = async () => {
-    try {
-      await cleanUp();
-    } catch (error) {
-      console.error('Cleanup error:', error);
-    }
-  };
-
   return (
-    <div className="container mx-auto pb-8">
+    <div className="container mx-auto pt-4 pb-8">
+      {/* Banner Section */}
       <section className="mb-12">
-        <h2 className="text-text-primary mb-6 text-2xl font-bold">
-          Sự kiện nổi bật
-        </h2>
         {isLoadingAll ? (
           <BannerCarouselSkeleton />
         ) : (
-          <BannerCarousel events={allEvents.slice(0, 6)} />
+          <>
+            <h2 className="text-text-primary mb-6 text-3xl font-bold">
+              Sự kiện nổi bật
+            </h2>
+            <BannerCarousel events={allEvents?.slice(0, 6) || []} />
+          </>
         )}
       </section>
 
-      <section>
-        <h2 className="text-text-primary mb-6 text-2xl font-bold">
-          Đang chờ bạn khám phá
-        </h2>
+      {/* New Events Section */}
+      <EventSection
+        title="Sự kiện mới nhất"
+        queryKey={['events', 'new']}
+        queryFn={() => getNewEvents(8)}
+      />
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {isLoadingAll
-            ? [...Array(8)].map((_, index) => (
-                <EventCardSkeleton key={`skeleton-${index}`} />
-              ))
-            : allEvents?.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-        </div>
-      </section>
+      {/* This Weekend Section */}
+      <EventSection
+        title="Sự kiện cuối tuần này"
+        queryKey={['events', 'this-weekend']}
+        queryFn={() => getThisWeekendEvents(8)}
+      />
+
+      {/* Trending Section */}
+      <EventSection
+        title="Đang thịnh hành"
+        badge="🔥"
+        queryKey={['events', 'trending']}
+        queryFn={() => getTrendingEvents(8)}
+      />
+
+      {/* Selling Fast Section */}
+      <EventSection
+        title="Sắp hết vé"
+        badge="⚡"
+        queryKey={['events', 'selling-fast']}
+        queryFn={() => getSellingFastEvents(8)}
+      />
+
+      {/* Music Category */}
+      <EventSection
+        title="Âm nhạc"
+        badge="🎵"
+        queryKey={['events', 'category', CATEGORIES.MUSIC]}
+        queryFn={() => getEventsByCategory(CATEGORIES.MUSIC, 8)}
+      />
+
+      {/* Stage & Art Category */}
+      <EventSection
+        title="Sân khấu & Nghệ thuật"
+        badge="🎭"
+        queryKey={['events', 'category', CATEGORIES.STAGE_ART]}
+        queryFn={() => getEventsByCategory(CATEGORIES.STAGE_ART, 8)}
+      />
+
+      {/* Sports Category */}
+      <EventSection
+        title="Thể thao"
+        badge="⚽"
+        queryKey={['events', 'category', CATEGORIES.SPORTS]}
+        queryFn={() => getEventsByCategory(CATEGORIES.SPORTS, 8)}
+      />
+
+      {/* Workshop Category */}
+      <EventSection
+        title="Workshop"
+        badge="📚"
+        queryKey={['events', 'category', CATEGORIES.WORKSHOP]}
+        queryFn={() => getEventsByCategory(CATEGORIES.WORKSHOP, 8)}
+      />
+
+      {/* Other Category */}
+      <EventSection
+        title="Khác"
+        badge="✨"
+        queryKey={['events', 'category', CATEGORIES.OTHER]}
+        queryFn={() => getEventsByCategory(CATEGORIES.OTHER, 8)}
+      />
     </div>
   );
 };

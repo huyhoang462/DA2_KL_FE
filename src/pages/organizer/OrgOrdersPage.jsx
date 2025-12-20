@@ -1,22 +1,86 @@
 // src/pages/organizer/OrgOrdersPage.jsx
 import React, { useState } from 'react';
-import { MoreVertical, Mail, XCircle, Eye, Download } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
+import {
+  MoreVertical,
+  Mail,
+  XCircle,
+  Eye,
+  Download,
+  AlertCircle,
+} from 'lucide-react';
 import DataTable from '../../components/ui/DataTable';
 import OrderDetailModal from '../../components/features/organizer/OrderDetailModal';
-import {
-  mockOrdersData,
-  orderStatusMap,
-  paymentMethodMap,
-} from '../../utils/mockData';
+import { orderService } from '../../services/orderService';
+import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { orderStatusMap, paymentMethodMap } from '../../utils/mockData';
 
 const OrgOrdersPage = () => {
+  const { id: eventId } = useParams();
+  const queryClient = useQueryClient();
+
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Filters state
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    showId: 'all',
+    startDate: null,
+    endDate: null,
+    page: 1,
+    limit: 20,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+
+  // Fetch orders with filters
+  const {
+    data: ordersResponse,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['event-orders', eventId, filters],
+    queryFn: () => orderService.getEventOrders(eventId, filters),
+    staleTime: 30 * 1000, // Cache 30 seconds
+    enabled: !!eventId,
+  });
+
+  // Cancel order mutation
+  const cancelMutation = useMutation({
+    mutationFn: (orderId) => orderService.cancelOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['event-orders', eventId]);
+      alert('Đã hủy đơn hàng thành công');
+    },
+    onError: (error) => {
+      alert(error.message || 'Có lỗi xảy ra khi hủy đơn hàng');
+    },
+  });
+
+  // Resend payment mutation
+  const resendPaymentMutation = useMutation({
+    mutationFn: (orderId) => orderService.resendPaymentLink(orderId),
+    onSuccess: () => {
+      alert('Đã gửi lại link thanh toán thành công');
+    },
+    onError: (error) => {
+      alert(error.message || 'Có lỗi xảy ra khi gửi lại link thanh toán');
+    },
+  });
+
+  const orders = ordersResponse?.orders || [];
+  const pagination = ordersResponse?.pagination || {};
+  const summary = ordersResponse?.summary || {};
 
   // ✅ Table columns configuration
   const columns = [
     {
-      key: 'id',
+      key: 'orderCode',
       header: 'Mã đơn hàng',
       sortable: true,
       render: (value) => (
@@ -26,19 +90,21 @@ const OrgOrdersPage = () => {
       ),
     },
     {
-      key: 'customerName',
+      key: 'buyer',
       header: 'Khách hàng',
       sortable: true,
       render: (value, row) => (
         <div>
-          <div className="font-medium text-gray-900">{value}</div>
-          <div className="text-sm text-gray-500">{row.customerEmail}</div>
+          <div className="font-medium text-gray-900">
+            {value?.name || 'N/A'}
+          </div>
+          <div className="text-sm text-gray-500">{value?.email || 'N/A'}</div>
         </div>
       ),
     },
     {
-      key: 'purchaseDate',
-      header: 'Ngày mua',
+      key: 'createdAt',
+      header: 'Ngày tạo',
       sortable: true,
       render: (value) => (
         <div className="text-sm">
@@ -53,7 +119,15 @@ const OrgOrdersPage = () => {
       ),
     },
     {
-      key: 'totalTickets',
+      key: 'showName',
+      header: 'Suất diễn',
+      sortable: false,
+      render: (value) => (
+        <span className="text-sm text-gray-700">{value || 'N/A'}</span>
+      ),
+    },
+    {
+      key: 'ticketCount',
       header: 'Số vé',
       sortable: true,
       render: (value) => (
@@ -83,21 +157,24 @@ const OrgOrdersPage = () => {
         const statusInfo = orderStatusMap[value];
         return (
           <span
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${statusInfo.color}`}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${statusInfo?.color || 'bg-gray-100 text-gray-800'}`}
           >
-            {statusInfo.icon} {statusInfo.label}
+            {statusInfo?.icon} {statusInfo?.label || value}
           </span>
         );
       },
     },
     {
-      key: 'paymentMethod',
+      key: 'transactions',
       header: 'Thanh toán',
       sortable: false,
-      filterable: true,
-      filterPlaceholder: 'Lọc phương thức',
-      filterDisplay: (value) => paymentMethodMap[value] || value,
-      render: (value) => paymentMethodMap[value] || value,
+      render: (value) => {
+        const latestTransaction = value?.[value.length - 1];
+        const paymentMethod = latestTransaction?.paymentMethod;
+        return paymentMethod
+          ? paymentMethodMap[paymentMethod] || paymentMethod
+          : 'N/A';
+      },
     },
   ];
 
@@ -172,34 +249,65 @@ const OrgOrdersPage = () => {
   };
 
   const handleResendEmail = (order) => {
-    // TODO: Implement resend email functionality
-    console.log('Resending email for order:', order.id);
-    alert(`Đã gửi lại email xác nhận cho đơn hàng ${order.id}`);
+    if (order.status !== 'pending') {
+      alert('Chỉ có thể gửi lại link thanh toán cho đơn hàng chờ thanh toán');
+      return;
+    }
+
+    const isExpired = new Date(order.expiresAt) < new Date();
+    if (isExpired) {
+      alert('Đơn hàng đã hết hạn, không thể gửi lại link thanh toán');
+      return;
+    }
+
+    if (confirm(`Gửi lại link thanh toán cho đơn hàng ${order.orderCode}?`)) {
+      resendPaymentMutation.mutate(order.id);
+    }
   };
 
   const handleCancelOrder = (order) => {
-    // TODO: Implement cancel order functionality
-    if (confirm(`Bạn có chắc chắn muốn hủy đơn hàng ${order.id}?`)) {
-      console.log('Cancelling order:', order.id);
-      alert(`Đã hủy đơn hàng ${order.id}`);
+    if (order.status !== 'pending') {
+      alert('Chỉ có thể hủy đơn hàng chờ thanh toán');
+      return;
+    }
+
+    if (confirm(`Bạn có chắc chắn muốn hủy đơn hàng ${order.orderCode}?`)) {
+      cancelMutation.mutate(order.id);
     }
   };
 
   const handleExportOrder = (order) => {
     // TODO: Implement export functionality
-    console.log('Exporting order:', order.id);
-    alert(`Đang xuất PDF cho đơn hàng ${order.id}`);
+    console.log('Exporting order:', order.orderCode);
+    alert(`Đang xuất PDF cho đơn hàng ${order.orderCode}`);
   };
 
-  // ✅ Summary stats
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <ErrorDisplay
+        message={error?.message || 'Không thể tải danh sách đơn hàng'}
+      />
+    );
+  }
+
+  // ✅ Summary stats from API
   const stats = {
-    total: mockOrdersData.length,
-    paid: mockOrdersData.filter((o) => o.status === 'paid').length,
-    pending: mockOrdersData.filter((o) => o.status === 'pending').length,
-    cancelled: mockOrdersData.filter((o) => o.status === 'cancelled').length,
-    totalRevenue: mockOrdersData
-      .filter((o) => o.status === 'paid')
-      .reduce((sum, o) => sum + o.totalAmount, 0),
+    total: summary.total || 0,
+    paid: summary.paid || 0,
+    pending: summary.pending || 0,
+    cancelled: summary.cancelled || 0,
+    failed: summary.failed || 0,
+    totalRevenue: summary.totalRevenue || 0,
   };
 
   return (
@@ -220,7 +328,7 @@ const OrgOrdersPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
           <div className="text-sm text-gray-600">Tổng đơn hàng</div>
@@ -242,6 +350,10 @@ const OrgOrdersPage = () => {
           <div className="text-sm text-gray-600">Đã hủy</div>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="text-2xl font-bold text-gray-600">{stats.failed}</div>
+          <div className="text-sm text-gray-600">Thất bại</div>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="text-primary text-2xl font-bold">
             {stats.totalRevenue.toLocaleString('vi-VN')}đ
           </div>
@@ -250,18 +362,16 @@ const OrgOrdersPage = () => {
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <DataTable
-          data={mockOrdersData}
-          columns={columns}
-          actions={renderActions}
-          onRowClick={handleRowClick}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          emptyMessage="Chưa có đơn hàng nào"
-        />
-      </div>
+      <DataTable
+        data={orders}
+        columns={columns}
+        actions={renderActions}
+        onRowClick={handleRowClick}
+        searchable={true}
+        filterable={true}
+        sortable={true}
+        emptyMessage="Chưa có đơn hàng nào"
+      />
 
       {/* Order Detail Modal */}
       <OrderDetailModal
@@ -270,7 +380,7 @@ const OrgOrdersPage = () => {
           setShowDetailModal(false);
           setSelectedOrder(null);
         }}
-        order={selectedOrder}
+        orderId={selectedOrder?.id}
       />
     </div>
   );

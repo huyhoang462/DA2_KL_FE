@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { cn } from '../../utils/lib';
+import { trackEventView } from '../../services/eventService';
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -18,11 +19,24 @@ const formatPrice = (price) => {
 };
 
 export default function EventCard({ event, className }) {
+  const navigate = useNavigate();
+
   if (!event) return null;
+
+  const handleClick = (e) => {
+    e.preventDefault();
+
+    // Track view
+    trackEventView(event.id);
+
+    // Navigate
+    navigate(`/event-detail/${event.id}`);
+  };
 
   return (
     <Link
       to={`/event-detail/${event.id}`}
+      onClick={handleClick}
       className={cn('group block', className)}
     >
       <div className="bg-background-secondary hover:shadow-primary/20 overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:-translate-y-1">
@@ -57,7 +71,9 @@ export default function EventCard({ event, className }) {
             <div className="flex items-start">
               <MapPin className="text-text-placeholder mt-0.5 mr-2 h-4 w-4 flex-shrink-0" />
               <span className="truncate">
-                {event.location?.address || event.location?.province?.name}
+                {event.format === 'offline'
+                  ? event.location?.address
+                  : 'Sự kiện online'}
               </span>
             </div>
           </div>

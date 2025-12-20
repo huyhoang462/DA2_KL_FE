@@ -24,7 +24,7 @@ const EventListItem = ({ event, onViewDetails }) => (
               </div>
               <div className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
-                <span>{event.location.address}</span>
+                <span>{event.location?.address}</span>
               </div>
             </div>
             <div className="text-text-secondary mt-2 flex items-center gap-4 text-xs">
