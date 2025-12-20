@@ -117,13 +117,13 @@ export default function BannerCarousel({ events }) {
         </div>
       </div>
 
-      <div className="absolute -bottom-12 left-1/2 flex -translate-x-1/2 items-center gap-4">
-        <button
+      <div className="absolute -bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-4">
+        {/* <button
           onClick={scrollPrev}
           className="bg-background-secondary hover:bg-primary cursor-pointer rounded-full p-2 shadow-md transition-colors"
         >
           <ArrowLeft className="text-text-primary h-5 w-5" />
-        </button>
+        </button> */}
 
         <div className="flex items-center justify-center gap-2">
           {scrollSnaps.map((_, index) => (
@@ -135,12 +135,12 @@ export default function BannerCarousel({ events }) {
           ))}
         </div>
 
-        <button
+        {/* <button
           onClick={scrollNext}
           className="bg-background-secondary hover:bg-primary cursor-pointer rounded-full p-2 shadow-md transition-colors"
         >
           <ArrowRight className="text-text-primary h-5 w-5" />
-        </button>
+        </button> */}
       </div>
     </div>
   );

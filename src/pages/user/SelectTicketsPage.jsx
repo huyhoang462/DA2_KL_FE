@@ -13,7 +13,10 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import TicketShowGroup from '../../components/features/buyTicket/TicketShowGroup';
 import CartSummary from '../../components/features/buyTicket/CartSummary';
 import MobileCartSummary from '../../components/features/buyTicket/MobileCartSummary';
-import { getTicketTypesByShowId } from '../../services/ticketService';
+import {
+  getTicketTypesByShowId,
+  getTicketsByShowId,
+} from '../../services/ticketService';
 
 export default function SelectTicketsPage() {
   const { id: eventId, showId } = useParams(); // ✅ Get both eventId and showId
@@ -42,6 +45,7 @@ export default function SelectTicketsPage() {
   const handleGetTicketInfo = async () => {
     try {
       await getTicketTypesByShowId(showId);
+      await getTicketsByShowId(showId);
     } catch (error) {
       console.error('GETINFO error:', error);
     }
@@ -49,6 +53,7 @@ export default function SelectTicketsPage() {
 
   // ✅ Find the specific show by showId
   const selectedShow = useMemo(() => {
+    handleGetTicketInfo();
     if (!event?.shows || !showId) return null;
     return event.shows.find((show) => (show._id || show.id) === showId);
   }, [event, showId]);

@@ -12,6 +12,7 @@ export const getAllEvents = async () => {
     throw extractError(error);
   }
 };
+
 export const cleanUp = async () => {
   try {
     const response = await axios.post(`${API_BASE_URL}/events/cleanup`);
@@ -20,6 +21,83 @@ export const cleanUp = async () => {
     return response.data;
   } catch (error) {
     throw extractError(error);
+  }
+};
+
+// Home page APIs
+export const getFeaturedEvents = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/home/featured`);
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getNewEvents = async (limit = 8) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/home/new-events`, {
+      params: { limit },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getThisWeekendEvents = async (limit = 8) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/home/this-weekend`, {
+      params: { limit },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getTrendingEvents = async (limit = 8) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/home/trending`, {
+      params: { limit },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getSellingFastEvents = async (limit = 8) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/home/selling-fast`, {
+      params: { limit },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getEventsByCategory = async (categoryId, limit = 8) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/home/category/${categoryId}`,
+      {
+        params: { limit },
+      }
+    );
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const trackEventView = async (eventId) => {
+  try {
+    await axios.post(`${API_BASE_URL}/home/event/${eventId}/view`);
+  } catch (error) {
+    // Silent fail - không cần throw error cho tracking
+    console.error('Failed to track event view:', error);
   }
 };
 
