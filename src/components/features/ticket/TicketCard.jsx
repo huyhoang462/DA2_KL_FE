@@ -1,6 +1,6 @@
 // TicketCard.jsx - Horizontal Layout
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
@@ -15,6 +15,8 @@ import {
 
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
+import { usePrivy } from '@privy-io/react-auth';
+import { QRCodeSVG } from 'qrcode.react';
 
 const STATUS_CONFIG = {
   pending: {
@@ -46,6 +48,11 @@ const STATUS_CONFIG = {
 
 export default function TicketCard({ ticket }) {
   const [showQRModal, setShowQRModal] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [loadingQR, setLoadingQR] = useState(false);
+
+  const { signMessage, user: privyUser, ready, authenticated } = usePrivy();
 
   const statusConfig = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.pending;
 
@@ -61,6 +68,83 @@ export default function TicketCard({ ticket }) {
   // Xác định icon location
   const isOnline = ticket.format === 'online';
   const LocationIcon = isOnline ? Globe : Building;
+
+  const handleExportQR = async () => {
+    try {
+      console.log('[TicketCard] Bắt đầu flow Xuất QR cho ticket:', {
+        rawTicket: ticket,
+        ticketId: ticket?._id || ticket?.id,
+        mintStatus: ticket?.mintStatus,
+      });
+
+      console.log('[TicketCard] Privy state:', {
+        ready,
+        authenticated,
+        hasPrivyUser: !!privyUser,
+        walletAddress: privyUser?.wallet?.address || null,
+      });
+
+      if (!ready) {
+        alert('Hệ thống ví đang khởi tạo, vui lòng thử lại sau vài giây.');
+        return;
+      }
+
+      if (!authenticated || !privyUser || !privyUser.wallet?.address) {
+        alert(
+          'Không tìm thấy ví Privy. Vui lòng đăng nhập lại hoặc chờ ví được tạo rồi thử lại.'
+        );
+        return;
+      }
+
+      const ticketId = ticket?._id || ticket?.id;
+      if (!ticketId) {
+        console.error('[TicketCard] Không tìm thấy ticketId (_id hoặc id)');
+        alert('Không xác định được mã vé để tạo QR.');
+        return;
+      }
+
+      setLoadingQR(true);
+
+      const timestamp = Date.now();
+      const message = `Check-in ticket ${ticketId} at timestamp ${timestamp}`;
+      console.log('[TicketCard] Message sẽ ký:', message);
+
+      const signature = await signMessage({ message });
+      console.log('[TicketCard] Đã ký xong, signature:', signature);
+
+      const payload = {
+        ticketId,
+        walletAddress: privyUser.wallet.address,
+        timestamp,
+        signature,
+      };
+
+      setQrData(JSON.stringify(payload));
+      setTimeLeft(60);
+      setShowQRModal(true);
+      setLoadingQR(false);
+    } catch (error) {
+      console.error('[TicketCard] Lỗi khi ký hoặc tạo QR:', error, {
+        code: error?.code,
+        message: error?.message,
+      });
+      setLoadingQR(false);
+      alert(
+        `Lỗi khi ký: ${error?.message || 'Bạn đã hủy ký hoặc có lỗi xảy ra.'}`
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (timeLeft > 0 && qrData && showQRModal) {
+      const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    if (timeLeft === 0 && qrData) {
+      setQrData(null);
+    }
+  }, [timeLeft, qrData, showQRModal]);
 
   return (
     <>
@@ -127,22 +211,35 @@ export default function TicketCard({ ticket }) {
                     {ticket.ticketTypeName}
                   </p>
                 </div>
+
+                {/* Mint Status */}
+                <div className="flex items-center gap-2 md:col-span-2">
+                  <QrCode className="text-primary h-4 w-4 flex-shrink-0" />
+                  <p className="text-text-primary truncate text-xs md:text-sm">
+                    Trạng thái mint:{' '}
+                    <span className="font-semibold">
+                      {ticket.mintStatus || 'Không có'}
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Bottom Section: Action Button */}
             <div className="flex items-center justify-end">
               <Button
-                onClick={() => setShowQRModal(true)}
+                onClick={handleExportQR}
                 disabled={
-                  ticket.status === 'cancelled' || ticket.status === 'expired'
+                  loadingQR ||
+                  ticket.status === 'cancelled' ||
+                  ticket.status === 'expired'
                 }
                 className="w-full md:w-auto"
                 variant="primary"
                 size="sm"
               >
                 <QrCode className="mr-2 h-4 w-4" />
-                Xuất vé
+                {loadingQR ? 'Đang tạo QR...' : 'Xuất QR'}
               </Button>
             </div>
           </div>
@@ -150,23 +247,35 @@ export default function TicketCard({ ticket }) {
       </div>
 
       {/* QR Code Modal */}
-      {showQRModal && (
+      {showQRModal && qrData && (
         <Modal
           isOpen={showQRModal}
           onClose={() => setShowQRModal(false)}
           title="Mã QR Vé"
         >
           <div className="space-y-4 text-center">
-            <div className="bg-background-secondary mx-auto flex h-64 w-64 items-center justify-center rounded-lg">
-              {ticket.qrCode ? (
-                <img
-                  src={ticket.qrCode}
-                  alt="QR Code"
-                  className="h-full w-full object-contain p-4"
-                />
-              ) : (
-                <p className="text-text-secondary">Chưa có mã QR</p>
-              )}
+            <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-white p-4 shadow-sm">
+              <h3 className="mb-2 font-bold">Mã Check-in (Dynamic)</h3>
+              <div className="flex flex-col items-center">
+                <div className="rounded border-2 border-blue-500 p-2">
+                  <QRCodeSVG value={qrData} size={200} />
+                </div>
+                <p className="mt-3 animate-pulse text-lg font-bold text-red-600">
+                  Hết hạn sau: {timeLeft}s
+                </p>
+                <p className="mt-1 max-w-[200px] text-center text-xs text-gray-500">
+                  Đưa mã này cho nhân viên soát vé. Không chụp màn hình.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowQRModal(false);
+                    setQrData(null);
+                  }}
+                  className="mt-3 rounded border border-gray-300 px-4 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
             <div className="text-text-secondary space-y-1 text-sm">
               <p className="font-semibold">{ticket.eventName}</p>
