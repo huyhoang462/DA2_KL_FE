@@ -34,10 +34,10 @@ export default function EventCard({ event, className }) {
   };
 
   return (
-    <Link
-      to={`/event-detail/${event.id}`}
+    <div
+      //  to={`/event-detail/${event.id}`}
       onClick={handleClick}
-      className={cn('group block', className)}
+      className={cn('group block cursor-pointer', className)}
     >
       <div className="bg-background-secondary hover:shadow-primary/20 overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:-translate-y-1">
         <div className="relative aspect-[16/9] overflow-hidden">
@@ -79,6 +79,6 @@ export default function EventCard({ event, className }) {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

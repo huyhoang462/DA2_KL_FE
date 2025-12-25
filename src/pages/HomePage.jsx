@@ -30,35 +30,28 @@ const HomePage = () => {
 
   return (
     <div className="container mx-auto pt-4 pb-8">
-      {/* Banner Section */}
       <section className="mb-12">
         {isLoadingAll ? (
           <BannerCarouselSkeleton />
         ) : (
           <>
-            <h2 className="text-text-primary mb-6 text-3xl font-bold">
-              Sự kiện nổi bật
-            </h2>
             <BannerCarousel events={allEvents?.slice(0, 6) || []} />
           </>
         )}
       </section>
 
-      {/* New Events Section */}
       <EventSection
         title="Sự kiện mới nhất"
         queryKey={['events', 'new']}
         queryFn={() => getNewEvents(8)}
       />
 
-      {/* This Weekend Section */}
       <EventSection
         title="Sự kiện cuối tuần này"
         queryKey={['events', 'this-weekend']}
         queryFn={() => getThisWeekendEvents(8)}
       />
 
-      {/* Trending Section */}
       <EventSection
         title="Đang thịnh hành"
         badge="🔥"
@@ -66,7 +59,6 @@ const HomePage = () => {
         queryFn={() => getTrendingEvents(8)}
       />
 
-      {/* Selling Fast Section */}
       <EventSection
         title="Sắp hết vé"
         badge="⚡"
@@ -74,7 +66,6 @@ const HomePage = () => {
         queryFn={() => getSellingFastEvents(8)}
       />
 
-      {/* Music Category */}
       <EventSection
         title="Âm nhạc"
         badge="🎵"
@@ -82,7 +73,6 @@ const HomePage = () => {
         queryFn={() => getEventsByCategory(CATEGORIES.MUSIC, 8)}
       />
 
-      {/* Stage & Art Category */}
       <EventSection
         title="Sân khấu & Nghệ thuật"
         badge="🎭"
@@ -90,7 +80,6 @@ const HomePage = () => {
         queryFn={() => getEventsByCategory(CATEGORIES.STAGE_ART, 8)}
       />
 
-      {/* Sports Category */}
       <EventSection
         title="Thể thao"
         badge="⚽"
@@ -98,7 +87,6 @@ const HomePage = () => {
         queryFn={() => getEventsByCategory(CATEGORIES.SPORTS, 8)}
       />
 
-      {/* Workshop Category */}
       <EventSection
         title="Workshop"
         badge="📚"
@@ -106,7 +94,6 @@ const HomePage = () => {
         queryFn={() => getEventsByCategory(CATEGORIES.WORKSHOP, 8)}
       />
 
-      {/* Other Category */}
       <EventSection
         title="Khác"
         badge="✨"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import Modal from '../../ui/Modal';
@@ -12,7 +12,7 @@ import {
   Tag,
   DollarSign,
   X,
-  AlertCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../../utils/lib';
 import { getAllCategories } from '../../../services/eventService';
@@ -20,60 +20,39 @@ import { getAllCategories } from '../../../services/eventService';
 const Section = ({ title, icon, children, className = '' }) => (
   <div
     className={cn(
-      'border-border-default mb-4 border-b pb-4 last:border-b-0',
+      'border-border-default mb-4 border-b pb-4 last:mb-0 last:border-b-0 last:pb-0',
       className
     )}
   >
-    <div className="mb-3 flex items-center gap-2">
+    <div className="mb-2.5 flex items-center gap-1.5">
       {icon}
-      <h3 className="text-text-primary text-sm font-semibold">{title}</h3>
+      <h3 className="text-text-primary text-xs font-semibold tracking-wide uppercase">
+        {title}
+      </h3>
     </div>
     {children}
   </div>
 );
 
-const CategoryChip = ({ label, selected, onClick }) => (
+const Chip = ({ label, selected, onClick, icon: Icon }) => (
   <button
     type="button"
     onClick={onClick}
     className={cn(
-      'inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all duration-200',
+      'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
       selected
         ? 'bg-primary text-primary-foreground border-primary'
         : 'bg-background-secondary text-text-secondary border-border-default hover:border-primary hover:text-primary'
     )}
   >
-    {selected && <Check className="h-3 w-3" />}
+    {Icon && <Icon className="h-3 w-3" />}
     <span>{label}</span>
+    {selected && <Check className="ml-0.5 h-2.5 w-2.5" />}
   </button>
-);
-
-const LocationOption = ({ location, selected, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      'flex w-full cursor-pointer items-center gap-2 rounded-md border p-2 text-left text-xs transition-all duration-200',
-      selected
-        ? 'bg-primary text-primary-foreground border-primary'
-        : 'bg-background-secondary text-text-primary border-border-default hover:border-primary'
-    )}
-  >
-    <MapPin className="h-3 w-3 flex-shrink-0 text-current" />
-    <span className="truncate font-medium">{location.name}</span>
-    {selected && <Check className="ml-auto h-3 w-3 flex-shrink-0" />}
-  </button>
-);
-
-const ErrorMessage = ({ message }) => (
-  <div className="mt-1 flex items-center gap-1.5">
-    <AlertCircle className="text-destructive h-3 w-3 flex-shrink-0" />
-    <span className="text-destructive text-xs">{message}</span>
-  </div>
 );
 
 const staticLocations = [
-  { code: 79, name: 'TP. HCM' },
+  { code: 79, name: 'TP.HCM' },
   { code: 1, name: 'Hà Nội' },
   { code: 48, name: 'Đà Nẵng' },
   { code: 0, name: 'Khác' },
@@ -81,11 +60,44 @@ const staticLocations = [
 
 const defaultFilters = {
   category: [],
-  cityCode: '',
+  city: '',
   minPrice: 0,
   maxPrice: 5000000,
   startDate: '',
   endDate: '',
+};
+
+const getDateShortcuts = () => {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const thisWeekend = new Date(today);
+  const daysUntilSaturday = (6 - today.getDay() + 7) % 7;
+  thisWeekend.setDate(today.getDate() + daysUntilSaturday);
+
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
+
+  const thisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  return [
+    { label: 'Hôm nay', date: today.toISOString().split('T')[0] },
+    { label: 'Ngày mai', date: tomorrow.toISOString().split('T')[0] },
+    { label: 'Cuối tuần', date: thisWeekend.toISOString().split('T')[0] },
+    { label: 'Tuần sau', date: nextWeek.toISOString().split('T')[0] },
+    { label: 'Tháng này', date: thisMonth.toISOString().split('T')[0] },
+  ];
+};
+
+const formatPrice = (value) => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `${Math.round(value / 1000)}K`;
+  return value.toString();
+};
+
+const formatPriceInput = (value) => {
+  return value === 0 ? '' : value.toLocaleString('vi-VN');
 };
 
 export default function SearchFilter({ initialFilters, onApply }) {
@@ -93,10 +105,21 @@ export default function SearchFilter({ initialFilters, onApply }) {
   const [localFilters, setLocalFilters] = useState(
     initialFilters || defaultFilters
   );
-  const [errors, setErrors] = useState({});
+  const [priceMode, setPriceMode] = useState('range'); // 'range', 'min', 'max'
 
   useEffect(() => {
     setLocalFilters(initialFilters || defaultFilters);
+    // Detect price mode from initial filters
+    if (initialFilters?.minPrice > 0 && initialFilters?.maxPrice >= 5000000) {
+      setPriceMode('min');
+    } else if (
+      initialFilters?.minPrice === 0 &&
+      initialFilters?.maxPrice < 5000000
+    ) {
+      setPriceMode('max');
+    } else {
+      setPriceMode('range');
+    }
   }, [initialFilters]);
 
   const { data: availableCategories = [], isLoading } = useQuery({
@@ -105,37 +128,6 @@ export default function SearchFilter({ initialFilters, onApply }) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const validateFilters = (filters) => {
-    const newErrors = {};
-
-    if (filters.startDate && filters.endDate) {
-      const startDate = new Date(filters.startDate);
-      const endDate = new Date(filters.endDate);
-      if (startDate > endDate) {
-        newErrors.dateRange = 'Ngày bắt đầu phải trước ngày kết thúc';
-      }
-    }
-
-    if (filters.minPrice < 0) {
-      newErrors.minPrice = 'Giá không được âm';
-    }
-
-    if (filters.maxPrice < 0) {
-      newErrors.maxPrice = 'Giá không được âm';
-    }
-
-    if (filters.maxPrice > 10000000) {
-      newErrors.maxPrice = 'Giá tối đa là 10 triệu VNĐ';
-    }
-
-    if (filters.minPrice >= filters.maxPrice && filters.maxPrice > 0) {
-      newErrors.priceRange = 'Giá từ phải nhỏ hơn giá đến';
-    }
-
-    return Object.fromEntries(
-      Object.entries(newErrors).filter(([_, value]) => value !== undefined)
-    );
-  };
   const handleToggleCategory = (categoryId) => {
     setLocalFilters((prev) => {
       const newCategories = prev.category.includes(categoryId)
@@ -148,94 +140,63 @@ export default function SearchFilter({ initialFilters, onApply }) {
   const handleLocationSelect = (cityCode) => {
     setLocalFilters((prev) => ({
       ...prev,
-      cityCode: prev.cityCode === cityCode ? '' : cityCode,
+      city: prev.city === cityCode ? '' : cityCode,
     }));
   };
 
-  const handleDateChange = (field, value) => {
-    const newFilters = { ...localFilters, [field]: value };
-    setLocalFilters(newFilters);
+  const handleDateShortcut = (dateStr) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      startDate: dateStr,
+      endDate: '',
+    }));
+  };
 
-    if (errors.dateRange) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.dateRange;
-        return newErrors;
-      });
+  const handlePriceModeChange = (mode) => {
+    setPriceMode(mode);
+    if (mode === 'min') {
+      setLocalFilters((prev) => ({ ...prev, maxPrice: 5000000 }));
+    } else if (mode === 'max') {
+      setLocalFilters((prev) => ({ ...prev, minPrice: 0 }));
     }
-
-    const newErrors = validateFilters(newFilters);
-
-    setErrors((prev) => {
-      const filteredNewErrors = Object.fromEntries(
-        Object.entries(newErrors).filter(([_, value]) => value !== undefined)
-      );
-      return { ...prev, ...filteredNewErrors };
-    });
   };
 
   const handlePriceChange = (field, value) => {
-    const numValue = Number(value) || 0;
-    const newFilters = { ...localFilters, [field]: numValue };
-    setLocalFilters(newFilters);
-
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[field];
-      delete newErrors.priceRange;
-      return newErrors;
-    });
-
-    const newErrors = validateFilters(newFilters);
-
-    setErrors((prev) => {
-      const filteredNewErrors = Object.fromEntries(
-        Object.entries(newErrors).filter(([_, value]) => value !== undefined)
-      );
-      return { ...prev, ...filteredNewErrors };
-    });
+    const numValue = parseInt(value.replace(/\D/g, '')) || 0;
+    setLocalFilters((prev) => ({ ...prev, [field]: numValue }));
   };
 
   const handleApply = () => {
-    const validationErrors = validateFilters(localFilters);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     onApply(localFilters);
     setIsOpen(false);
   };
 
   const handleReset = () => {
     setLocalFilters(defaultFilters);
-    setErrors({});
-    onApply(defaultFilters);
-    setIsOpen(false);
+    setPriceMode('range');
   };
 
-  const activeFilterCount = Object.entries(localFilters).filter(
-    ([key, value]) => {
-      if (key === 'minPrice' && value === 0) return false;
-      if (key === 'maxPrice' && value === 5000000) return false;
-      if (Array.isArray(value)) return value.length > 0;
-      return !!value;
-    }
-  ).length;
+  const activeFilterCount = (() => {
+    let count = 0;
+    if (localFilters.category.length > 0) count++;
+    if (localFilters.city) count++;
+    if (localFilters.startDate || localFilters.endDate) count++;
+    if (localFilters.minPrice > 0 || localFilters.maxPrice < 5000000) count++;
+    return count;
+  })();
 
   return (
     <>
       <Button
         onClick={() => setIsOpen(true)}
         variant="outline"
-        className="relative flex items-center gap-2"
+        className="relative gap-1.5"
         size="sm"
       >
-        <Filter className="h-4 w-4" />
-        <span>Lọc</span>
+        <Filter className="h-3.5 w-3.5" />
+        <span className="hidden text-xs sm:inline">Lọc</span>
         {activeFilterCount > 0 && (
-          <span className="bg-primary text-primary-foreground absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold">
+          <span className="bg-primary text-primary-foreground absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold">
             {activeFilterCount}
           </span>
         )}
@@ -244,25 +205,26 @@ export default function SearchFilter({ initialFilters, onApply }) {
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Bộ lọc tìm kiếm"
+        title="Bộ lọc"
         xButton={true}
-        maxWidth="max-w-xl"
+        maxWidth="max-w-lg"
       >
-        <div className="flex w-full flex-col">
-          <div className="max-h-96 space-y-0 overflow-y-auto">
+        <div className="flex flex-col">
+          <div className="max-h-[70vh] overflow-y-auto">
+            {/* Categories */}
             <Section
               title="Thể loại"
-              icon={<Tag className="text-primary h-4 w-4" />}
+              icon={<Tag className="text-primary h-3.5 w-3.5" />}
             >
               {isLoading ? (
-                <div className="text-text-secondary flex items-center gap-2 text-sm">
+                <div className="text-text-secondary flex items-center gap-2 py-4 text-xs">
                   <div className="border-primary h-3 w-3 animate-spin rounded-full border-2 border-t-transparent" />
                   <span>Đang tải...</span>
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {availableCategories.map((cat) => (
-                    <CategoryChip
+                    <Chip
                       key={cat.id}
                       label={cat.name}
                       selected={localFilters.category.includes(cat.id)}
@@ -273,131 +235,217 @@ export default function SearchFilter({ initialFilters, onApply }) {
               )}
             </Section>
 
-            {/* Địa điểm */}
+            {/* Location */}
             <Section
-              title="Thành phố"
-              icon={<MapPin className="text-primary h-4 w-4" />}
+              title="Địa điểm"
+              icon={<MapPin className="text-primary h-3.5 w-3.5" />}
             >
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {staticLocations.map((location) => (
-                  <LocationOption
+                  <Chip
                     key={location.code}
-                    location={location}
-                    selected={localFilters.cityCode === location.code}
+                    label={location.name}
+                    icon={MapPin}
+                    selected={localFilters.city === location.code}
                     onClick={() => handleLocationSelect(location.code)}
                   />
                 ))}
               </div>
             </Section>
 
-            {/* Thời gian */}
+            {/* Date Range */}
             <Section
               title="Thời gian"
-              icon={<Calendar className="text-primary h-4 w-4" />}
+              icon={<Calendar className="text-primary h-3.5 w-3.5" />}
             >
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Input
-                    type="date"
-                    value={localFilters.startDate}
-                    onChange={(e) =>
-                      handleDateChange('startDate', e.target.value)
-                    }
-                    inputClassName={cn(
-                      'text-xs',
-                      errors.dateRange &&
-                        'border-destructive focus:border-destructive'
+              {/* Quick Select */}
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {getDateShortcuts().map((shortcut) => (
+                  <button
+                    key={shortcut.label}
+                    type="button"
+                    onClick={() => handleDateShortcut(shortcut.date)}
+                    className={cn(
+                      'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      localFilters.startDate === shortcut.date
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background-secondary text-text-secondary border-border-default hover:border-primary'
                     )}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Input
-                    type="date"
-                    value={localFilters.endDate}
-                    onChange={(e) =>
-                      handleDateChange('endDate', e.target.value)
-                    }
-                    inputClassName={cn(
-                      'text-xs',
-                      errors.dateRange &&
-                        'border-destructive focus:border-destructive'
-                    )}
-                  />
-                </div>
+                  >
+                    {shortcut.label}
+                  </button>
+                ))}
               </div>
-              {errors.dateRange && <ErrorMessage message={errors.dateRange} />}
+
+              {/* Custom Date Range */}
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  type="date"
+                  value={localFilters.startDate}
+                  onChange={(e) =>
+                    setLocalFilters((prev) => ({
+                      ...prev,
+                      startDate: e.target.value,
+                    }))
+                  }
+                  placeholder="Từ ngày"
+                  inputClassName="text-xs h-8"
+                />
+                <Input
+                  type="date"
+                  value={localFilters.endDate}
+                  onChange={(e) =>
+                    setLocalFilters((prev) => ({
+                      ...prev,
+                      endDate: e.target.value,
+                    }))
+                  }
+                  placeholder="Đến ngày"
+                  inputClassName="text-xs h-8"
+                />
+              </div>
             </Section>
 
-            {/* Khoảng giá */}
+            {/* Price Range */}
             <Section
               title="Khoảng giá"
-              icon={<DollarSign className="text-primary h-4 w-4" />}
+              icon={<DollarSign className="text-primary h-3.5 w-3.5" />}
             >
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              {/* Price Mode Toggle */}
+              <div className="mb-3 flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => handlePriceModeChange('range')}
+                  className={cn(
+                    'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
+                    priceMode === 'range'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background-secondary text-text-secondary border-border-default'
+                  )}
+                >
+                  Khoảng
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePriceModeChange('min')}
+                  className={cn(
+                    'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
+                    priceMode === 'min'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background-secondary text-text-secondary border-border-default'
+                  )}
+                >
+                  Từ ≥
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePriceModeChange('max')}
+                  className={cn(
+                    'flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors',
+                    priceMode === 'max'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background-secondary text-text-secondary border-border-default'
+                  )}
+                >
+                  Đến ≤
+                </button>
+              </div>
+
+              {/* Price Inputs */}
+              {priceMode === 'range' && (
+                <div className="grid grid-cols-2 gap-2">
                   <Input
-                    type="number"
-                    min="0"
-                    value={localFilters.minPrice}
+                    type="text"
+                    value={formatPriceInput(localFilters.minPrice)}
                     onChange={(e) =>
                       handlePriceChange('minPrice', e.target.value)
                     }
-                    placeholder="0"
-                    inputClassName={cn(
-                      'text-xs',
-                      (errors.minPrice || errors.priceRange) &&
-                        'border-destructive focus:border-destructive'
-                    )}
+                    placeholder="Từ"
+                    inputClassName="text-xs h-8"
                   />
-                  {errors.minPrice && (
-                    <ErrorMessage message={errors.minPrice} />
-                  )}
-                </div>
-                <div className="space-y-1">
                   <Input
-                    type="number"
-                    min="0"
-                    max="10000000"
-                    value={localFilters.maxPrice}
+                    type="text"
+                    value={formatPriceInput(localFilters.maxPrice)}
                     onChange={(e) =>
                       handlePriceChange('maxPrice', e.target.value)
                     }
-                    placeholder="5,000,000"
-                    inputClassName={cn(
-                      'text-xs',
-                      (errors.maxPrice || errors.priceRange) &&
-                        'border-destructive focus:border-destructive'
-                    )}
+                    placeholder="Đến"
+                    inputClassName="text-xs h-8"
                   />
-                  {errors.maxPrice && (
-                    <ErrorMessage message={errors.maxPrice} />
-                  )}
                 </div>
-              </div>
-              {errors.priceRange && (
-                <ErrorMessage message={errors.priceRange} />
               )}
+
+              {priceMode === 'min' && (
+                <Input
+                  type="text"
+                  value={formatPriceInput(localFilters.minPrice)}
+                  onChange={(e) =>
+                    handlePriceChange('minPrice', e.target.value)
+                  }
+                  placeholder="Giá từ"
+                  inputClassName="text-xs h-8"
+                />
+              )}
+
+              {priceMode === 'max' && (
+                <Input
+                  type="text"
+                  value={formatPriceInput(localFilters.maxPrice)}
+                  onChange={(e) =>
+                    handlePriceChange('maxPrice', e.target.value)
+                  }
+                  placeholder="Giá đến"
+                  inputClassName="text-xs h-8"
+                />
+              )}
+
+              {/* Quick Price Options */}
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {[0, 100000, 200000, 500000, 1000000].map((price) => (
+                  <button
+                    key={price}
+                    type="button"
+                    onClick={() => {
+                      if (priceMode === 'min' || priceMode === 'range') {
+                        setLocalFilters((prev) => ({
+                          ...prev,
+                          minPrice: price,
+                        }));
+                      }
+                      if (priceMode === 'max' || priceMode === 'range') {
+                        setLocalFilters((prev) => ({
+                          ...prev,
+                          maxPrice: price,
+                        }));
+                      }
+                    }}
+                    className="border-border-default bg-background-secondary text-text-secondary hover:border-primary hover:text-primary rounded-md border px-2 py-0.5 text-xs transition-colors"
+                  >
+                    {price === 0 ? 'Miễn phí' : formatPrice(price)}
+                  </button>
+                ))}
+              </div>
             </Section>
           </div>
 
           {/* Footer */}
-          <div className="mt-4 flex items-center justify-between border-t pt-4">
+          <div className="border-border-default mt-4 flex items-center justify-between gap-2 border-t pt-3">
             <Button
               onClick={handleReset}
               variant="outline"
               size="sm"
-              className="text-text-secondary text-xs"
+              className="h-8 text-xs"
             >
               <X className="mr-1 h-3 w-3" />
-              Xóa tất cả
+              Xóa
             </Button>
             <Button
               onClick={handleApply}
               size="sm"
-              className="px-6 text-xs"
-              disabled={Object.keys(errors).length > 0}
+              className="h-8 px-6 text-xs"
             >
               Áp dụng
+              {activeFilterCount > 0 && ` (${activeFilterCount})`}
             </Button>
           </div>
         </div>
