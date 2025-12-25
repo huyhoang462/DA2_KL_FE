@@ -4,9 +4,12 @@ import { Loader2 } from 'lucide-react';
 
 const variants = {
   default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+  primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
   success: 'bg-success text-success-foreground hover:bg-success-hover',
   destructive:
     'bg-destructive text-destructive-foreground hover:bg-destructive-hover',
+  warning: 'bg-warning text-white hover:bg-warning/90',
+  info: 'bg-blue-500 text-white hover:bg-blue-600',
   outline: 'border border-border bg-transparent hover:bg-accent-hover',
   secondary: 'bg-foreground text-text-primary hover:bg-accent-hover',
   ghost: 'bg-transparent hover:bg-accent-hover',
@@ -16,7 +19,7 @@ const variants = {
 
 const sizes = {
   default: 'h-10 px-4 py-2',
-  sm: 'h-9 px-3',
+  sm: 'h-9 px-2.5',
   lg: 'h-11 px-8',
 };
 

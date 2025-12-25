@@ -19,9 +19,10 @@ import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
 import LoadingSpinner from '../../ui/LoadingSpinner';
 import ConfirmModal from '../../ui/ConfirmModal';
+import RejectModal from '../../ui/RejectModal';
 import {
-  getEventById,
-  updateEventStatus,
+  getAdminEventById,
+  updateEventStatusAdmin,
 } from '../../../services/adminService';
 
 // Helper function để format location
@@ -47,6 +48,7 @@ const formatLocation = (location) => {
 const EventReviewModal = ({ isOpen, onClose, eventId }) => {
   const queryClient = useQueryClient();
   const [confirmAction, setConfirmAction] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   const {
     data: event,
@@ -54,16 +56,19 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
     error,
   } = useQuery({
     queryKey: ['eventDetails', eventId],
-    queryFn: () => getEventById(eventId),
+    queryFn: () => getAdminEventById(eventId),
     enabled: isOpen && !!eventId,
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ eventId, status }) => updateEventStatus(eventId, status),
+    mutationFn: ({ eventId, status, reason }) =>
+      updateEventStatusAdmin(eventId, status, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries(['pendingEvents']);
+      queryClient.invalidateQueries(['adminEvents']);
+      queryClient.invalidateQueries(['eventDetails', eventId]);
       onClose();
       setConfirmAction(null);
+      setShowRejectModal(false);
     },
     onError: (error) => {
       console.error('Update status failed:', error);
@@ -71,12 +76,20 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
   });
 
   const handleStatusAction = (action) => {
-    setConfirmAction(action);
+    if (action === 'reject') {
+      setShowRejectModal(true);
+    } else {
+      setConfirmAction(action);
+    }
   };
 
   const handleConfirmAction = () => {
     const status = confirmAction === 'approve' ? 'upcoming' : 'rejected';
     updateStatusMutation.mutate({ eventId, status });
+  };
+
+  const handleRejectConfirm = (reason) => {
+    updateStatusMutation.mutate({ eventId, status: 'rejected', reason });
   };
 
   if (isLoading) {
@@ -148,11 +161,23 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
               <div className="space-y-4">
                 {/* Event Image */}
                 <div className="flex justify-center">
-                  <img
-                    src={event.bannerImageUrl}
-                    alt={event.name}
-                    className="h-48 w-full max-w-xl rounded-lg object-cover shadow-md"
-                  />
+                  {event.bannerImageUrl ? (
+                    <img
+                      src={event.bannerImageUrl}
+                      alt={event.name}
+                      className="h-48 w-full max-w-xl rounded-lg object-cover shadow-md"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="192" viewBox="0 0 600 192"%3E%3Crect width="600" height="192" fill="%23374151"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%239CA3AF"%3EImage Not Available%3C/text%3E%3C/svg%3E';
+                      }}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="bg-background-primary flex h-48 w-full max-w-xl items-center justify-center rounded-lg">
+                      <Calendar className="text-text-secondary h-16 w-16" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Event Title & Meta */}
@@ -404,40 +429,92 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
               )}
             </div>
 
-            {/* 6. Action Buttons - Sticky bottom */}
-            <div className="border-border-default bg-background-secondary sticky bottom-0 rounded-lg border p-4 shadow-lg">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-text-secondary">
-                  <p className="font-medium">
-                    🔍 Sự kiện này đang chờ phê duyệt
-                  </p>
-                  <p className="text-xs">
-                    Hãy xem xét kỹ lưỡng trước khi đưa ra quyết định
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => handleStatusAction('reject')}
-                    variant="destructive"
-                    size="lg"
-                    className="flex flex-1 items-center gap-2 sm:flex-none"
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <X className="h-4 w-4" />
-                    Từ chối
-                  </Button>
-                  <Button
-                    onClick={() => handleStatusAction('approve')}
-                    size="lg"
-                    className="flex flex-1 items-center gap-2 sm:flex-none"
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <Check className="h-4 w-4" />
-                    Phê duyệt
-                  </Button>
+            {/* 6. Action Buttons - Only show for pending status */}
+            {event.status === 'pending' && (
+              <div className="border-border-default bg-background-secondary rounded-lg border p-4 shadow-lg">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-text-secondary">
+                    <p className="font-medium">
+                      🔍 Sự kiện này đang chờ phê duyệt
+                    </p>
+                    <p className="text-xs">
+                      Hãy xem xét kỹ lưỡng trước khi đưa ra quyết định
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleStatusAction('reject')}
+                      variant="destructive"
+                      size="lg"
+                      className="flex flex-1 items-center gap-2 sm:flex-none"
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      <X className="h-4 w-4" />
+                      Từ chối
+                    </Button>
+                    <Button
+                      onClick={() => handleStatusAction('approve')}
+                      size="lg"
+                      className="flex flex-1 items-center gap-2 sm:flex-none"
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      <Check className="h-4 w-4" />
+                      Phê duyệt
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Status info for non-pending events */}
+            {event.status !== 'pending' && (
+              <div className="border-border-default bg-background-secondary rounded-lg border p-6">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="text-text-secondary text-sm font-medium">
+                      Trạng thái hiện tại:
+                    </div>
+                    <div>
+                      {event.status === 'upcoming' && (
+                        <span className="bg-success/10 text-success border-success/30 inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold">
+                          ✓ Đã duyệt
+                        </span>
+                      )}
+                      {event.status === 'ongoing' && (
+                        <span className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm font-semibold text-blue-500">
+                          ● Đang diễn ra
+                        </span>
+                      )}
+                      {event.status === 'rejected' && (
+                        <span className="bg-destructive/10 text-destructive border-destructive/30 inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold">
+                          ✕ Đã từ chối
+                        </span>
+                      )}
+                      {event.status === 'cancelled' && (
+                        <span className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 text-sm font-semibold text-red-500">
+                          ✕ Đã hủy
+                        </span>
+                      )}
+                      {event.status === 'completed' && (
+                        <span className="inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-sm font-semibold text-purple-500">
+                          ✓ Hoàn thành
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {event.rejectionReason && (
+                    <div className="bg-background-primary w-full rounded-lg p-4">
+                      <p className="text-text-secondary mb-1 text-xs font-medium uppercase">
+                        Lý do từ chối:
+                      </p>
+                      <p className="text-text-primary text-sm leading-relaxed">
+                        {event.rejectionReason}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Modal>
@@ -481,6 +558,14 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
         onCancel={() => setConfirmAction(null)}
         confirmText={confirmAction === 'approve' ? 'Phê duyệt' : 'Từ chối'}
         confirmVariant={confirmAction === 'approve' ? 'success' : 'destructive'}
+        isLoading={updateStatusMutation.isPending}
+      />
+
+      {/* Reject Modal with Reason Input */}
+      <RejectModal
+        isOpen={showRejectModal}
+        onConfirm={handleRejectConfirm}
+        onCancel={() => setShowRejectModal(false)}
         isLoading={updateStatusMutation.isPending}
       />
     </>

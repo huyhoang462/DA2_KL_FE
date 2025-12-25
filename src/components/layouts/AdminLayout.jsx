@@ -48,11 +48,11 @@ const AdminLayout = () => {
       icon: Calendar,
       path: '/admin/events',
     },
-    {
-      label: 'Duyệt sự kiện',
-      icon: UserCheck,
-      path: '/admin/event-approvals',
-    },
+    // {
+    //   label: 'Duyệt sự kiện',
+    //   icon: UserCheck,
+    //   path: '/admin/event-approvals',
+    // },
     {
       label: 'Báo cáo & Thống kê',
       icon: BarChart3,
@@ -63,11 +63,11 @@ const AdminLayout = () => {
       icon: CreditCard,
       path: '/admin/transactions',
     },
-    {
-      label: 'Danh mục',
-      icon: FileText,
-      path: '/admin/categories',
-    },
+    // {
+    //   label: 'Danh mục',
+    //   icon: FileText,
+    //   path: '/admin/categories',
+    // },
     {
       label: 'Cài đặt',
       icon: Settings,

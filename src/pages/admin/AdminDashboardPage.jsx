@@ -5,186 +5,237 @@ import {
   Calendar,
   DollarSign,
   TrendingUp,
-  Eye,
-  UserCheck,
-  AlertTriangle,
+  Ticket,
+  CheckCircle,
+  Clock,
+  XCircle,
+  BarChart3,
+  Activity,
+  PieChart,
 } from 'lucide-react';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import DashboardSkeleton from '../../components/ui/DashboardSkeleton';
+import { getDashboardOverview } from '../../services/adminService';
+import DashboardAlertCard from '../../components/features/admin/DashboardAlertCard';
+import TopEventCard from '../../components/features/admin/TopEventCard';
+import {
+  PendingEventsList,
+  TransactionsList,
+  NewUsersList,
+} from '../../components/features/admin/RecentActivityList';
+import RevenueChart from '../../components/features/admin/RevenueChart';
+import UserRegistrationChart from '../../components/features/admin/UserRegistrationChart';
+import CategoryDistributionChart from '../../components/features/admin/CategoryDistributionChart';
 
-const StatCard = ({ title, value, change, icon: Icon, color = 'primary' }) => (
-  <div className="bg-background-secondary border-border-default rounded-lg border p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-text-secondary text-sm font-medium">{title}</p>
-        <p className="text-text-primary text-2xl font-bold">{value}</p>
-        {change && (
-          <p
-            className={`text-sm font-medium ${change > 0 ? 'text-green-600' : 'text-red-600'}`}
+const StatCard = ({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color = 'primary',
+  trend,
+}) => (
+  <div className="bg-background-secondary border-border-default group rounded-lg border p-6 transition-all hover:shadow-lg">
+    <div className="flex items-start justify-between">
+      <div className="flex-1">
+        <p className="text-text-secondary mb-1 text-sm font-medium">{title}</p>
+        <p className="text-text-primary mb-2 text-3xl font-bold">{value}</p>
+        {subtitle && <p className="text-text-secondary text-sm">{subtitle}</p>}
+        {trend && (
+          <div
+            className={`mt-2 flex items-center gap-1 text-sm font-medium ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}
           >
-            {change > 0 ? '+' : ''}
-            {change}% so với tháng trước
-          </p>
+            <TrendingUp
+              className={`h-4 w-4 ${trend < 0 ? 'rotate-180' : ''}`}
+            />
+            <span>
+              {trend > 0 ? '+' : ''}
+              {trend.toFixed(1)}%
+            </span>
+            <span className="text-text-secondary text-xs font-normal">
+              vs tháng trước
+            </span>
+          </div>
         )}
       </div>
-      <div className={`bg-${color}/10 text-${color} rounded-lg p-3`}>
-        <Icon className="h-6 w-6" />
+      <div
+        className={`bg-${color}/10 rounded-lg p-3 transition-transform group-hover:scale-110`}
+      >
+        <Icon className={`text-${color} h-7 w-7`} />
       </div>
     </div>
   </div>
 );
 
-const AdminDashboardPage = () => {
-  // Mock data - thay thế bằng API calls thật
-  const stats = {
-    totalUsers: 12543,
-    totalEvents: 456,
-    totalRevenue: 2540000,
-    pendingApprovals: 23,
-  };
+const SectionCard = ({ title, icon: Icon, children, className = '' }) => (
+  <div
+    className={`bg-background-secondary border-border-default rounded-lg border p-6 ${className}`}
+  >
+    <div className="mb-4 flex items-center gap-2">
+      {Icon && <Icon className="text-primary h-5 w-5" />}
+      <h3 className="text-text-primary text-lg font-semibold">{title}</h3>
+    </div>
+    {children}
+  </div>
+);
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'user',
-      message: 'Người dùng mới đăng ký: user@example.com',
-      time: '2 phút trước',
-    },
-    {
-      id: 2,
-      type: 'event',
-      message: 'Sự kiện mới cần duyệt: "Concert nhạc rock"',
-      time: '5 phút trước',
-    },
-    {
-      id: 3,
-      type: 'payment',
-      message: 'Thanh toán thành công: 2,500,000 VNĐ',
-      time: '10 phút trước',
-    },
-    {
-      id: 4,
-      type: 'event',
-      message: 'Sự kiện được phê duyệt: "Workshop AI"',
-      time: '15 phút trước',
-    },
-  ];
+const AdminDashboardPage = () => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dashboardOverview'],
+    queryFn: getDashboardOverview,
+    refetchInterval: 60000, // Refetch mỗi 60s
+  });
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (error) {
+    return <ErrorDisplay error={error} />;
+  }
+
+  const { overview, charts, topSellingEvents, recentActivities, alerts } =
+    data?.data || {};
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
+      {/* <div>
         <h1 className="text-text-primary text-3xl font-bold">Dashboard</h1>
-        <p className="text-text-secondary">Tổng quan hệ thống EventHub</p>
-      </div>
+        <p className="text-text-secondary mt-1">Tổng quan hệ thống EventHub</p>
+      </div> */}
 
-      {/* Stats Grid */}
+      {/* Alerts Section */}
+      {alerts && alerts.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {alerts.map((alert, index) => (
+            <DashboardAlertCard key={index} {...alert} />
+          ))}
+        </div>
+      )}
+
+      {/* Overview Stats - Row 1 */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Tổng người dùng"
-          value={stats.totalUsers.toLocaleString()}
-          change={12}
+          value={overview?.users?.total?.toLocaleString() || '0'}
+          subtitle={`${overview?.users?.organizers || 0} organizers`}
           icon={Users}
           color="blue"
         />
         <StatCard
           title="Tổng sự kiện"
-          value={stats.totalEvents.toLocaleString()}
-          change={8}
+          value={overview?.events?.total?.toLocaleString() || '0'}
+          subtitle={`${overview?.events?.pending || 0} chờ duyệt, ${overview?.events?.ongoing || 0} đang diễn ra`}
           icon={Calendar}
+          color="purple"
+        />
+        <StatCard
+          title="Doanh thu tháng này"
+          value={`${((overview?.revenue?.thisMonth || 0) / 1000000).toFixed(1)}M`}
+          subtitle={`Hôm nay: ${((overview?.revenue?.today || 0) / 1000).toFixed(0)}K VNĐ`}
+          icon={DollarSign}
+          color="green"
+          trend={overview?.revenue?.growth}
+        />
+        <StatCard
+          title="Vé đã bán"
+          value={overview?.tickets?.total?.toLocaleString() || '0'}
+          subtitle={`${overview?.tickets?.today || 0} vé hôm nay`}
+          icon={Ticket}
+          color="orange"
+        />
+      </div>
+
+      {/* Transaction Stats */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <StatCard
+          title="Giao dịch thành công"
+          value={overview?.transactions?.success?.toLocaleString() || '0'}
+          icon={CheckCircle}
           color="green"
         />
         <StatCard
-          title="Doanh thu"
-          value={`${(stats.totalRevenue / 1000000).toFixed(1)}M VNĐ`}
-          change={15}
-          icon={DollarSign}
-          color="yellow"
+          title="Đang xử lý"
+          value={overview?.transactions?.pending?.toLocaleString() || '0'}
+          icon={Clock}
+          color="warning"
         />
         <StatCard
-          title="Chờ duyệt"
-          value={stats.pendingApprovals.toLocaleString()}
-          icon={AlertTriangle}
-          color="red"
+          title="Thất bại"
+          value={overview?.transactions?.failed?.toLocaleString() || '0'}
+          icon={XCircle}
+          color="destructive"
         />
       </div>
 
-      {/* Charts and Recent Activities */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {/* Chart Placeholder */}
-        <div className="bg-background-secondary border-border-default rounded-lg border p-6">
-          <h3 className="text-text-primary mb-4 text-lg font-semibold">
-            Thống kê người dùng
-          </h3>
-          <div className="bg-background-primary border-border-default flex h-64 items-center justify-center rounded-lg border-2 border-dashed">
-            <div className="text-center">
-              <TrendingUp className="text-text-secondary mx-auto mb-2 h-12 w-12" />
-              <p className="text-text-secondary">
-                Biểu đồ thống kê sẽ được hiển thị ở đây
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="bg-background-secondary border-border-default rounded-lg border p-6">
-          <h3 className="text-text-primary mb-4 text-lg font-semibold">
-            Hoạt động gần đây
-          </h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3">
-                <div className="bg-primary/10 text-primary rounded-full p-2">
-                  {activity.type === 'user' && <Users className="h-4 w-4" />}
-                  {activity.type === 'event' && (
-                    <Calendar className="h-4 w-4" />
-                  )}
-                  {activity.type === 'payment' && (
-                    <DollarSign className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-text-primary text-sm">
-                    {activity.message}
-                  </p>
-                  <p className="text-text-secondary text-xs">{activity.time}</p>
-                </div>
-              </div>
+      {/* Top Selling Events */}
+      {topSellingEvents && topSellingEvents.length > 0 && (
+        <SectionCard title="Top sự kiện bán chạy" icon={BarChart3}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {topSellingEvents.map((event) => (
+              <TopEventCard key={event.id} event={event} />
             ))}
           </div>
-        </div>
+        </SectionCard>
+      )}
+
+      {/* Recent Activities Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Pending Events */}
+        {recentActivities?.pendingEvents &&
+          recentActivities.pendingEvents.length > 0 && (
+            <SectionCard title="Sự kiện chờ duyệt" icon={Calendar}>
+              <PendingEventsList events={recentActivities.pendingEvents} />
+            </SectionCard>
+          )}
+
+        {/* Recent Transactions */}
+        {recentActivities?.transactions &&
+          recentActivities.transactions.length > 0 && (
+            <SectionCard title="Giao dịch gần đây" icon={DollarSign}>
+              <TransactionsList transactions={recentActivities.transactions} />
+            </SectionCard>
+          )}
+
+        {/* New Users */}
+        {recentActivities?.newUsers && recentActivities.newUsers.length > 0 && (
+          <SectionCard title="Người dùng mới" icon={Users}>
+            <NewUsersList users={recentActivities.newUsers} />
+          </SectionCard>
+        )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-background-secondary border-border-default rounded-lg border p-6">
-        <h3 className="text-text-primary mb-4 text-lg font-semibold">
-          Thao tác nhanh
-        </h3>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <button className="border-border-default bg-background-primary hover:bg-primary/5 flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors">
-            <UserCheck className="text-primary h-8 w-8" />
-            <span className="text-text-primary text-sm font-medium">
-              Duyệt sự kiện
-            </span>
-          </button>
-          <button className="border-border-default bg-background-primary hover:bg-primary/5 flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors">
-            <Users className="text-primary h-8 w-8" />
-            <span className="text-text-primary text-sm font-medium">
-              Quản lý user
-            </span>
-          </button>
-          <button className="border-border-default bg-background-primary hover:bg-primary/5 flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors">
-            <Eye className="text-primary h-8 w-8" />
-            <span className="text-text-primary text-sm font-medium">
-              Xem báo cáo
-            </span>
-          </button>
-          <button className="border-border-default bg-background-primary hover:bg-primary/5 flex flex-col items-center gap-2 rounded-lg border p-4 transition-colors">
-            <DollarSign className="text-primary h-8 w-8" />
-            <span className="text-text-primary text-sm font-medium">
-              Giao dịch
-            </span>
-          </button>
+      {/* Charts Grid */}
+      {charts && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Revenue Chart */}
+          {charts.revenue && charts.revenue.length > 0 && (
+            <SectionCard title="Doanh thu & Vé bán (7 ngày)" icon={Activity}>
+              <RevenueChart data={charts.revenue} />
+            </SectionCard>
+          )}
+
+          {/* User Registration Chart */}
+          {charts.userRegistration && charts.userRegistration.length > 0 && (
+            <SectionCard
+              title="Người dùng đăng ký mới (7 ngày)"
+              icon={BarChart3}
+            >
+              <UserRegistrationChart data={charts.userRegistration} />
+            </SectionCard>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Category Distribution Chart */}
+      {charts?.categoryDistribution &&
+        charts.categoryDistribution.length > 0 && (
+          <SectionCard title="Phân bố sự kiện theo danh mục" icon={PieChart}>
+            <CategoryDistributionChart data={charts.categoryDistribution} />
+          </SectionCard>
+        )}
     </div>
   );
 };
