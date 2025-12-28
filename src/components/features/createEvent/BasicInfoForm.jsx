@@ -82,8 +82,8 @@ export default function BasicInfoForm({
             <p className="text-destructive mt-2 text-sm">{uploadError}</p>
           )}
         </div>
-        <div className="sm:col-span-3">
-          {/* <DatePicker value={eventData.startDate} onChange={(date) => handleFieldChange('startDate', date)} /> */}
+
+        {/* <div className="sm:col-span-3">
           <Input
             id="eventStartDate"
             type="date"
@@ -95,7 +95,6 @@ export default function BasicInfoForm({
           />
         </div>
         <div className="sm:col-span-3">
-          {/* <DatePicker value={eventData.endDate} onChange={(date) => handleFieldChange('endDate', date)} /> */}
           <Input
             id="eventEndDate"
             type="date"
@@ -105,7 +104,7 @@ export default function BasicInfoForm({
             error={errors?.endDate}
             disabled={!isEditable}
           />
-        </div>
+        </div> */}
 
         <div className="sm:col-span-6">
           <p className="text-text-secondary mb-2 block text-sm font-medium">

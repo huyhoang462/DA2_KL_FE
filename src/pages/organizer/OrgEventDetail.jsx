@@ -51,6 +51,31 @@ const formatDateTimeForInput = (isoString) => {
   }
 };
 
+const extractDateFromDateTime = (isoString) => {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch (e) {
+    return '';
+  }
+};
+
+const extractTimeFromDateTime = (isoString) => {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    return '';
+  }
+};
+
 const formatDateTimeForAPI = (datetimeLocal) => {
   if (!datetimeLocal) return null;
   try {
@@ -313,24 +338,61 @@ const formatUpdatePayloadForAPI = (updatePayload) => {
 
   if (formatted.shows) {
     if (formatted.shows.create) {
-      formatted.shows.create = formatted.shows.create.map((show) => ({
-        ...show,
-        startTime: formatDateTimeForAPI(show.startTime),
-        endTime: formatDateTimeForAPI(show.endTime),
-        tickets:
-          show.tickets?.map((ticket) => ({
-            ...ticket,
-          })) || [],
-      }));
+      formatted.shows.create = formatted.shows.create.map((show) => {
+        const transformed = { ...show };
+
+        // Combine date + startTime thành startTime datetime
+        if (show.date && show.startTime) {
+          transformed.startTime = formatDateTimeForAPI(
+            `${show.date}T${show.startTime}`
+          );
+        }
+
+        // Combine date + endTime thành endTime datetime
+        if (show.date && show.endTime) {
+          transformed.endTime = formatDateTimeForAPI(
+            `${show.date}T${show.endTime}`
+          );
+        }
+
+        // Xóa field date vì API không cần
+        delete transformed.date;
+
+        transformed.tickets =
+          show.tickets?.map((ticket) => ({ ...ticket })) || [];
+
+        return transformed;
+      });
     }
     if (formatted.shows.update) {
-      formatted.shows.update = formatted.shows.update.map((show) => ({
-        ...show,
-        startTime: show.startTime
-          ? formatDateTimeForAPI(show.startTime)
-          : undefined,
-        endTime: show.endTime ? formatDateTimeForAPI(show.endTime) : undefined,
-      }));
+      formatted.shows.update = formatted.shows.update.map((show) => {
+        const transformed = { ...show };
+
+        // Nếu có date và startTime, combine chúng
+        if (show.date && show.startTime) {
+          transformed.startTime = formatDateTimeForAPI(
+            `${show.date}T${show.startTime}`
+          );
+        } else if (show.startTime && show.startTime.includes('T')) {
+          // Nếu đã là datetime format rồi thì giữ nguyên
+          transformed.startTime = formatDateTimeForAPI(show.startTime);
+        }
+
+        // Nếu có date và endTime, combine chúng
+        if (show.date && show.endTime) {
+          transformed.endTime = formatDateTimeForAPI(
+            `${show.date}T${show.endTime}`
+          );
+        } else if (show.endTime && show.endTime.includes('T')) {
+          // Nếu đã là datetime format rồi thì giữ nguyên
+          transformed.endTime = formatDateTimeForAPI(show.endTime);
+        }
+
+        // Xóa field date vì API không cần
+        delete transformed.date;
+
+        return transformed;
+      });
     }
   }
 
@@ -429,8 +491,9 @@ export default function OrgEventDetail() {
             originalEvent.shows?.map((show) => ({
               _id: show._id,
               name: show.name || '',
-              startTime: formatDateTimeForInput(show.startTime),
-              endTime: formatDateTimeForInput(show.endTime),
+              date: extractDateFromDateTime(show.startTime),
+              startTime: extractTimeFromDateTime(show.startTime),
+              endTime: extractTimeFromDateTime(show.endTime),
               event: show.event,
               createdAt: show.createdAt,
               updatedAt: show.updatedAt,
@@ -578,6 +641,14 @@ export default function OrgEventDetail() {
         const updatePayload = createDifferentialUpdate(firstData, editData);
         const formattedPayload = formatUpdatePayloadForAPI(updatePayload);
 
+        // Nếu status là rejected hoặc cancelled, thêm status='pending' để tạo lại
+        if (
+          originalEvent?.status === 'rejected' ||
+          originalEvent?.status === 'cancelled'
+        ) {
+          formattedPayload.status = 'pending';
+        }
+
         console.log('📊 Differential update payload:', formattedPayload);
 
         if (Object.keys(formattedPayload).length === 0) {
@@ -680,7 +751,9 @@ export default function OrgEventDetail() {
   }
 
   const isEditable =
-    originalEvent?.status === 'draft' || originalEvent?.status === 'pending';
+    originalEvent?.status === 'draft' ||
+    originalEvent?.status === 'pending' ||
+    originalEvent?.status === 'rejected';
 
   const getStatusInfo = (status) => {
     const statusMap = {
@@ -741,17 +814,17 @@ export default function OrgEventDetail() {
                     )}
                   </div>
                 )}
-                {hasChanges && isEditable && (
+                {/* {hasChanges && isEditable && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">
                     <div className="h-1.5 w-1.5 rounded-full bg-orange-500"></div>
                     Có thay đổi chưa lưu
                   </span>
-                )}
+                )} */}
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {isEditable ? (
                   <>
-                    <Button
+                    {/* <Button
                       variant="destructive"
                       onClick={handleDeleteClick}
                       size="sm"
@@ -761,7 +834,7 @@ export default function OrgEventDetail() {
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Xóa
-                    </Button>
+                    </Button> */}
 
                     <Button
                       size="sm"
@@ -778,7 +851,10 @@ export default function OrgEventDetail() {
                       ) : (
                         <Save className="mr-2 h-4 w-4" />
                       )}
-                      Lưu thay đổi
+                      {originalEvent.status === 'rejected' ||
+                      originalEvent.status === 'cancelled'
+                        ? 'Tạo lại'
+                        : 'Lưu thay đổi'}
                     </Button>
                   </>
                 ) : null}
@@ -885,8 +961,8 @@ export default function OrgEventDetail() {
         message={notificationInfo.message}
         onClose={handleNotificationClose}
       />
-
-      <DebugDifferentialData />
+      {/* 
+      <DebugDifferentialData /> */}
     </div>
   );
 }

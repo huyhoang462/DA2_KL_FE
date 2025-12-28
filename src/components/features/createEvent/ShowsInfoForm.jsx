@@ -14,6 +14,7 @@ export default function ShowsInfoForm({
     const newShow = {
       _id: `temp_${Date.now()}`,
       name: `Suất diễn ${shows.length + 1}`,
+      date: '',
       startTime: '',
       endTime: '',
       tickets: [],

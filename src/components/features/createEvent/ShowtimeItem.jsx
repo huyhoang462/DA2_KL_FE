@@ -125,7 +125,7 @@ export default function ShowtimeItem({
 
   return (
     <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Input
           id={`eventShowName-${showIndex}`}
           label="Tên suất diễn"
@@ -136,10 +136,19 @@ export default function ShowtimeItem({
           disabled={!isEditable}
         />
         <Input
+          id={`eventShowDate-${showIndex}`}
+          label="Ngày"
+          type="date"
+          value={showData.date || ''}
+          onChange={(e) => handleShowtimeChange('date', e.target.value)}
+          error={errors.date}
+          disabled={!isEditable}
+        />
+        <Input
           id={`eventShowStart-${showIndex}`}
           label="Thời gian bắt đầu"
-          type="datetime-local"
-          value={showData.startTime}
+          type="time"
+          value={showData.startTime || ''}
           onChange={(e) => handleShowtimeChange('startTime', e.target.value)}
           error={errors.startTime}
           disabled={!isEditable}
@@ -147,8 +156,8 @@ export default function ShowtimeItem({
         <Input
           id={`eventShowEnd-${showIndex}`}
           label="Thời gian kết thúc"
-          type="datetime-local"
-          value={showData.endTime}
+          type="time"
+          value={showData.endTime || ''}
           onChange={(e) => handleShowtimeChange('endTime', e.target.value)}
           error={errors.endTime}
           disabled={!isEditable}

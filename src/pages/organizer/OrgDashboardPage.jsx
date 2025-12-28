@@ -77,23 +77,59 @@ export default function OrgDashboardPage() {
       <ErrorDisplay message="Không có dữ liệu tổng quan cho sự kiện này." />
     );
   }
+  const getStatusInfo = (status) => {
+    const statusMap = {
+      draft: {
+        label: 'Bản nháp',
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+      },
+      pending: {
+        label: 'Chờ duyệt',
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      },
+      upcoming: {
+        label: 'Sắp diễn ra',
+        color: 'bg-blue-100 text-blue-800 border-blue-200',
+      },
+      ongoing: {
+        label: 'Đang diễn ra',
+        color: 'bg-green-100 text-green-800 border-green-200',
+      },
+      completed: {
+        label: 'Đã hoàn thành',
+        color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      },
+      rejected: {
+        label: 'Bị từ chối',
+        color: 'bg-red-100 text-red-800 border-red-200',
+      },
+      cancelled: {
+        label: 'Đã hủy',
+        color: 'bg-slate-100 text-slate-800 border-slate-200',
+      },
+    };
+    return statusMap[status] || statusMap.draft;
+  };
 
+  const statusInfo = getStatusInfo(overviewData.eventInfo.status);
   return (
     <div className="space-y-6">
       {/* Event Info Header (Optional) */}
-      {overviewData.eventInfo && (
+      {/* {overviewData.eventInfo && (
         <div className="border-border-default bg-background-secondary rounded-lg border p-4">
           <h2 className="text-text-primary text-xl font-bold">
             {overviewData.eventInfo.eventName}
           </h2>
           <p className="text-text-secondary mt-1 text-sm">
             Trạng thái:{' '}
-            <span className="font-semibold capitalize">
-              {overviewData.eventInfo.status}
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${statusInfo.color}`}
+            >
+              {statusInfo.label}
             </span>
           </p>
         </div>
-      )}
+      )} */}
 
       {/* Key Metrics */}
       <KeyMetricsDisplay data={overviewData.metrics} />
@@ -114,10 +150,10 @@ export default function OrgDashboardPage() {
       </div>
 
       {/* Recent Orders */}
-      <RecentOrdersCard
+      {/* <RecentOrdersCard
         data={overviewData.recentOrders || []}
         eventId={eventId}
-      />
+      /> */}
     </div>
   );
 }

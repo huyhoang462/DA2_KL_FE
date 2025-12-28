@@ -102,7 +102,7 @@ export default function BigTicket({ event, onNav }) {
                 Chọn suất diễn
               </Button>
             ) : (
-              <Link to={`/select-tickets/${event._id}/${getSingleShowId()}`}>
+              <Link to={`/select-tickets/${event.id}/${getSingleShowId()}`}>
                 <Button className="w-full" size="lg">
                   Mua vé ngay
                 </Button>

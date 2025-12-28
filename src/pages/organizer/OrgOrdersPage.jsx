@@ -173,7 +173,7 @@ const OrgOrdersPage = () => {
         const paymentMethod = latestTransaction?.paymentMethod;
         return paymentMethod
           ? paymentMethodMap[paymentMethod] || paymentMethod
-          : 'N/A';
+          : 'Chưa';
       },
     },
   ];

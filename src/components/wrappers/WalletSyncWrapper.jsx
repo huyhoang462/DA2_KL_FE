@@ -13,13 +13,13 @@ const WalletSyncWrapper = ({ children }) => {
   useEffect(() => {
     // Hàm kiểm tra và sync
     const checkAndSync = async () => {
-      console.log('[Sync Check] State snapshot:', {
-        ready,
-        privyAuthenticated: authenticated,
-        hasPrivyUser: !!privyUser,
-        walletAddress: privyUser?.wallet?.address || null,
-        isBackendAuthenticated,
-      });
+      // console.log('[Sync Check] State snapshot:', {
+      //   ready,
+      //   privyAuthenticated: authenticated,
+      //   hasPrivyUser: !!privyUser,
+      //   walletAddress: privyUser?.wallet?.address || null,
+      //   isBackendAuthenticated,
+      // });
 
       // Log chi tiết toàn bộ privyUser để xem cấu trúc thật
       if (ready && authenticated && privyUser) {

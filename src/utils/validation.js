@@ -37,22 +37,22 @@ export const validateStepOne = (eventData) => {
     errors.category = 'Vui lòng chọn một danh mục.';
   }
 
-  if (!eventData.startDate) {
-    errors.startDate = 'Vui lòng chọn ngày bắt đầu.';
-  }
-  if (eventData.startDate && new Date(eventData.startDate) <= new Date()) {
-    errors.startDate = 'Ngày bắt đầu phải lớn hơn hiện tại.';
-  }
-  if (!eventData.endDate) {
-    errors.endDate = 'Vui lòng chọn ngày kết thúc.';
-  }
-  if (
-    eventData.startDate &&
-    eventData.endDate &&
-    new Date(eventData.startDate) > new Date(eventData.endDate)
-  ) {
-    errors.endDate = 'Ngày kết thúc không thể trước ngày bắt đầu.';
-  }
+  // if (!eventData.startDate) {
+  //   errors.startDate = 'Vui lòng chọn ngày bắt đầu.';
+  // }
+  // if (eventData.startDate && new Date(eventData.startDate) <= new Date()) {
+  //   errors.startDate = 'Ngày bắt đầu phải lớn hơn hiện tại.';
+  // }
+  // if (!eventData.endDate) {
+  //   errors.endDate = 'Vui lòng chọn ngày kết thúc.';
+  // }
+  // if (
+  //   eventData.startDate &&
+  //   eventData.endDate &&
+  //   new Date(eventData.startDate) > new Date(eventData.endDate)
+  // ) {
+  //   errors.endDate = 'Ngày kết thúc không thể trước ngày bắt đầu.';
+  // }
 
   if (eventData.format === 'offline') {
     const locationInfo = eventData.location || {};
@@ -128,7 +128,7 @@ export const validateTicketType = (data) => {
 
 export const validateStepTwo = (eventData) => {
   const errors = {};
-  const { shows, startDate, endDate } = eventData;
+  const { shows } = eventData;
 
   if (!shows || shows.length === 0) {
     errors.shows_general = 'Sự kiện phải có ít nhất 1 suất diễn.';
@@ -136,51 +136,102 @@ export const validateStepTwo = (eventData) => {
   }
 
   const showErrors = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const eventStartDate = startDate
-    ? new Date(startDate).setHours(0, 0, 0, 0)
-    : null;
-  const eventEndDate = endDate
-    ? new Date(endDate).setHours(23, 59, 59, 999)
-    : null;
+  // Mảng lưu thông tin về ngày và thời gian của các show để kiểm tra trùng lặp
+  const showTimeSlots = [];
 
   shows.forEach((show, index) => {
     const currentShowErrors = {};
-    const showStartTime = show.startTime ? new Date(show.startTime) : null;
-    const showEndTime = show.endTime ? new Date(show.endTime) : null;
 
+    // Validate tên
     if (!show.name || show.name.trim() === '') {
       currentShowErrors.name = 'Vui lòng nhập tên suất diễn.';
     }
 
-    if (!showStartTime) {
+    // Validate date
+    if (!show.date) {
+      currentShowErrors.date = 'Vui lòng chọn ngày.';
+    } else {
+      const showDate = new Date(show.date);
+      showDate.setHours(0, 0, 0, 0);
+      if (showDate < today) {
+        currentShowErrors.date = 'Ngày suất diễn phải lớn hơn hôm nay.';
+      }
+    }
+
+    // Validate startTime
+    if (!show.startTime || show.startTime.trim() === '') {
       currentShowErrors.startTime = 'Vui lòng chọn thời gian bắt đầu.';
     }
-    if (!showEndTime) {
+
+    // Validate endTime
+    if (!show.endTime || show.endTime.trim() === '') {
       currentShowErrors.endTime = 'Vui lòng chọn thời gian kết thúc.';
     }
 
-    if (showStartTime && showEndTime && showStartTime >= showEndTime) {
-      currentShowErrors.endTime = 'Giờ kết thúc phải sau giờ bắt đầu.';
-    }
-    if (eventStartDate && showStartTime && showStartTime < eventStartDate) {
-      currentShowErrors.startTime =
-        'Không thể bắt đầu trước ngày bắt đầu của sự kiện.';
-    }
-    if (eventEndDate && showEndTime && showEndTime > eventEndDate) {
-      currentShowErrors.endTime =
-        'Không thể kết thúc sau ngày kết thúc của sự kiện.';
+    // Validate startTime < endTime
+    if (show.startTime && show.endTime) {
+      if (show.startTime >= show.endTime) {
+        currentShowErrors.endTime = 'Giờ kết thúc phải sau giờ bắt đầu.';
+      }
     }
 
+    // Validate tickets
     if (!show.tickets || show.tickets.length === 0) {
       currentShowErrors.tickets_general =
         'Suất diễn này phải có ít nhất 1 loại vé.';
+    }
+
+    // Nếu không có lỗi về date và time, thêm vào mảng để kiểm tra trùng lặp
+    if (
+      show.date &&
+      show.startTime &&
+      show.endTime &&
+      !currentShowErrors.date &&
+      !currentShowErrors.startTime &&
+      !currentShowErrors.endTime
+    ) {
+      showTimeSlots.push({
+        index,
+        date: show.date,
+        startTime: show.startTime,
+        endTime: show.endTime,
+      });
     }
 
     if (Object.keys(currentShowErrors).length > 0) {
       showErrors[index] = currentShowErrors;
     }
   });
+
+  // Kiểm tra trùng lặp thời gian giữa các show cùng ngày
+  for (let i = 0; i < showTimeSlots.length; i++) {
+    for (let j = i + 1; j < showTimeSlots.length; j++) {
+      const slot1 = showTimeSlots[i];
+      const slot2 = showTimeSlots[j];
+
+      // Chỉ kiểm tra nếu cùng ngày
+      if (slot1.date === slot2.date) {
+        // Kiểm tra xem có trùng lặp thời gian không
+        const start1 = slot1.startTime;
+        const end1 = slot1.endTime;
+        const start2 = slot2.startTime;
+        const end2 = slot2.endTime;
+
+        // Hai khoảng thời gian trùng nếu:
+        // start1 < end2 && start2 < end1
+        if (start1 < end2 && start2 < end1) {
+          if (!showErrors[slot2.index]) {
+            showErrors[slot2.index] = {};
+          }
+          showErrors[slot2.index].startTime =
+            `Thời gian trùng với suất diễn "${shows[slot1.index].name}".`;
+        }
+      }
+    }
+  }
 
   if (showErrors.length > 0) {
     errors.shows = showErrors;

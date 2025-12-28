@@ -22,7 +22,6 @@ export const getTicketTypesByShowId = async (showId) => {
       `${API_BASE_URL}/tickets/show/${showId}/ticket-types`
     );
 
-    console.log('TICKETTYPE của SHOW trả về: ', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);

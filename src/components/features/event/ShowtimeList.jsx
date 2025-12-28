@@ -110,13 +110,17 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
           >
             <Button
               size="sm"
-              disabled={!hasAvailableTickets}
+              disabled={!hasAvailableTickets || show?.status === 'completed'}
               className={cn(
                 'min-w-[100px]',
                 !hasAvailableTickets && 'cursor-not-allowed opacity-50'
               )}
             >
-              {hasAvailableTickets ? 'Mua vé' : 'Hết vé'}
+              {hasAvailableTickets
+                ? show.status === 'completed'
+                  ? 'Đã kết thúc'
+                  : 'Mua vé'
+                : 'Hết vé'}
             </Button>
           </Link>
 

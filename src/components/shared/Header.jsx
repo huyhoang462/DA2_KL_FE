@@ -54,7 +54,7 @@ const Header = () => {
       label: 'Sự kiện của tôi',
       icon: <Calendar className="mr-2 h-4 w-4" />,
       onClick: () => {
-        nav('/organizer/my-events');
+        window.open('/organizer/my-events', '_blank', 'noopener,noreferrer');
         setDropdownOpen(false);
       },
     },
@@ -121,6 +121,8 @@ const Header = () => {
       <div className="relative flex h-8 items-center gap-4">
         <Link
           to="/organizer/create-event"
+          target="_blank"
+          rel="noopener noreferrer"
           className="hover:bg-background-secondary text-background-primary hover:text-primary flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition"
         >
           <PlusCircle className="h-5 w-5" />
@@ -189,7 +191,11 @@ const Header = () => {
               <button
                 className="border-primary bg-background-secondary text-primary hover:bg-primary hover:text-primary-foreground flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-base font-medium transition"
                 onClick={() => {
-                  nav('/organizer/create-event');
+                  window.open(
+                    '/organizer/create-event',
+                    '_blank',
+                    'noopener,noreferrer'
+                  );
                   setMobileMenuOpen(false);
                 }}
               >

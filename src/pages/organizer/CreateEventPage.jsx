@@ -116,14 +116,144 @@ const CreateEventPage = () => {
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    console.log('Submitting event data:', eventData);
+
+    // Transform data: combine date + time thành datetime cho shows
+    const transformedEventData = {
+      ...eventData,
+      status: 'pending', // Mặc định là pending khi gửi duyệt
+      shows: eventData.shows.map((show) => {
+        const showDateTime = {
+          ...show,
+        };
+
+        // Combine date + startTime thành startTime datetime
+        if (show.date && show.startTime) {
+          showDateTime.startTime = `${show.date}T${show.startTime}`;
+        }
+
+        // Combine date + endTime thành endTime datetime
+        if (show.date && show.endTime) {
+          showDateTime.endTime = `${show.date}T${show.endTime}`;
+        }
+
+        // Xóa field date vì API không cần
+        delete showDateTime.date;
+
+        return showDateTime;
+      }),
+    };
+
+    // Tính startDate và endDate cho event từ các shows
+    if (transformedEventData.shows.length > 0) {
+      const showDates = transformedEventData.shows
+        .filter((show) => show.startTime)
+        .map((show) => new Date(show.startTime));
+
+      if (showDates.length > 0) {
+        const minDate = new Date(Math.min(...showDates));
+        const maxDate = new Date(Math.max(...showDates));
+
+        transformedEventData.startDate = minDate.toISOString().split('T')[0];
+        transformedEventData.endDate = maxDate.toISOString().split('T')[0];
+      }
+    }
+
+    console.log('Submitting event data:', transformedEventData);
     setIsSubmitting(true);
     try {
-      const result = await createEvent(eventData);
+      const result = await createEvent(transformedEventData);
       setNotificationInfo({
         type: 'success',
         title: 'Thành công!',
         message: 'Sự kiện của bạn đã được tạo và gửi đi xét duyệt.',
+      });
+      setShowNotification(true);
+    } catch (error) {
+      setNotificationInfo({
+        type: 'error',
+        title: 'Thất bại!',
+        message: error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+      });
+      setShowNotification(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (isSubmitting) return;
+
+    // Kiểm tra validation cho bước hiện tại
+    let validationErrors = {};
+    if (currentStep === 1) {
+      validationErrors = validateStepOne(eventData);
+    } else if (currentStep === 2) {
+      validationErrors = validateStepTwo(eventData);
+    } else if (currentStep === 3) {
+      validationErrors = validateStepThree(eventData);
+    }
+
+    // Nếu có lỗi, hiển thị thông báo
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setNotificationInfo({
+        type: 'error',
+        title: 'Lỗi validation!',
+        message: 'Vui lòng kiểm tra lại thông tin đã nhập.',
+      });
+      setShowNotification(true);
+      return;
+    }
+
+    // Transform data giống như handleSubmit
+    const transformedEventData = {
+      ...eventData,
+      status: 'draft', // Lưu nháp với status='draft'
+      shows: eventData.shows.map((show) => {
+        const showDateTime = {
+          ...show,
+        };
+
+        // Combine date + startTime thành startTime datetime
+        if (show.date && show.startTime) {
+          showDateTime.startTime = `${show.date}T${show.startTime}`;
+        }
+
+        // Combine date + endTime thành endTime datetime
+        if (show.date && show.endTime) {
+          showDateTime.endTime = `${show.date}T${show.endTime}`;
+        }
+
+        // Xóa field date vì API không cần
+        delete showDateTime.date;
+
+        return showDateTime;
+      }),
+    };
+
+    // Tính startDate và endDate cho event từ các shows
+    if (transformedEventData.shows.length > 0) {
+      const showDates = transformedEventData.shows
+        .filter((show) => show.startTime)
+        .map((show) => new Date(show.startTime));
+
+      if (showDates.length > 0) {
+        const minDate = new Date(Math.min(...showDates));
+        const maxDate = new Date(Math.max(...showDates));
+
+        transformedEventData.startDate = minDate.toISOString().split('T')[0];
+        transformedEventData.endDate = maxDate.toISOString().split('T')[0];
+      }
+    }
+
+    console.log('Saving draft event data:', transformedEventData);
+    setIsSubmitting(true);
+    try {
+      const result = await createEvent(transformedEventData);
+      setNotificationInfo({
+        type: 'success',
+        title: 'Thành công!',
+        message: 'Bản nháp sự kiện đã được lưu.',
       });
       setShowNotification(true);
     } catch (error) {
@@ -190,7 +320,7 @@ const CreateEventPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" onClick={handleSaveDraft} size="sm">
               Lưu nháp
             </Button>
             <Button
@@ -208,7 +338,7 @@ const CreateEventPage = () => {
                 'Gửi duyệt'
               ) : (
                 <>
-                  Tiếp theo <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </Button>
