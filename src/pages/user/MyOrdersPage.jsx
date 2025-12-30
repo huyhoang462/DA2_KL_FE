@@ -344,7 +344,10 @@ export default function MyOrdersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-text-primary text-sm">
-                            {order.ticketCount || 0} vé
+                            {order.ticketCount === 0
+                              ? order?.items?.length
+                              : order.ticketCount}{' '}
+                            vé
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

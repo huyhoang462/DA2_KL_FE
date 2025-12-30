@@ -23,6 +23,8 @@ const getMyOrders = async () => {
     const response = await axiosInstance.get(
       `${API_BASE_URL}/orders/my-orders`
     );
+    console.log('ORDERS: ', response.data);
+
     return response.data;
   } catch (error) {
     throw extractError(error);

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSelector, useDispatch } from 'react-redux';
-import QRCode from 'react-qr-code';
 import { listenForPaymentResult } from '../../utils/broadcastChannel';
 
 import { getEventById } from '../../services/eventService';
@@ -15,6 +14,7 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import TimerCard from '../../components/features/buyTicket/TimerCard';
 import CartInfoCard from '../../components/features/buyTicket/CartInfoCard';
 import Button from '../../components/ui/Button';
+import { CreditCard, AlertCircle, ExternalLink } from 'lucide-react';
 
 export default function PaymentPage() {
   const { id, showId } = useParams();
@@ -178,29 +178,79 @@ export default function PaymentPage() {
     return <ErrorDisplay message="Không thể tải thông tin sự kiện." />;
   }
 
-  // --- QR CODE COMPONENT ---
-  const QRCodeDisplay = () => (
-    <div className="border-border-default bg-background-secondary flex flex-col items-center gap-4 rounded-lg border p-6 text-center">
+  // --- PAYMENT DISPLAY COMPONENT ---
+  const PaymentDisplay = () => (
+    <div className="bg-background-secondary border-border-default space-y-6 rounded-xl border p-8 shadow-lg">
       <div className="text-center">
-        <p className="text-text-primary text-sm font-semibold">
-          Mã đơn hàng: <span className="text-primary">{orderId}</span>
+        <div className="bg-primary/10 text-primary mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+          <CreditCard className="h-8 w-8" />
+        </div>
+        <h2 className="text-text-primary mb-2 text-2xl font-bold">
+          Thanh toán qua VNPay
+        </h2>
+        <p className="text-text-secondary text-sm">
+          Mã đơn hàng:{' '}
+          <span className="text-primary font-mono font-semibold">
+            {orderId}
+          </span>
         </p>
-        <p className="mb-2 text-sm font-medium text-blue-800">
-          🏦 Thanh toán qua VNPay
-        </p>
+      </div>
+
+      <div className="border-border-subtle border-t"></div>
+
+      <div className="space-y-4">
+        <div className="bg-background-primary rounded-lg p-4">
+          <h3 className="text-text-primary mb-3 text-sm font-semibold">
+            Hướng dẫn thanh toán:
+          </h3>
+          <ol className="text-text-secondary space-y-2 text-sm">
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">1.</span>
+              <span>Nhấn nút bên dưới để mở trang thanh toán VNPay</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">2.</span>
+              <span>Điền thông tin thanh toán</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">3.</span>
+              <span>Nhập mã OTP và hoàn tất thanh toán</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary font-semibold">4.</span>
+              <span>
+                Trang này sẽ tự động cập nhật sau khi thanh toán thành công
+              </span>
+            </li>
+          </ol>
+        </div>
+
         <Button
           onClick={() =>
             window.open(paymentUrl, '_blank', 'noopener,noreferrer')
           }
           variant="default"
+          className="w-full py-6 text-lg font-semibold"
         >
+          <ExternalLink className="mr-2 h-5 w-5" />
           Mở trang thanh toán VNPay
         </Button>
-      </div>
 
-      <p className="text-text-secondary text-xs">
-        Sau khi thanh toán thành công, trang sẽ tự động cập nhật
-      </p>
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <AlertCircle className="h-5 w-5 flex-shrink-0 text-blue-600" />
+          <div className="text-sm">
+            <p className="font-medium text-blue-900">Lưu ý quan trọng:</p>
+            <ul className="mt-1 space-y-1 text-xs text-blue-800">
+              <li>• Không đóng trang này cho đến khi thanh toán hoàn tất</li>
+              <li>
+                • Phiên thanh toán có hiệu lực trong {minutes}:
+                {seconds.toString().padStart(2, '0')} phút
+              </li>
+              <li>• Sau khi thanh toán, trang sẽ tự động chuyển hướng</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -300,8 +350,8 @@ export default function PaymentPage() {
       );
     }
 
-    // Default: hiển thị QR code
-    return <QRCodeDisplay />;
+    // Default: hiển thị payment display
+    return <PaymentDisplay />;
   };
 
   return (

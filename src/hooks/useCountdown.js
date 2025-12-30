@@ -3,14 +3,14 @@ import { useState, useEffect } from 'react';
 
 /**
  * Một custom hook để quản lý việc đếm ngược.
- * @param {number} initialMinutes - Số phút bắt đầu đếm ngược.
+ * @param {number} initialSeconds - Số giây bắt đầu đếm ngược.
  * @param {function} onComplete - Hàm callback sẽ được gọi khi đếm ngược kết thúc.
  * @returns {{minutes: number, seconds: number}} - Object chứa số phút và giây còn lại.
  */
-export default function useCountdown(initialMinutes, onComplete) {
+export default function useCountdown(initialSeconds, onComplete) {
   // --- STATE ---
   // Chúng ta lưu tổng số giây còn lại, việc này dễ quản lý hơn là phút và giây riêng lẻ.
-  const [totalSeconds, setTotalSeconds] = useState(initialMinutes * 60);
+  const [totalSeconds, setTotalSeconds] = useState(initialSeconds);
 
   // --- EFFECT CHÍNH ĐỂ CHẠY TIMER ---
   useEffect(() => {

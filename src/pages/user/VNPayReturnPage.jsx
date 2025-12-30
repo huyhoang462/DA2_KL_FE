@@ -7,25 +7,29 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 export default function VnpayReturnPage() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('processing');
+  const [countdown, setCountdown] = useState(3);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [orderId, setOrderId] = useState(null);
 
   useEffect(() => {
     const finalizePayment = async () => {
       const responseCode = searchParams.get('vnp_ResponseCode');
-      const orderId = searchParams.get('vnp_TxnRef');
+      const orderIdParam = searchParams.get('vnp_TxnRef');
       const transactionNo = searchParams.get('vnp_TransactionNo');
       const bankCode = searchParams.get('vnp_BankCode');
 
-      if (!orderId) {
+      if (!orderIdParam) {
         setStatus('invalid');
         return;
       }
 
+      setOrderId(orderIdParam);
+
       try {
-        // ✅ GỌI API TẠO VÉ + UPDATE STATUS
-        console.log('[RETURN] Finalizing order...', orderId);
+        console.log('[RETURN] Finalizing order...', orderIdParam);
 
         const result = await orderService.finalizeOrder({
-          orderId,
+          orderId: orderIdParam,
           vnp_ResponseCode: responseCode,
           vnp_TransactionNo: transactionNo,
           vnp_BankCode: bankCode,
@@ -33,34 +37,71 @@ export default function VnpayReturnPage() {
 
         console.log('[RETURN] Finalize result:', result);
 
-        // Broadcast kết quả đến PaymentPage
-        const paymentStatus = responseCode === '00' ? 'paid' : 'failed';
-        postPaymentResult({
-          orderId: orderId,
-          status: paymentStatus,
-        });
+        // Xử lý theo document
+        let paymentStatus;
+        if (responseCode === '00') {
+          paymentStatus = 'paid';
+          // Broadcast cho PaymentPage
+          postPaymentResult({
+            orderId: orderIdParam,
+            status: 'paid',
+          });
+        } else if (responseCode === '24') {
+          paymentStatus = 'cancelled';
+        } else {
+          paymentStatus = 'failed';
+          setErrorMessage(result.failureReason || 'Lỗi thanh toán');
+        }
 
-        setStatus(responseCode === '00' ? 'success' : 'failed');
+        setStatus(paymentStatus);
       } catch (error) {
         console.error('[RETURN] Error finalizing order:', error);
-
-        // Vẫn broadcast để PaymentPage biết
-        postPaymentResult({
-          orderId: orderId,
-          status: 'failed',
-        });
-
         setStatus('failed');
       }
-
-      // Tự động đóng tab sau 3 giây
-      setTimeout(() => {
-        window.close();
-      }, 3000);
     };
 
     finalizePayment();
   }, [searchParams]);
+
+  // Countdown và xử lý theo document (Bug 2 - Fix)
+  useEffect(() => {
+    if (status === 'processing' || status === 'invalid') return;
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    } else {
+      // countdown = 0
+      if (status === 'paid') {
+        // ✅ Success: Close popup (PaymentPage đã nhận broadcast)
+        console.log('[RETURN] Closing popup - payment successful');
+        window.close();
+      } else if (status === 'cancelled' || status === 'failed') {
+        // 🚫 Cancelled/Failed: PostMessage to parent TRƯỚC KHI close
+        console.log('[RETURN] Sending postMessage to parent:', status);
+
+        if (window.opener && !window.opener.closed) {
+          // Gửi postMessage cho parent
+          window.opener.postMessage(
+            {
+              type: 'PAYMENT_RESULT',
+              orderId: orderId,
+              status: status,
+            },
+            window.location.origin
+          );
+
+          console.log('[RETURN] Closing popup after sending message');
+        }
+
+        // Close popup
+        window.close();
+      }
+    }
+  }, [countdown, status, orderId]);
 
   // --- RENDER (giữ nguyên code UI hiện tại) ---
   return (
@@ -77,7 +118,7 @@ export default function VnpayReturnPage() {
         </>
       )}
 
-      {status === 'success' && (
+      {status === 'paid' && (
         <div className="max-w-md">
           <div className="bg-success/10 border-success text-success mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-4">
             <svg
@@ -100,14 +141,38 @@ export default function VnpayReturnPage() {
           <p className="text-text-secondary mb-6">
             Vé đã được tạo và gửi vào tài khoản.
             <br />
-            Tab này sẽ tự động đóng sau 3 giây...
+            Tab này sẽ tự động đóng sau{' '}
+            <span className="text-lg font-bold">{countdown}</span> giây...
           </p>
-          {/* <button
-            onClick={() => window.close()}
-            className="bg-success hover:bg-success/90 rounded-lg px-6 py-2 text-white transition-colors"
-          >
-            Đóng tab ngay
-          </button> */}
+        </div>
+      )}
+
+      {status === 'cancelled' && (
+        <div className="max-w-md">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-4 border-gray-400 bg-gray-100 text-gray-600">
+            <svg
+              className="h-12 w-12"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
+            </svg>
+          </div>
+          <h1 className="mb-3 text-2xl font-bold text-gray-700">
+            Bạn đã hủy thanh toán
+          </h1>
+          <p className="text-text-secondary mb-6">
+            Đơn hàng đã được hủy. Vé đã được trả lại kho.
+            <br />
+            Đang chuyển hướng trong{' '}
+            <span className="text-lg font-bold">{countdown}</span> giây...
+          </p>
         </div>
       )}
 
@@ -131,8 +196,14 @@ export default function VnpayReturnPage() {
           <h1 className="text-destructive mb-3 text-2xl font-bold">
             Thanh toán không thành công
           </h1>
+          {errorMessage && (
+            <p className="text-destructive mb-2 font-semibold">
+              {errorMessage}
+            </p>
+          )}
           <p className="text-text-secondary mb-6">
-            Tab này sẽ tự động đóng sau 3 giây...
+            Đang chuyển hướng trong{' '}
+            <span className="text-lg font-bold">{countdown}</span> giây...
           </p>
         </div>
       )}
