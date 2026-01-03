@@ -4,7 +4,7 @@ import { login, logout } from '../store/slices/authSlice';
 import { API_BASE_URL } from '../constants/apiConstants';
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: API_BASE_URL ,
   withCredentials: true, //  trình duyệt tự động gửi cookie (chứa refresh token)
 });
 
