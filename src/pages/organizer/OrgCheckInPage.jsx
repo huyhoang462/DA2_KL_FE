@@ -3,17 +3,25 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getEventById } from '../../services/eventService';
 import {
-  getTicketTypesByShowId,
-  getTicketsByShowId,
+  getOrganizerStats,
+  getOrganizerTickets,
 } from '../../services/ticketService';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import OrgCheckInSkeleton from '../../components/ui/OrgCheckInSkeleton';
 import { Ticket, Users, ChevronDown } from 'lucide-react';
 
 const OrgCheckInPage = () => {
   const { id: eventId } = useParams();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'checkin'
   const [selectedShowId, setSelectedShowId] = useState(null);
+  const [filters, setFilters] = useState({
+    status: '',
+    ticketTypeId: '',
+    search: '',
+    page: 1,
+    limit: 50,
+  });
 
   // Fetch event data
   const {
@@ -39,8 +47,8 @@ const OrgCheckInPage = () => {
     isLoading: isLoadingStats,
     error: statsError,
   } = useQuery({
-    queryKey: ['ticketStats', selectedShowId],
-    queryFn: () => getTicketTypesByShowId(selectedShowId),
+    queryKey: ['organizerStats', selectedShowId],
+    queryFn: () => getOrganizerStats(selectedShowId),
     enabled: !!selectedShowId,
   });
 
@@ -50,8 +58,8 @@ const OrgCheckInPage = () => {
     isLoading: isLoadingTickets,
     error: ticketsError,
   } = useQuery({
-    queryKey: ['tickets', selectedShowId],
-    queryFn: () => getTicketsByShowId(selectedShowId),
+    queryKey: ['organizerTickets', selectedShowId, filters],
+    queryFn: () => getOrganizerTickets(selectedShowId, filters),
     enabled: !!selectedShowId && activeTab === 'checkin',
   });
 
@@ -61,11 +69,7 @@ const OrgCheckInPage = () => {
   }, [event, selectedShowId]);
 
   if (isLoadingEvent) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
+    return <OrgCheckInSkeleton />;
   }
 
   if (eventError) {
@@ -82,11 +86,10 @@ const OrgCheckInPage = () => {
 
   const checkedInCount = ticketStats?.totalCheckedIn || 0;
   const totalSold = ticketStats?.totalSold || 0;
-  const checkinPercentage =
-    totalSold > 0 ? Math.round((checkedInCount / totalSold) * 100) : 0;
+  const checkinPercentage = ticketStats?.checkinRate || 0;
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="">
       {/* Header with Show Selector */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -139,16 +142,14 @@ const OrgCheckInPage = () => {
         >
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Check-in
+            Danh sách vé
           </div>
         </button>
       </div>
 
       {/* Content */}
       {isLoadingStats ? (
-        <div className="flex h-64 items-center justify-center">
-          <LoadingSpinner />
-        </div>
+        <OrgCheckInSkeleton />
       ) : statsError ? (
         <ErrorDisplay message={statsError.message} />
       ) : (
@@ -224,8 +225,8 @@ const OrgCheckInPage = () => {
                   </div>
                 </div>
 
-                <div className="border-border-default text-text-primary mt-6 border-t pt-4 text-center">
-                  <p className="text-sm">Tổng vé bán:</p>
+                <div className="border-border-default text-text-primary mt-6 flex items-center justify-center gap-x-2 border-t pt-4 text-center">
+                  <p className="text-sm">Tổng vé bán: </p>{' '}
                   <p className="text-2xl font-bold">
                     {totalSold.toLocaleString()}
                   </p>
@@ -253,12 +254,16 @@ const OrgCheckInPage = () => {
                               {ticket.name}
                             </p>
                             <p className="text-text-secondary text-sm">
-                              {ticket.price.toLocaleString()}đ
+                              {ticket.price.toLocaleString()}đ • Check-in:{' '}
+                              {ticket.checkinRate || 0}%
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="text-text-primary font-bold">
                               {ticket.quantitySold} / {ticket.quantityTotal}
+                            </p>
+                            <p className="text-text-secondary text-xs">
+                              Đã check-in: {ticket.quantityCheckedIn || 0}
                             </p>
                           </div>
                         </div>
@@ -285,6 +290,61 @@ const OrgCheckInPage = () => {
                   Danh sách vé
                 </h2>
 
+                {/* Filter Bar */}
+                <div className="mb-6 flex flex-wrap gap-3">
+                  {/* Search */}
+                  <input
+                    type="text"
+                    placeholder="Tìm theo tên, email, SĐT, mã đơn..."
+                    value={filters.search}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        search: e.target.value,
+                        page: 1,
+                      })
+                    }
+                    className="border-border-default bg-background-primary text-text-primary focus:border-primary focus:ring-primary/20 min-w-[250px] flex-1 rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+                  />
+
+                  {/* Status Filter */}
+                  <select
+                    value={filters.status}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        status: e.target.value,
+                        page: 1,
+                      })
+                    }
+                    className="border-border-default bg-background-primary text-text-primary focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+                  >
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="pending">Chờ check-in</option>
+                    <option value="checkedIn">Đã check-in</option>
+                  </select>
+
+                  {/* Ticket Type Filter */}
+                  <select
+                    value={filters.ticketTypeId}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        ticketTypeId: e.target.value,
+                        page: 1,
+                      })
+                    }
+                    className="border-border-default bg-background-primary text-text-primary focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+                  >
+                    <option value="">Tất cả loại vé</option>
+                    {ticketStats?.ticketTypes?.map((tt) => (
+                      <option key={tt.id} value={tt.id}>
+                        {tt.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {isLoadingTickets ? (
                   <div className="flex h-32 items-center justify-center">
                     <LoadingSpinner />
@@ -294,18 +354,18 @@ const OrgCheckInPage = () => {
                 ) : !ticketsData?.data || ticketsData.data.length === 0 ? (
                   <div className="text-text-secondary py-12 text-center">
                     <Ticket className="mx-auto mb-2 h-12 w-12 opacity-50" />
-                    <p>Chưa có vé nào được mua</p>
+                    <p>Không tìm thấy vé nào</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-border-default text-text-secondary border-b text-left text-sm">
-                          <th className="pb-3 font-medium">Mã QR</th>
                           <th className="pb-3 font-medium">Loại vé</th>
                           <th className="pb-3 font-medium">Người mua</th>
                           <th className="pb-3 font-medium">Email</th>
                           <th className="pb-3 font-medium">SĐT</th>
+                          <th className="pb-3 font-medium">Mã đơn</th>
                           <th className="pb-3 font-medium">Trạng thái</th>
                         </tr>
                       </thead>
@@ -313,52 +373,110 @@ const OrgCheckInPage = () => {
                         {ticketsData.data.map((ticket) => (
                           <tr
                             key={ticket.id}
-                            className="text-text-primary text-sm"
+                            className="text-text-primary text-sm hover:bg-gray-50"
                           >
-                            <td className="py-3 font-mono text-xs">
-                              {ticket.qrCode}
-                            </td>
                             <td className="py-3">
                               <div>
+                                {/* Loại vé + Số thứ tự */}
                                 <p className="font-medium">
                                   {ticket.ticketType.name}
+                                  {ticket.ticketIndex !== undefined && (
+                                    <span className="text-primary ml-1">
+                                      #{ticket.ticketIndex + 1}
+                                    </span>
+                                  )}
                                 </p>
                                 <p className="text-text-secondary text-xs">
                                   {ticket.ticketType.price.toLocaleString()}đ
                                 </p>
+                                {/* NFT Token ID */}
+                                {ticket.mintStatus === 'minted' &&
+                                  ticket.tokenId && (
+                                    <p className="mt-1 font-mono text-xs text-purple-600">
+                                      🎨 NFT #{ticket.tokenId}
+                                    </p>
+                                  )}
                               </div>
                             </td>
                             <td className="py-3">{ticket.owner.fullName}</td>
                             <td className="py-3">{ticket.owner.email}</td>
                             <td className="py-3">{ticket.owner.phone}</td>
+                            <td className="py-3 font-mono text-xs">
+                              {ticket.order.orderCode}
+                            </td>
                             <td className="py-3">
-                              <span
-                                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                                  ticket.status === 'checked_in'
-                                    ? 'bg-green-100 text-green-800'
+                              <div className="flex flex-col gap-1">
+                                {/* Ticket Status */}
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                                    ticket.status === 'checkedIn'
+                                      ? 'bg-green-100 text-green-800'
+                                      : ticket.status === 'pending'
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {ticket.status === 'checkedIn'
+                                    ? '✅ Đã check-in'
                                     : ticket.status === 'pending'
-                                      ? 'bg-yellow-100 text-yellow-800'
-                                      : 'bg-gray-100 text-gray-800'
-                                }`}
-                              >
-                                {ticket.status === 'checked_in'
-                                  ? 'Đã check-in'
-                                  : ticket.status === 'pending'
-                                    ? 'Chờ check-in'
-                                    : 'Đã hủy'}
-                              </span>
+                                      ? '⏳ Chờ check-in'
+                                      : '❌ Đã hủy'}
+                                </span>
+
+                                {/* NFT Mint Status */}
+                                {ticket.mintStatus === 'minted' && (
+                                  <span className="inline-flex rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
+                                    🎨 NFT Minted
+                                  </span>
+                                )}
+                                {ticket.mintStatus === 'pending' && (
+                                  <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                                    ⏳ Minting...
+                                  </span>
+                                )}
+                                {ticket.mintStatus === 'failed' && (
+                                  <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
+                                    ❌ Mint Failed
+                                  </span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
 
-                    {/* Pagination info */}
+                    {/* Pagination */}
                     {ticketsData.pagination && (
-                      <div className="text-text-secondary mt-4 text-center text-sm">
-                        Trang {ticketsData.pagination.page} /{' '}
-                        {ticketsData.pagination.totalPages} • Tổng{' '}
-                        {ticketsData.pagination.total} vé
+                      <div className="mt-6 flex items-center justify-between">
+                        <div className="text-text-secondary text-sm">
+                          Trang {ticketsData.pagination.page} /{' '}
+                          {ticketsData.pagination.totalPages} • Tổng{' '}
+                          {ticketsData.pagination.total} vé
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            disabled={ticketsData.pagination.page === 1}
+                            onClick={() =>
+                              setFilters({ ...filters, page: filters.page - 1 })
+                            }
+                            className="border-border-default bg-background-primary text-text-primary hover:bg-background-secondary rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Trước
+                          </button>
+                          <button
+                            disabled={
+                              ticketsData.pagination.page ===
+                              ticketsData.pagination.totalPages
+                            }
+                            onClick={() =>
+                              setFilters({ ...filters, page: filters.page + 1 })
+                            }
+                            className="border-border-default bg-background-primary text-text-primary hover:bg-background-secondary rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Sau
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

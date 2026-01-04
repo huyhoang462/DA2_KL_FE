@@ -40,23 +40,13 @@ const HomePage = () => {
         )}
       </section>
 
-      <EventSection
-        title="Sự kiện mới nhất"
-        queryKey={['events', 'new']}
-        queryFn={() => getNewEvents(8)}
-      />
-
-      <EventSection
-        title="Sự kiện cuối tuần này"
-        queryKey={['events', 'this-weekend']}
-        queryFn={() => getThisWeekendEvents(8)}
-      />
-
+      {/* Special sections - không có filter tương ứng ở search page */}
       <EventSection
         title="Đang thịnh hành"
         badge="🔥"
         queryKey={['events', 'trending']}
         queryFn={() => getTrendingEvents(8)}
+        showViewAll={false}
       />
 
       <EventSection
@@ -64,13 +54,30 @@ const HomePage = () => {
         badge="⚡"
         queryKey={['events', 'selling-fast']}
         queryFn={() => getSellingFastEvents(8)}
+        showViewAll={false}
       />
 
+      <EventSection
+        title="Sự kiện cuối tuần này"
+        queryKey={['events', 'this-weekend']}
+        queryFn={() => getThisWeekendEvents(8)}
+        showViewAll={false}
+      />
+
+      <EventSection
+        title="Sự kiện mới nhất"
+        queryKey={['events', 'new']}
+        queryFn={() => getNewEvents(8)}
+        showViewAll={false}
+      />
+
+      {/* Category sections - có thể filter bằng category ở search page */}
       <EventSection
         title="Âm nhạc"
         badge="🎵"
         queryKey={['events', 'category', CATEGORIES.MUSIC]}
         queryFn={() => getEventsByCategory(CATEGORIES.MUSIC, 8)}
+        viewAllLink={`/search?category=${CATEGORIES.MUSIC}`}
       />
 
       <EventSection
@@ -78,6 +85,7 @@ const HomePage = () => {
         badge="🎭"
         queryKey={['events', 'category', CATEGORIES.STAGE_ART]}
         queryFn={() => getEventsByCategory(CATEGORIES.STAGE_ART, 8)}
+        viewAllLink={`/search?category=${CATEGORIES.STAGE_ART}`}
       />
 
       <EventSection
@@ -85,6 +93,7 @@ const HomePage = () => {
         badge="⚽"
         queryKey={['events', 'category', CATEGORIES.SPORTS]}
         queryFn={() => getEventsByCategory(CATEGORIES.SPORTS, 8)}
+        viewAllLink={`/search?category=${CATEGORIES.SPORTS}`}
       />
 
       <EventSection
@@ -92,6 +101,7 @@ const HomePage = () => {
         badge="📚"
         queryKey={['events', 'category', CATEGORIES.WORKSHOP]}
         queryFn={() => getEventsByCategory(CATEGORIES.WORKSHOP, 8)}
+        viewAllLink={`/search?category=${CATEGORIES.WORKSHOP}`}
       />
 
       <EventSection
@@ -99,6 +109,7 @@ const HomePage = () => {
         badge="✨"
         queryKey={['events', 'category', CATEGORIES.OTHER]}
         queryFn={() => getEventsByCategory(CATEGORIES.OTHER, 8)}
+        viewAllLink={`/search?category=${CATEGORIES.OTHER}`}
       />
     </div>
   );

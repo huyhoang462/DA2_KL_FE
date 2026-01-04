@@ -26,6 +26,7 @@ const EventSection = ({
   queryFn,
   badge,
   showViewAll = true,
+  viewAllLink = '/search',
 }) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
@@ -109,7 +110,7 @@ const EventSection = ({
         </h2>
         {showViewAll && (
           <Link
-            to="/search"
+            to={viewAllLink}
             className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium transition-colors"
           >
             Xem tất cả

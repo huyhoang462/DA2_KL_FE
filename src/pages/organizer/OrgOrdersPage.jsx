@@ -14,7 +14,7 @@ import DataTable from '../../components/ui/DataTable';
 import OrderDetailModal from '../../components/features/organizer/OrderDetailModal';
 import { orderService } from '../../services/orderService';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import OrgOrdersTableSkeleton from '../../components/ui/OrgOrdersTableSkeleton';
 import { orderStatusMap, paymentMethodMap } from '../../utils/mockData';
 
 const OrgOrdersPage = () => {
@@ -192,7 +192,7 @@ const OrgOrdersPage = () => {
         <Eye className="h-4 w-4" />
       </button>
 
-      {order.status === 'paid' && (
+      {/* {order.status === 'paid' && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -203,7 +203,7 @@ const OrgOrdersPage = () => {
         >
           <Mail className="h-4 w-4" />
         </button>
-      )}
+      )} */}
 
       {order.status === 'pending' && (
         <button
@@ -218,7 +218,7 @@ const OrgOrdersPage = () => {
         </button>
       )}
 
-      <div className="group relative">
+      {/* <div className="group relative">
         <button className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100">
           <MoreVertical className="h-4 w-4" />
         </button>
@@ -234,7 +234,7 @@ const OrgOrdersPage = () => {
             Xuất PDF
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 
@@ -284,11 +284,7 @@ const OrgOrdersPage = () => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <OrgOrdersTableSkeleton />;
   }
 
   // Error state
@@ -321,9 +317,9 @@ const OrgOrdersPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white transition-colors">
+          {/* <button className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white transition-colors">
             Xuất báo cáo
-          </button>
+          </button> */}
         </div>
       </div>
 

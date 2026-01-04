@@ -248,7 +248,7 @@ const OrderDetailModal = ({ isOpen, onClose, orderId }) => {
           </div>
 
           {/* QR Codes */}
-          {order.tickets && order.tickets.length > 0 && (
+          {/* {order.tickets && order.tickets.length > 0 && (
             <div>
               <h3 className="mb-4 flex items-center gap-2 font-medium text-gray-900">
                 <Ticket className="h-5 w-5" />
@@ -290,7 +290,7 @@ const OrderDetailModal = ({ isOpen, onClose, orderId }) => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Timeline / Transactions */}
           <div>
@@ -383,11 +383,11 @@ const OrderDetailModal = ({ isOpen, onClose, orderId }) => {
         >
           Đóng
         </button>
-        {order.status === 'paid' && (
+        {/* {order.status === 'paid' && (
           <button className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">
             Gửi lại email xác nhận
           </button>
-        )}
+        )} */}
         {order.status === 'pending' && (
           <button className="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700">
             Hủy đơn hàng

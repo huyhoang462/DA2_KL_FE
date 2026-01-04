@@ -1,10 +1,10 @@
 // src/components/features/event/BigTicket.jsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 
-export default function BigTicket({ event, onNav }) {
+export default function BigTicket({ event }) {
   const getMinPrice = (shows) => {
     if (!shows || shows.length === 0) return 0;
     const allTickets = shows.flatMap((show) => show.tickets);
@@ -41,6 +41,8 @@ export default function BigTicket({ event, onNav }) {
     }
     return null;
   };
+
+  const navigate = useNavigate();
 
   return (
     <div className="mx-auto mb-8 w-full">
@@ -102,11 +104,15 @@ export default function BigTicket({ event, onNav }) {
                 Chọn suất diễn
               </Button>
             ) : (
-              <Link to={`/select-tickets/${event.id}/${getSingleShowId()}`}>
-                <Button className="w-full" size="lg">
-                  Mua vé ngay
-                </Button>
-              </Link>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => {
+                  navigate(`/select-tickets/${event.id}/${getSingleShowId()}`);
+                }}
+              >
+                Mua vé ngay
+              </Button>
             )}
           </div>
         </div>

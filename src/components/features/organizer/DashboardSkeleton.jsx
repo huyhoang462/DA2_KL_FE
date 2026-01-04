@@ -20,12 +20,6 @@ const SkeletonMetric = () => (
 export default function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Skeleton cho Event Info Header */}
-      <div className="border-border-default bg-background-secondary rounded-lg border p-4">
-        <SkeletonBar className="mb-2 h-6 w-1/2" />
-        <SkeletonBar className="h-4 w-1/4" />
-      </div>
-
       {/* Skeleton cho Key Metrics - 4 cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

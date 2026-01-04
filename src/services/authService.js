@@ -23,7 +23,7 @@ export const handleSyncWallet = async ({ walletAddress }) => {
 };
 export const handleLogin = async ({ email, password }) => {
   try {
-    const response = await axiosInstance.post(`${API_BASE_URL}/auth/login`, {
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
       email,
       password,
     });

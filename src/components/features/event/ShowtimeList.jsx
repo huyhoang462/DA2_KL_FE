@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Clock, Calendar } from 'lucide-react';
 import { cn } from '../../../utils/lib';
 import Button from '../../ui/Button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const TicketItem = ({ ticket }) => {
   const available = ticket.quantityTotal - ticket.quantitySold;
@@ -41,6 +41,7 @@ const TicketItem = ({ ticket }) => {
 };
 
 const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
+  const navigate = useNavigate();
   const startTime = new Date(show.startTime);
   const endTime = new Date(show.endTime);
 
@@ -70,6 +71,10 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
 
   const hasAvailableTickets = totalAvailable > 0;
 
+  const handleClickBuyTickets = (e) => {
+    e.stopPropagation();
+    navigate(`/select-tickets/${eventId}/${show._id || show.id}`);
+  };
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
       <div
@@ -104,25 +109,25 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            to={`/select-tickets/${eventId}/${show._id || show.id}`}
-            onClick={(e) => e.stopPropagation()}
+          <Button
+            size="sm"
+            disabled={
+              !hasAvailableTickets ||
+              show?.status === 'completed' ||
+              show?.status === 'ongoing'
+            }
+            onClick={handleClickBuyTickets}
+            className={cn(
+              'min-w-[100px]',
+              !hasAvailableTickets && 'cursor-not-allowed'
+            )}
           >
-            <Button
-              size="sm"
-              disabled={!hasAvailableTickets || show?.status === 'completed'}
-              className={cn(
-                'min-w-[100px]',
-                !hasAvailableTickets && 'cursor-not-allowed opacity-50'
-              )}
-            >
-              {hasAvailableTickets
-                ? show.status === 'completed'
-                  ? 'Đã kết thúc'
-                  : 'Mua vé'
-                : 'Hết vé'}
-            </Button>
-          </Link>
+            {hasAvailableTickets
+              ? show.status === 'completed'
+                ? 'Đã kết thúc'
+                : 'Mua vé'
+              : 'Hết vé'}
+          </Button>
 
           <button className="rounded-full p-2 transition-colors hover:bg-gray-200">
             <ChevronDown

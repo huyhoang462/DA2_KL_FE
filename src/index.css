@@ -221,3 +221,18 @@ h6 {
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
 }
+
+/* Remove outline from chart elements when focused/clicked */
+svg:focus,
+svg *:focus {
+  outline: none !important;
+}
+
+.recharts-wrapper svg,
+.recharts-wrapper svg * {
+  outline: none !important;
+}
+
+.recharts-surface:focus {
+  outline: none !important;
+}

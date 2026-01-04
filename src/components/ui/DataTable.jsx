@@ -34,11 +34,34 @@ const DataTable = ({
   const searchableData = useMemo(() => {
     if (!searchTerm) return data;
 
+    const searchLower = searchTerm.toLowerCase();
+
     return data.filter((item) => {
+      // Search in all columns
       return columns.some((column) => {
         if (column.searchable === false) return false;
-        const value = column.accessor ? item[column.accessor] : '';
-        return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+
+        const key = column.key || column.accessor;
+        if (!key) return false;
+
+        let value = item[key];
+
+        // Handle nested objects (e.g., buyer.name, buyer.email)
+        if (typeof value === 'object' && value !== null) {
+          // For buyer object, search in name and email
+          if (key === 'buyer') {
+            const name = value.name || '';
+            const email = value.email || '';
+            return (
+              String(name).toLowerCase().includes(searchLower) ||
+              String(email).toLowerCase().includes(searchLower)
+            );
+          }
+          // For other objects, stringify
+          value = JSON.stringify(value);
+        }
+
+        return String(value).toLowerCase().includes(searchLower);
       });
     });
   }, [data, searchTerm, columns]);
@@ -338,7 +361,6 @@ const DataTable = ({
             >
               <div className="flex items-center gap-1">
                 <ChevronLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Trước</span>
               </div>
             </button>
 
@@ -379,7 +401,6 @@ const DataTable = ({
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
             >
               <div className="flex items-center gap-1">
-                <span className="hidden sm:inline">Sau</span>
                 <ChevronRight className="h-4 w-4" />
               </div>
             </button>

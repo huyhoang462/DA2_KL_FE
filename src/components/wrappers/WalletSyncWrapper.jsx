@@ -23,18 +23,18 @@ const WalletSyncWrapper = ({ children }) => {
 
       // Log chi tiết toàn bộ privyUser để xem cấu trúc thật
       if (ready && authenticated && privyUser) {
-        console.log('🧩 [PrivyUser FULL OBJECT]:', privyUser);
+        //  console.log('🧩 [PrivyUser FULL OBJECT]:', privyUser);
       }
 
       if (ready && isBackendAuthenticated && privyUser?.wallet?.address) {
-        console.log('✅ [WalletSync] Gửi yêu cầu sync ví xuống BE:', {
-          walletAddress: privyUser.wallet.address,
-        });
+        // console.log('✅ [WalletSync] Gửi yêu cầu sync ví xuống BE:', {
+        //   walletAddress: privyUser.wallet.address,
+        // });
         try {
           const res = await handleSyncWallet({
             walletAddress: privyUser.wallet.address,
           });
-          console.log('✅ [WalletSync] Kết quả từ BE:', res);
+          // console.log('✅ [WalletSync] Kết quả từ BE:', res);
         } catch (syncErr) {
           console.error('❌ [WalletSync] Lỗi khi sync ví xuống BE:', syncErr);
         }
