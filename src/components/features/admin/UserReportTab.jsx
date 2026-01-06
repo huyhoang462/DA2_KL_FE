@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   LineChart,
   Line,
@@ -25,8 +26,10 @@ import { getUserReport, exportReport } from '../../../services/adminService';
 import LoadingSpinner from '../../ui/LoadingSpinner';
 import ErrorDisplay from '../../ui/ErrorDisplay';
 import UserReportSkeleton from '../../ui/UserReportSkeleton';
+import PieChartTooltip from '../../ui/PieChartTooltip';
 
 const UserReportTab = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -302,14 +305,7 @@ const UserReportTab = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#ffffff',
-                    }}
-                  />
+                  <Tooltip content={<PieChartTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -336,14 +332,7 @@ const UserReportTab = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#ffffff',
-                    }}
-                  />
+                  <Tooltip content={<PieChartTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -379,7 +368,8 @@ const UserReportTab = () => {
                     reportData.topBuyers.map((buyer, index) => (
                       <tr
                         key={buyer.userId}
-                        className="hover:bg-background-primary"
+                        onClick={() => navigate(`/admin/users/${buyer.userId}`)}
+                        className="hover:bg-background-primary cursor-pointer transition-colors"
                       >
                         <td className="text-text-secondary px-6 py-4 text-sm">
                           {index + 1}

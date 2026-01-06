@@ -179,10 +179,10 @@ const AdminLayout = () => {
 
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <button className="text-text-secondary hover:text-text-primary relative">
+            {/* <button className="text-text-secondary hover:text-text-primary relative">
               <Bell className="h-5 w-5" />
               <span className="bg-destructive absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>
-            </button>
+            </button> */}
 
             {/* Profile Dropdown */}
             <div className="relative">

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { TrendingUp, TicketIcon, Users, Tag, BarChart3 } from 'lucide-react';
 import RevenueReportTab from '../../components/features/admin/RevenueReportTab';
 import TicketReportTab from '../../components/features/admin/TicketReportTab';
@@ -6,7 +7,20 @@ import UserReportTab from '../../components/features/admin/UserReportTab';
 import CategoryReportTab from '../../components/features/admin/CategoryReportTab';
 
 const AdminReportsPage = () => {
-  const [activeTab, setActiveTab] = useState('revenue');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'revenue';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  // Sync activeTab with URL
+  useEffect(() => {
+    const tab = searchParams.get('tab') || 'revenue';
+    setActiveTab(tab);
+  }, [searchParams]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   const tabs = [
     {
@@ -61,7 +75,7 @@ const AdminReportsPage = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'border-primary text-primary border-b-2'

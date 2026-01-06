@@ -47,7 +47,7 @@ export const PendingEventsList = ({ events }) => (
         title={event.name}
         subtitle={`${event.creator?.name} - ${event.category?.name}`}
         time={new Date(event.createdAt).toLocaleString('vi-VN')}
-        link={`/admin/events/approvals`}
+        link={`/admin/events?status=pending&eventId=${event.id}`}
         iconColor="warning"
       />
     ))}
@@ -79,7 +79,7 @@ export const TransactionsList = ({ transactions }) => (
             </span>
           }
           time={new Date(transaction.createdAt).toLocaleString('vi-VN')}
-          link="/admin/transactions"
+          link={`/admin/transactions?transactionId=${transaction.id}`}
           iconColor="green"
         />
       );
@@ -96,7 +96,7 @@ export const NewUsersList = ({ users }) => (
         title={user.fullName}
         subtitle={user.email}
         time={new Date(user.createdAt).toLocaleString('vi-VN')}
-        link="/admin/users"
+        link={`/admin/users/${user.id}`}
         iconColor="blue"
       />
     ))}

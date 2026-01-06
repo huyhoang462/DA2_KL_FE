@@ -35,9 +35,9 @@ const CategoryDistributionChart = ({ data }) => {
           <p className="text-primary text-sm font-medium">
             {payload[0].value} sự kiện
           </p>
-          <p className="text-text-secondary text-xs">
+          {/* <p className="text-text-secondary text-xs">
             {((payload[0].percent || 0) * 100).toFixed(1)}%
-          </p>
+          </p> */}
         </div>
       );
     }
