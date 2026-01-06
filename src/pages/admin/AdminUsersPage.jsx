@@ -300,7 +300,7 @@ const AdminUsersPage = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {/* Role Change Dropdown */}
-                        {user.role !== 'admin' && (
+                        {/* {user.role !== 'admin' && (
                           <select
                             value={user.role}
                             onChange={(e) =>
@@ -312,7 +312,7 @@ const AdminUsersPage = () => {
                             <option value="staff">Staff</option>
                             <option value="admin">Admin</option>
                           </select>
-                        )}
+                        )} */}
 
                         {/* Ban/Unban Button */}
                         {user.status === 'banned' ? (

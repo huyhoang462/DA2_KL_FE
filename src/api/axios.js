@@ -4,7 +4,7 @@ import { login, logout } from '../store/slices/authSlice';
 import { API_BASE_URL } from '../constants/apiConstants';
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL ,
+  baseURL: API_BASE_URL,
   withCredentials: true, //  trình duyệt tự động gửi cookie (chứa refresh token)
 });
 
@@ -33,15 +33,35 @@ axiosInstance.interceptors.response.use(
         // Gọi API /refresh-token để lấy access token mới
         // axiosInstance.post sẽ tự động thêm cookie `jwt` vào request
         const { data } = await axiosInstance.post('/auth/refresh-token');
-        const newAccessToken = data.accessToken;
 
-        const currentUser = store.getState().auth.user;
+        // Nếu BE trả về user, dùng data.user; nếu không, decode token
+        let refreshedUser;
+        if (data.user) {
+          refreshedUser = data.user;
+        } else {
+          // Fallback: decode token để lấy basic info
+          const tokenPayload = JSON.parse(atob(data.accessToken.split('.')[1]));
+          const currentUser = store.getState().auth.user;
+
+          // Kiểm tra user ID có khớp không
+          if (currentUser && currentUser.id !== tokenPayload.id) {
+            console.error('🚨 [Security] User ID mismatch! Force logout.');
+            console.error('Expected:', currentUser.id, 'Got:', tokenPayload.id);
+            store.dispatch(logout());
+            window.location.href = '/login';
+            return Promise.reject(new Error('Session mismatch'));
+          }
+          refreshedUser = currentUser;
+        }
 
         store.dispatch(
-          login({ user: currentUser, accessToken: newAccessToken })
+          login({
+            user: refreshedUser,
+            accessToken: data.accessToken,
+          })
         );
 
-        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        originalRequest.headers['Authorization'] = `Bearer ${data.accessToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         store.dispatch(logout());

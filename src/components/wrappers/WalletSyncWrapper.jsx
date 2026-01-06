@@ -1,14 +1,19 @@
 // components/wrappers/WalletSyncWrapper.jsx
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useSelector } from 'react-redux';
 import { handleSyncWallet } from '../../services/authService';
 
 const WalletSyncWrapper = ({ children }) => {
-  const { user: privyUser, ready, authenticated } = usePrivy(); // Lấy thêm 'authenticated' từ Privy
+  const { user: privyUser, ready, authenticated } = usePrivy();
   const isBackendAuthenticated = useSelector(
     (state) => state.auth.isAuthenticated
   );
+
+  // Flags để ngăn race condition
+  const isSyncing = useRef(false);
+  const hasSynced = useRef(false);
+  const lastSyncedAddress = useRef(null);
 
   useEffect(() => {
     // Hàm kiểm tra và sync
@@ -21,34 +26,38 @@ const WalletSyncWrapper = ({ children }) => {
       //   isBackendAuthenticated,
       // });
 
-      // Log chi tiết toàn bộ privyUser để xem cấu trúc thật
       if (ready && authenticated && privyUser) {
         //  console.log('🧩 [PrivyUser FULL OBJECT]:', privyUser);
       }
 
-      if (ready && isBackendAuthenticated && privyUser?.wallet?.address) {
-        // console.log('✅ [WalletSync] Gửi yêu cầu sync ví xuống BE:', {
-        //   walletAddress: privyUser.wallet.address,
-        // });
+      const walletAddress = privyUser?.wallet?.address;
+
+      // Điều kiện sync
+      if (ready && isBackendAuthenticated && walletAddress) {
+        // Ngăn gọi trùng lặp: đang sync HOẶC đã sync address này rồi
+        if (isSyncing.current || lastSyncedAddress.current === walletAddress) {
+          return;
+        }
+
+        isSyncing.current = true; // Lock
+
         try {
-          const res = await handleSyncWallet({
-            walletAddress: privyUser.wallet.address,
-          });
-          // console.log('✅ [WalletSync] Kết quả từ BE:', res);
+          const res = await handleSyncWallet({ walletAddress });
+
+          if (res) {
+            hasSynced.current = true;
+            lastSyncedAddress.current = walletAddress; // Lưu address đã sync
+            console.log('✅ [WalletSync] Synced successfully');
+          }
         } catch (syncErr) {
-          console.error('❌ [WalletSync] Lỗi khi sync ví xuống BE:', syncErr);
+          console.error('❌ [WalletSync] Error:', syncErr);
+        } finally {
+          isSyncing.current = false; // Unlock
         }
       }
     };
 
-    // 1. Chạy ngay khi có thay đổi
     checkAndSync();
-
-    // 2. [MỚI] Thiết lập interval để kiểm tra lại mỗi 5 giây (phòng trường hợp mạng lag)
-    const intervalId = setInterval(checkAndSync, 5000);
-
-    // Dọn dẹp khi component unmount
-    return () => clearInterval(intervalId);
   }, [privyUser, isBackendAuthenticated, ready, authenticated]);
 
   return <>{children}</>;

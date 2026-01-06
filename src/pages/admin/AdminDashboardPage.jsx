@@ -13,7 +13,6 @@ import {
   Activity,
   PieChart,
 } from 'lucide-react';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import DashboardSkeleton from '../../components/ui/DashboardSkeleton';
 import { getDashboardOverview } from '../../services/adminService';

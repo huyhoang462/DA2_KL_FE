@@ -68,11 +68,11 @@ const AdminLayout = () => {
     //   icon: FileText,
     //   path: '/admin/categories',
     // },
-    {
-      label: 'Cài đặt',
-      icon: Settings,
-      path: '/admin/settings',
-    },
+    // {
+    //   label: 'Cài đặt',
+    //   icon: Settings,
+    //   path: '/admin/settings',
+    // },
   ];
 
   const SidebarItem = ({ item }) => (
@@ -165,7 +165,7 @@ const AdminLayout = () => {
             </button>
 
             {/* Search */}
-            <div className="hidden md:block">
+            {/* <div className="hidden md:block">
               <div className="relative">
                 <Search className="text-text-placeholder absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <input
@@ -174,7 +174,7 @@ const AdminLayout = () => {
                   className="border-border-default bg-background-primary text-text-primary placeholder:text-text-placeholder focus:border-primary focus:ring-primary/20 w-80 rounded-lg border py-2 pr-4 pl-9 text-sm focus:ring-2 focus:outline-none"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex items-center gap-4">
