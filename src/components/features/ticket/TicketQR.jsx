@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { QRCodeSVG } from 'qrcode.react';
+import { ShowerHead } from 'lucide-react';
 
 const TicketQR = ({ ticket, autoStart = false }) => {
   const { signMessage, user: privyUser, ready, authenticated } = usePrivy();
@@ -38,6 +39,13 @@ const TicketQR = ({ ticket, autoStart = false }) => {
       }
 
       const ticketId = ticket?._id || ticket?.id;
+      const showId =
+        ticket?.showId || ticket?.show?.id || ticket?.show?.showId || null;
+      if (!showId) {
+        console.error('[TicketQR] Không tìm thấy showId trong ticket');
+        alert('Không xác định được showId từ vé.');
+        return;
+      }
       if (!ticketId) {
         console.error('[TicketQR] Không tìm thấy ticketId (_id hoặc id)');
         alert('Không xác định được mã vé để tạo QR.');
@@ -47,7 +55,9 @@ const TicketQR = ({ ticket, autoStart = false }) => {
 
       // 1. Lấy timestamp hiện tại
       const timestamp = Date.now();
-      console.log('[TicketQR] Timestamp hiện tại:', timestamp);
+      console.log('[TicketQR] Timestamp hiện tại:', timestamp, {
+        showId,
+      });
 
       // 2. Tạo message để ký (Message này phải khớp logic với Backend)
       // Format: "Check-in ticket [ID] at timestamp [TIME]"
@@ -73,6 +83,7 @@ const TicketQR = ({ ticket, autoStart = false }) => {
       // 4. Đóng gói dữ liệu JSON
       const payload = {
         ticketId: ticketId,
+        showId: showId,
         walletAddress: privyUser.wallet.address,
         timestamp: timestamp,
         signature: signature,
@@ -91,6 +102,17 @@ const TicketQR = ({ ticket, autoStart = false }) => {
       });
       setLoading(false);
       console.log('[TicketQR] Đặt loading=false trong catch');
+
+      // Nếu user bấm X hoặc Cancel trên popup Privy (code 4001)
+      // thì coi như user hủy thao tác, không cần báo lỗi
+      if (
+        error?.code === 4001 ||
+        (typeof error?.message === 'string' &&
+          error.message.toLowerCase().includes('user rejected'))
+      ) {
+        return;
+      }
+
       alert(
         `Lỗi khi ký: ${error?.message || 'Bạn đã hủy ký hoặc có lỗi xảy ra.'}`
       );

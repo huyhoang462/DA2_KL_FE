@@ -46,15 +46,35 @@ const STATUS_CONFIG = {
   },
 };
 
+const MINT_STATUS_CONFIG = {
+  pending: {
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-200',
+  },
+  minted: {
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-700',
+    borderColor: 'border-green-200',
+  },
+  default: {
+    bgColor: 'bg-gray-50',
+    textColor: 'text-gray-700',
+    borderColor: 'border-gray-200',
+  },
+};
+
 export default function TicketCard({ ticket }) {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [loadingQR, setLoadingQR] = useState(false);
-
+  console.log('[TicketCard] status =', ticket.status, ticket);
   const { signMessage, user: privyUser, ready, authenticated } = usePrivy();
 
   const statusConfig = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.pending;
+  const mintStatusConfig =
+    MINT_STATUS_CONFIG[ticket.mintStatus] || MINT_STATUS_CONFIG.default;
 
   // Format ngày giờ
   const formattedDate = format(new Date(ticket.startTime), 'EEE, dd MMM yyyy', {
@@ -97,6 +117,8 @@ export default function TicketCard({ ticket }) {
       }
 
       const ticketId = ticket?._id || ticket?.id;
+      const showId =
+        ticket?.showId || ticket?.show?.id || ticket?.show?.showId || null;
       if (!ticketId) {
         console.error('[TicketCard] Không tìm thấy ticketId (_id hoặc id)');
         alert('Không xác định được mã vé để tạo QR.');
@@ -114,6 +136,7 @@ export default function TicketCard({ ticket }) {
 
       const payload = {
         ticketId,
+        showId,
         walletAddress: privyUser.wallet.address,
         timestamp,
         signature,
@@ -129,6 +152,16 @@ export default function TicketCard({ ticket }) {
         message: error?.message,
       });
       setLoadingQR(false);
+
+      // Nếu người dùng tự đóng popup / bấm hủy ký thì không hiện alert lỗi
+      if (
+        error?.code === 4001 ||
+        (typeof error?.message === 'string' &&
+          error.message.toLowerCase().includes('user rejected'))
+      ) {
+        return;
+      }
+
       alert(
         `Lỗi khi ký: ${error?.message || 'Bạn đã hủy ký hoặc có lỗi xảy ra.'}`
       );
@@ -217,7 +250,9 @@ export default function TicketCard({ ticket }) {
                   <QrCode className="text-primary h-4 w-4 flex-shrink-0" />
                   <p className="text-text-primary truncate text-xs md:text-sm">
                     Trạng thái mint:{' '}
-                    <span className="font-semibold">
+                    <span
+                      className={`${mintStatusConfig.bgColor} ${mintStatusConfig.textColor} ${mintStatusConfig.borderColor} inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold`}
+                    >
                       {ticket.mintStatus || 'Không có'}
                     </span>
                   </p>
@@ -231,8 +266,8 @@ export default function TicketCard({ ticket }) {
                 onClick={handleExportQR}
                 disabled={
                   loadingQR ||
-                  ticket.status === 'cancelled' ||
-                  ticket.status === 'expired'
+                  ticket.status !== 'pending' ||
+                  ticket.mintStatus !== 'minted'
                 }
                 className="w-full md:w-auto"
                 variant="primary"
@@ -270,6 +305,10 @@ export default function TicketCard({ ticket }) {
                   onClick={() => {
                     setShowQRModal(false);
                     setQrData(null);
+                    // Reload lại trang sau khi đóng popup
+                    if (typeof window !== 'undefined') {
+                      window.location.reload();
+                    }
                   }}
                   className="mt-3 rounded border border-gray-300 px-4 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
                 >
