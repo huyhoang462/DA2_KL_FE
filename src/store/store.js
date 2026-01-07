@@ -26,7 +26,8 @@ const authPersistConfig = {
   key: 'auth',
   storage: storage,
   // Chỉ lưu những trường này của authSlice, không lưu status hay error
-  whitelist: ['user', 'token', 'isAuthenticated'],
+  // Cần lưu cả privyToken để sau khi reload trang vẫn đồng bộ được với Privy
+  whitelist: ['user', 'token', 'isAuthenticated', 'privyToken'],
 };
 const rootReducer = combineReducers({
   // Bọc authReducer bằng persistReducer với config riêng của nó
