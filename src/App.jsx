@@ -50,9 +50,12 @@ const AdminDashboardPage = lazy(
   () => import('./pages/admin/AdminDashboardPage')
 );
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminUserDetailPage = lazy(
+  () => import('./pages/admin/AdminUserDetailPage')
+);
 const AdminEventsPage = lazy(() => import('./pages/admin/AdminEventsPage'));
-const AdminEventApprovalsPage = lazy(
-  () => import('./pages/admin/AdminEventApprovalsPage')
+const AdminEventDetailPage = lazy(
+  () => import('./pages/admin/AdminEventDetailPage')
 );
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const AdminTransactionsPage = lazy(
@@ -142,11 +145,9 @@ function App() {
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<AdminDashboardPage />} />
                   <Route path="users" element={<AdminUsersPage />} />
+                  <Route path="users/:id" element={<AdminUserDetailPage />} />
                   <Route path="events" element={<AdminEventsPage />} />
-                  <Route
-                    path="event-approvals"
-                    element={<AdminEventApprovalsPage />}
-                  />
+                  <Route path="events/:id" element={<AdminEventDetailPage />} />
                   <Route path="reports" element={<AdminReportsPage />} />
                   <Route
                     path="transactions"

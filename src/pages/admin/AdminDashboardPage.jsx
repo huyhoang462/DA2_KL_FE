@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Calendar,
@@ -34,8 +35,12 @@ const StatCard = ({
   icon: Icon,
   color = 'primary',
   trend,
+  onClick,
 }) => (
-  <div className="bg-background-secondary border-border-default group rounded-lg border p-6 transition-all hover:shadow-lg">
+  <div
+    className={`bg-background-secondary border-border-default group rounded-lg border p-6 transition-all hover:shadow-lg ${onClick ? 'hover:border-primary cursor-pointer' : ''}`}
+    onClick={onClick}
+  >
     <div className="flex items-start justify-between">
       <div className="flex-1">
         <p className="text-text-secondary mb-1 text-sm font-medium">{title}</p>
@@ -80,6 +85,7 @@ const SectionCard = ({ title, icon: Icon, children, className = '' }) => (
 );
 
 const AdminDashboardPage = () => {
+  const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboardOverview'],
     queryFn: getDashboardOverview,
@@ -97,6 +103,17 @@ const AdminDashboardPage = () => {
   const { overview, charts, topSellingEvents, recentActivities, alerts } =
     data?.data || {};
 
+  // Update alert links to include query params
+  const processedAlerts = alerts?.map((alert) => {
+    if (
+      alert.link === '/admin/events' &&
+      alert.message?.includes('chờ duyệt')
+    ) {
+      return { ...alert, link: '/admin/events?status=pending' };
+    }
+    return alert;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -106,9 +123,9 @@ const AdminDashboardPage = () => {
       </div> */}
 
       {/* Alerts Section */}
-      {alerts && alerts.length > 0 && (
+      {processedAlerts && processedAlerts.length > 0 && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {alerts.map((alert, index) => (
+          {processedAlerts.map((alert, index) => (
             <DashboardAlertCard key={index} {...alert} />
           ))}
         </div>
@@ -121,7 +138,7 @@ const AdminDashboardPage = () => {
           value={overview?.users?.total?.toLocaleString() || '0'}
           subtitle={`${overview?.users?.organizers || 0} organizers`}
           icon={Users}
-          color="blue"
+          onClick={() => navigate('/admin/users')}
         />
         <StatCard
           title="Tổng sự kiện"
@@ -129,6 +146,7 @@ const AdminDashboardPage = () => {
           subtitle={`${overview?.events?.pending || 0} chờ duyệt, ${overview?.events?.ongoing || 0} đang diễn ra`}
           icon={Calendar}
           color="purple"
+          onClick={() => navigate('/admin/events')}
         />
         <StatCard
           title="Doanh thu tháng này"
@@ -137,6 +155,7 @@ const AdminDashboardPage = () => {
           icon={DollarSign}
           color="green"
           trend={overview?.revenue?.growth}
+          onClick={() => navigate('/admin/reports?tab=revenue')}
         />
         <StatCard
           title="Vé đã bán"
@@ -144,6 +163,7 @@ const AdminDashboardPage = () => {
           subtitle={`${overview?.tickets?.today || 0} vé hôm nay`}
           icon={Ticket}
           color="orange"
+          onClick={() => navigate('/admin/reports?tab=tickets')}
         />
       </div>
 
@@ -154,18 +174,21 @@ const AdminDashboardPage = () => {
           value={overview?.transactions?.success?.toLocaleString() || '0'}
           icon={CheckCircle}
           color="green"
+          onClick={() => navigate('/admin/transactions?status=success')}
         />
         <StatCard
           title="Đang xử lý"
           value={overview?.transactions?.pending?.toLocaleString() || '0'}
           icon={Clock}
           color="warning"
+          onClick={() => navigate('/admin/transactions?status=pending')}
         />
         <StatCard
           title="Thất bại"
           value={overview?.transactions?.failed?.toLocaleString() || '0'}
           icon={XCircle}
           color="destructive"
+          onClick={() => navigate('/admin/transactions?status=failed')}
         />
       </div>
 

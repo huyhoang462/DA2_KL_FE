@@ -337,3 +337,40 @@ export const getTransactionStatistics = async (params = {}) => {
     throw extractError(error);
   }
 };
+
+// User Detail Management APIs - getUserOrders and getUserEvents
+export const getUserOrders = async (userId, params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/admin/users/${userId}/orders?${queryParams}`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const getUserEvents = async (userId, params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/admin/users/${userId}/events?${queryParams}`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};

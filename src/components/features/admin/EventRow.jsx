@@ -1,5 +1,6 @@
 import React from 'react';
-import { Eye, Trash2, Star, Calendar, TicketIcon } from 'lucide-react';
+import { Eye, Trash2, Star, Calendar, TicketIcon, Ban } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../ui/Button';
 import EventStatusBadge from './EventStatusBadge';
 
@@ -11,8 +12,25 @@ const EventRow = React.memo(
     onDelete,
     isTogglingFeatured,
   }) => {
+    const navigate = useNavigate();
+
+    const handleRowClick = (e) => {
+      // Don't navigate if clicking on buttons or interactive elements
+      if (
+        e.target.closest('button') ||
+        e.target.closest('a') ||
+        e.target.closest('[role="button"]')
+      ) {
+        return;
+      }
+      navigate(`/admin/events/${event.id}`);
+    };
+
     return (
-      <tr className="hover:bg-background-primary transition-colors">
+      <tr
+        className="hover:bg-background-primary cursor-pointer transition-colors"
+        onClick={handleRowClick}
+      >
         <td className="max-w-md py-4 pr-4 pl-5">
           <div className="flex items-start gap-2.5">
             {event.bannerImageUrl ? (
@@ -129,9 +147,9 @@ const EventRow = React.memo(
                 e.stopPropagation();
                 onDelete(event);
               }}
-              title="Xóa sự kiện"
+              title="Hủy sự kiện"
             >
-              <Trash2 className="h-4 w-4" />
+              <Ban className="h-4 w-4" />
             </Button>
           </div>
         </td>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   LineChart,
   Line,
@@ -24,12 +25,14 @@ import {
   CreditCard,
 } from 'lucide-react';
 import Button from '../../ui/Button';
+import PieChartTooltip from '../../ui/PieChartTooltip';
 import { getRevenueReport, exportReport } from '../../../services/adminService';
 import LoadingSpinner from '../../ui/LoadingSpinner';
 import ErrorDisplay from '../../ui/ErrorDisplay';
 import RevenueReportSkeleton from '../../ui/RevenueReportSkeleton';
 
 const RevenueReportTab = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -351,13 +354,7 @@ const RevenueReportTab = () => {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => formatCurrency(value)}
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#ffffff',
-                    }}
+                    content={<PieChartTooltip formatter={formatCurrency} />}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -404,7 +401,10 @@ const RevenueReportTab = () => {
                       .map((org, index) => (
                         <tr
                           key={org.organizerId}
-                          className="hover:bg-background-primary"
+                          onClick={() =>
+                            navigate(`/admin/users/${org.organizerId}`)
+                          }
+                          className="hover:bg-background-primary cursor-pointer transition-colors"
                         >
                           <td className="text-text-secondary px-6 py-4 text-sm">
                             {index + 1}

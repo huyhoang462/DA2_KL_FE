@@ -66,7 +66,7 @@ const DashboardAlertCard = ({ type, priority, message, action, link }) => {
         </div>
         {priority === 'high' && (
           <span className="bg-destructive/10 text-destructive rounded-full px-2 py-0.5 text-xs font-medium">
-            Urgent
+            Notice
           </span>
         )}
       </div>

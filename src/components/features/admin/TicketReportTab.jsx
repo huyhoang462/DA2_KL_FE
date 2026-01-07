@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   PieChart,
   Pie,
@@ -18,8 +19,10 @@ import { getTicketReport, exportReport } from '../../../services/adminService';
 import LoadingSpinner from '../../ui/LoadingSpinner';
 import ErrorDisplay from '../../ui/ErrorDisplay';
 import TicketReportSkeleton from '../../ui/TicketReportSkeleton';
+import PieChartTooltip from '../../ui/PieChartTooltip';
 
 const TicketReportTab = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -224,14 +227,7 @@ const TicketReportTab = () => {
                         />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1f2937',
-                        border: '1px solid #374151',
-                        borderRadius: '8px',
-                        color: '#ffffff',
-                      }}
-                    />
+                    <Tooltip content={<PieChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -316,7 +312,10 @@ const TicketReportTab = () => {
                     reportData.topEventsByTicketSales.map((event, index) => (
                       <tr
                         key={event.eventId}
-                        className="hover:bg-background-primary"
+                        onClick={() =>
+                          navigate(`/admin/events/${event.eventId}`)
+                        }
+                        className="hover:bg-background-primary cursor-pointer transition-colors"
                       >
                         <td className="text-text-secondary px-6 py-4 text-sm">
                           {index + 1}

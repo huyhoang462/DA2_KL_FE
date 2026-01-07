@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
@@ -15,10 +16,11 @@ import {
 
 const AdminEventsPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     search: '',
-    status: '',
+    status: searchParams.get('status') || '',
     format: '',
     isFeatured: null,
     sortBy: 'createdAt',
@@ -41,6 +43,20 @@ const AdminEventsPage = () => {
   });
 
   const limit = 20;
+
+  // Handle eventId from URL query params
+  useEffect(() => {
+    const eventId = searchParams.get('eventId');
+    const status = searchParams.get('status');
+
+    if (eventId) {
+      setReviewModalState({ isOpen: true, eventId });
+    }
+
+    if (status) {
+      setFilters((prev) => ({ ...prev, status }));
+    }
+  }, [searchParams]);
 
   // Fetch events
   const { data, isLoading, error } = useQuery({
@@ -98,6 +114,15 @@ const AdminEventsPage = () => {
     setReviewModalState({ isOpen: true, eventId });
   }, []);
 
+  const handleCloseReviewModal = useCallback(() => {
+    setReviewModalState({ isOpen: false, eventId: null });
+    // Remove eventId from URL if it exists
+    if (searchParams.get('eventId')) {
+      searchParams.delete('eventId');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleToggleFeatured = useCallback((event) => {
     setFeaturedModalState({ isOpen: true, event });
   }, []);
@@ -136,7 +161,7 @@ const AdminEventsPage = () => {
       {/* Filters */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         {/* Search */}
-        <form onSubmit={handleSearch} className="md:col-span-2">
+        <form onSubmit={handleSearch} className="md:col-span-3">
           <div className="relative">
             <Search className="text-text-secondary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <input
@@ -176,8 +201,8 @@ const AdminEventsPage = () => {
         </select>
 
         {/* Featured Filter */}
-        <select
-          value={filters.isFeatured ?? ''}
+        {/* <select
+          value={filters.isFeatured === null ? '' : String(filters.isFeatured)}
           onChange={(e) =>
             handleFilterChange(
               'isFeatured',
@@ -189,7 +214,7 @@ const AdminEventsPage = () => {
           <option value="">Tất cả</option>
           <option value="true">Featured</option>
           <option value="false">Không featured</option>
-        </select>
+        </select> */}
       </div>
 
       {/* Stats Cards */}
@@ -364,26 +389,27 @@ const AdminEventsPage = () => {
       {/* Modals */}
       <EventReviewModal
         isOpen={reviewModalState.isOpen}
-        onClose={() => setReviewModalState({ isOpen: false, eventId: null })}
+        onClose={handleCloseReviewModal}
         eventId={reviewModalState.eventId}
       />
 
       <ConfirmModal
         isOpen={deleteModalState.isOpen}
-        title="Xóa sự kiện"
+        title="Hủy sự kiện"
         message={
           <div>
-            Bạn có chắc chắn muốn xóa sự kiện{' '}
+            Bạn có chắc chắn muốn hủy sự kiện{' '}
             <strong>{deleteModalState.event?.name}</strong>?
             <br />
-            <span className="text-text-secondary text-sm">
+            {/* <span className="text-text-secondary text-sm">
               Sự kiện sẽ bị soft delete. Dữ liệu vẫn được giữ lại.
-            </span>
+            </span> */}
           </div>
         }
         onConfirm={() => deleteEventMutation.mutate(deleteModalState.event.id)}
         onCancel={() => setDeleteModalState({ isOpen: false, event: null })}
-        confirmText="Xóa"
+        confirmText="Xác nhận"
+        cancelText="Không"
         confirmVariant="destructive"
         isLoading={deleteEventMutation.isPending}
       />

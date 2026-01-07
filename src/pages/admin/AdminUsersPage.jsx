@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
-  Filter,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
   Eye,
   UserCog,
   Ban,
@@ -13,12 +12,10 @@ import {
   Trash2,
   Mail,
   Phone,
-  Calendar,
   DollarSign,
   ShoppingBag,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import UserTableSkeleton from '../../components/ui/UserTableSkeleton';
 import ConfirmModal from '../../components/ui/ConfirmModal';
@@ -35,6 +32,7 @@ import {
 
 const AdminUsersPage = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     search: '',
@@ -44,7 +42,6 @@ const AdminUsersPage = () => {
     sortOrder: 'desc',
   });
   const [searchInput, setSearchInput] = useState('');
-  const [expandedUser, setExpandedUser] = useState(null);
 
   // Modal states
   const [banModalState, setBanModalState] = useState({
@@ -124,10 +121,6 @@ const AdminUsersPage = () => {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-  };
-
-  const handleRoleChange = (user, newRole) => {
-    setRoleModalState({ isOpen: true, user, newRole });
   };
 
   const handleBanUser = (user) => {
@@ -247,7 +240,8 @@ const AdminUsersPage = () => {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-background-primary transition-colors"
+                    className="hover:bg-background-primary cursor-pointer transition-colors"
+                    onClick={() => navigate(`/admin/users/${user.id}`)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -299,27 +293,28 @@ const AdminUsersPage = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Role Change Dropdown */}
-                        {/* {user.role !== 'admin' && (
-                          <select
-                            value={user.role}
-                            onChange={(e) =>
-                              handleRoleChange(user, e.target.value)
-                            }
-                            className="bg-background-primary border-border-default text-text-primary focus:border-primary rounded border px-2 py-1 text-xs focus:outline-none"
-                          >
-                            <option value="user">User</option>
-                            <option value="staff">Staff</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                        )} */}
+                        {/* View Detail Button */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/users/${user.id}`);
+                          }}
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
 
                         {/* Ban/Unban Button */}
                         {user.status === 'banned' ? (
                           <Button
                             size="sm"
                             variant="success"
-                            onClick={() => handleUnbanUser(user)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnbanUser(user);
+                            }}
                           >
                             <CheckCircle className="h-4 w-4" />
                           </Button>
@@ -327,22 +322,28 @@ const AdminUsersPage = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleBanUser(user)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBanUser(user);
+                            }}
                           >
                             <Ban className="h-4 w-4" />
                           </Button>
                         ) : null}
 
                         {/* Delete Button */}
-                        {user.role !== 'admin' && (
+                        {/* {user.role !== 'admin' && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleDeleteUser(user)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteUser(user);
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
+                        )} */}
                       </div>
                     </td>
                   </tr>

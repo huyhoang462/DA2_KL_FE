@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import {
   Search,
   Eye,
@@ -10,7 +11,6 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
-import TransactionsTableSkeleton from '../../components/ui/TransactionsTableSkeleton';
 import TransactionDetailModal from '../../components/features/admin/TransactionDetailModal';
 import RefundTransactionModal from '../../components/features/admin/RefundTransactionModal';
 import {
@@ -21,6 +21,10 @@ import {
 
 const AdminTransactionsPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get initial status from URL
+  const initialStatus = searchParams.get('status') || '';
 
   // Filters state
   const [filters, setFilters] = useState({
@@ -28,7 +32,7 @@ const AdminTransactionsPage = () => {
     limit: 20,
     sortBy: 'createdAt',
     sortOrder: 'desc',
-    status: '',
+    status: initialStatus,
     paymentMethod: '',
     searchTerm: '',
     startDate: '',
@@ -47,6 +51,21 @@ const AdminTransactionsPage = () => {
     isOpen: false,
     transaction: null,
   });
+
+  // Handle transactionId and status from URL query params
+  useEffect(() => {
+    const transactionId = searchParams.get('transactionId');
+    const status = searchParams.get('status');
+
+    if (transactionId) {
+      setDetailModalState({ isOpen: true, transactionId });
+    }
+
+    if (status) {
+      setFilters((prev) => ({ ...prev, status }));
+      setTempFilters((prev) => ({ ...prev, status }));
+    }
+  }, [searchParams]);
 
   // Fetch transactions
   const { data, isLoading, error } = useQuery({
@@ -109,6 +128,15 @@ const AdminTransactionsPage = () => {
 
   const handleViewDetail = (transactionId) => {
     setDetailModalState({ isOpen: true, transactionId });
+  };
+
+  const handleCloseDetailModal = () => {
+    setDetailModalState({ isOpen: false, transactionId: null });
+    // Remove transactionId from URL if it exists
+    if (searchParams.get('transactionId')) {
+      searchParams.delete('transactionId');
+      setSearchParams(searchParams);
+    }
   };
 
   const handleOpenRefund = (transaction) => {
@@ -504,9 +532,7 @@ const AdminTransactionsPage = () => {
       {/* Modals */}
       <TransactionDetailModal
         isOpen={detailModalState.isOpen}
-        onClose={() =>
-          setDetailModalState({ isOpen: false, transactionId: null })
-        }
+        onClose={handleCloseDetailModal}
         transaction={transactionDetail?.data}
       />
 
