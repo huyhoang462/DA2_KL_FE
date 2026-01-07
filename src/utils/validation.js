@@ -156,7 +156,7 @@ export const validateStepTwo = (eventData) => {
     } else {
       const showDate = new Date(show.date);
       showDate.setHours(0, 0, 0, 0);
-      if (showDate < today) {
+      if (showDate <= today) {
         currentShowErrors.date = 'Ngày suất diễn phải lớn hơn hôm nay.';
       }
     }

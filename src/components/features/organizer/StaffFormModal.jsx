@@ -54,7 +54,7 @@ export default function StaffFormModal({
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -72,7 +72,22 @@ export default function StaffFormModal({
       dataToSave.password = formData.password;
     }
 
-    onSave(dataToSave);
+    try {
+      await onSave(dataToSave);
+    } catch (error) {
+      // Hiển thị lỗi từ API như lỗi validation
+      const apiError = error?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+
+      // Xác định field nào bị lỗi dựa trên message
+      if (apiError.toLowerCase().includes('email')) {
+        setErrors({ email: apiError });
+      } else if (apiError.toLowerCase().includes('password')) {
+        setErrors({ password: apiError });
+      } else {
+        // Lỗi chung, hiển thị ở email field (hoặc có thể tạo 1 field error tổng quát)
+        setErrors({ email: apiError });
+      }
+    }
   };
 
   return (

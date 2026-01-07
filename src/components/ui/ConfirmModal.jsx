@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from './Modal';
 import Button from './Button';
+import LoadingSpinner from './LoadingSpinner';
 import { AlertTriangle } from 'lucide-react';
 
 export default function ConfirmModal({
@@ -15,6 +16,7 @@ export default function ConfirmModal({
   confirmText = 'Xác nhận',
   cancelText = 'Hủy',
   confirmVariant = 'destructive',
+  xButton = true,
   isLoading = false,
 }) {
   const defaultIcon = (
@@ -26,7 +28,7 @@ export default function ConfirmModal({
   );
 
   return (
-    <Modal isOpen={isOpen} title="" onClose={onCancel} xButton={true}>
+    <Modal isOpen={isOpen} title="" onClose={onCancel} xButton={xButton}>
       <div className="text-center">
         {icon !== undefined ? icon : defaultIcon}
         <h3
@@ -54,11 +56,12 @@ export default function ConfirmModal({
         </Button>
         <Button
           type="button"
-          className="w-full sm:w-auto sm:min-w-[120px]"
+          className="flex w-full items-center justify-center gap-2 sm:w-auto sm:min-w-[120px]"
           variant={confirmVariant}
           onClick={onConfirm}
           disabled={isLoading}
         >
+          {isLoading && <LoadingSpinner size="sm" />}
           {confirmText}
         </Button>
       </div>

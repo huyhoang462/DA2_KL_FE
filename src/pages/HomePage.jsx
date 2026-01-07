@@ -10,6 +10,7 @@ import {
   getTrendingEvents,
   getSellingFastEvents,
   getEventsByCategory,
+  getFeaturedEvents,
 } from '../services/eventService';
 
 // Category IDs
@@ -24,7 +25,7 @@ const CATEGORIES = {
 const HomePage = () => {
   const { data: allEvents, isLoading: isLoadingAll } = useQuery({
     queryKey: ['events', 'all'],
-    queryFn: getAllEvents,
+    queryFn: getFeaturedEvents,
     enabled: true,
   });
 

@@ -115,13 +115,16 @@ export default function CheckinAccountsPage() {
     setIsAssignModalOpen(true);
   };
 
-  const handleSaveStaff = (formData) => {
+  const handleSaveStaff = async (formData) => {
     if (editingStaff) {
       // Chế độ sửa
-      updateStaffMutation.mutate({ staffId: editingStaff.id, data: formData });
+      await updateStaffMutation.mutateAsync({
+        staffId: editingStaff.id,
+        data: formData,
+      });
     } else {
       // Chế độ tạo mới
-      createStaffMutation.mutate(formData);
+      await createStaffMutation.mutateAsync(formData);
     }
   };
 

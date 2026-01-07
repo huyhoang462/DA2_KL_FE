@@ -18,7 +18,7 @@ import {
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
 import LoadingSpinner from '../../ui/LoadingSpinner';
-import ConfirmModal from '../../ui/ConfirmModal';
+import ApproveModal from '../../ui/ApproveModal';
 import RejectModal from '../../ui/RejectModal';
 import {
   getAdminEventById,
@@ -47,7 +47,7 @@ const formatLocation = (location) => {
 
 const EventReviewModal = ({ isOpen, onClose, eventId }) => {
   const queryClient = useQueryClient();
-  const [confirmAction, setConfirmAction] = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   const {
@@ -63,29 +63,33 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
   const updateStatusMutation = useMutation({
     mutationFn: ({ eventId, status, reason }) =>
       updateEventStatusAdmin(eventId, status, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['adminEvents']);
-      queryClient.invalidateQueries(['eventDetails', eventId]);
-      onClose();
-      setConfirmAction(null);
+    onSuccess: (data, variables) => {
+      console.log('Update success:', data, variables);
+      // Đóng tất cả modal NGAY LẬP TỨC
+      setShowApproveModal(false);
       setShowRejectModal(false);
+      onClose();
+
+      // Invalidate queries trong background sau khi đã đóng modal
+      setTimeout(() => {
+        queryClient.invalidateQueries(['adminEvents']);
+      }, 0);
     },
     onError: (error) => {
       console.error('Update status failed:', error);
     },
   });
 
-  const handleStatusAction = (action) => {
-    if (action === 'reject') {
-      setShowRejectModal(true);
-    } else {
-      setConfirmAction(action);
-    }
+  const handleApprove = () => {
+    setShowApproveModal(true);
   };
 
-  const handleConfirmAction = () => {
-    const status = confirmAction === 'approve' ? 'upcoming' : 'rejected';
-    updateStatusMutation.mutate({ eventId, status });
+  const handleReject = () => {
+    setShowRejectModal(true);
+  };
+
+  const handleApproveConfirm = () => {
+    updateStatusMutation.mutate({ eventId, status: 'upcoming' });
   };
 
   const handleRejectConfirm = (reason) => {
@@ -443,7 +447,7 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
                   </div>
                   <div className="flex gap-3">
                     <Button
-                      onClick={() => handleStatusAction('reject')}
+                      onClick={handleReject}
                       variant="destructive"
                       size="lg"
                       className="flex flex-1 items-center gap-2 sm:flex-none"
@@ -453,7 +457,7 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
                       Từ chối
                     </Button>
                     <Button
-                      onClick={() => handleStatusAction('approve')}
+                      onClick={handleApprove}
                       size="lg"
                       className="flex flex-1 items-center gap-2 sm:flex-none"
                       disabled={updateStatusMutation.isPending}
@@ -519,50 +523,18 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
         </div>
       </Modal>
 
-      {/* Confirm Modal */}
-      <ConfirmModal
-        isOpen={!!confirmAction}
-        icon={
-          confirmAction === 'approve' && (
-            <div className="bg-success/30 mx-auto flex h-12 w-12 items-center justify-center rounded-full">
-              <CheckCircle
-                className="text-success h-6 w-6"
-                aria-hidden="true"
-              />
-            </div>
-          )
-        }
-        title={
-          confirmAction === 'approve'
-            ? 'Xác nhận phê duyệt'
-            : 'Xác nhận từ chối'
-        }
-        message={
-          <div className="space-y-3">
-            <div className="text-center">
-              Bạn có chắc chắn muốn{' '}
-              <strong>
-                {confirmAction === 'approve' ? 'phê duyệt' : 'từ chối'}
-              </strong>{' '}
-              sự kiện này?
-            </div>
-
-            <p className="text-text-secondary text-center text-sm">
-              {confirmAction === 'approve'
-                ? 'Sự kiện sẽ được công khai và người dùng có thể mua vé'
-                : 'Sự kiện sẽ bị từ chối và người tổ chức sẽ nhận được thông báo'}
-            </p>
-          </div>
-        }
-        onConfirm={handleConfirmAction}
-        onCancel={() => setConfirmAction(null)}
-        confirmText={confirmAction === 'approve' ? 'Phê duyệt' : 'Từ chối'}
-        confirmVariant={confirmAction === 'approve' ? 'success' : 'destructive'}
+      {/* Approve Modal */}
+      <ApproveModal
+        xButton={false}
+        isOpen={showApproveModal}
+        onConfirm={handleApproveConfirm}
+        onCancel={() => setShowApproveModal(false)}
         isLoading={updateStatusMutation.isPending}
       />
 
       {/* Reject Modal with Reason Input */}
       <RejectModal
+        xButton={false}
         isOpen={showRejectModal}
         onConfirm={handleRejectConfirm}
         onCancel={() => setShowRejectModal(false)}

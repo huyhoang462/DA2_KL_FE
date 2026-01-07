@@ -13,6 +13,7 @@ export default function RejectModal({
   onCancel,
   confirmText = 'Xác nhận từ chối',
   cancelText = 'Hủy',
+  xButton = true,
   isLoading = false,
 }) {
   const [reason, setReason] = useState('');
@@ -36,7 +37,7 @@ export default function RejectModal({
   };
 
   return (
-    <Modal isOpen={isOpen} title="" onClose={handleCancel} xButton={true}>
+    <Modal isOpen={isOpen} title="" onClose={handleCancel} xButton={xButton}>
       <div className="text-center">
         <div className="bg-destructive/10 mx-auto flex h-12 w-12 items-center justify-center rounded-full">
           <AlertTriangle

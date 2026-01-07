@@ -271,8 +271,8 @@ const CreateEventPage = () => {
   const handleNotificationClose = () => {
     setShowNotification(false);
     if (notificationInfo.type === 'success') {
-      dispatch(clearEvent());
-      nav('/organizer/my-events');
+      // dispatch(clearEvent());
+      //  nav('/organizer/my-events');
     }
   };
 

@@ -176,14 +176,12 @@ export const getAdminEventById = async (id) => {
   }
 };
 
-export const updateEventStatusAdmin = async (id, status, reason = null) => {
+export const updateEventStatusAdmin = async (eventId, status, reason = '') => {
   try {
-    const payload = { status };
-    if (reason) {
-      payload.reason = reason;
-    }
+    const payload = { status, reason };
+
     const response = await axiosInstance.patch(
-      `${API_BASE_URL}/admin/events/${id}/status`,
+      `${API_BASE_URL}/admin/events/${eventId}/status`,
       payload
     );
     return response.data;

@@ -27,7 +27,7 @@ const createStaff = async (staffData) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi tạo nhân viên:', error);
+    console.error('Lỗi khi tạo nhân viên:', error.response?.data);
     throw error.response?.data || error;
   }
 };
@@ -45,7 +45,7 @@ const updateStaff = async (staffId, updatedData) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi cập nhật nhân viên:', error);
+    console.error('Lỗi khi cập nhật nhân viên:', error.response?.data );
     throw error.response?.data || error;
   }
 };

@@ -365,17 +365,18 @@ export default function AssignEventsModal({
 
               {activeTab === 'ongoing' && (
                 <div className="space-y-3">
-                  {assignedOngoing.length > 0 ? (
-                    assignedOngoing.map((event) => (
-                      <EventListItem
+                  {ongoingEvents.length > 0 ? (
+                    ongoingEvents.map((event) => (
+                      <CheckboxItem
                         key={event.id}
                         event={event}
-                        icon={PlayCircle}
+                        checked={selectedEventIds.includes(event.id)}
+                        onToggle={() => handleToggleEvent(event.id)}
                       />
                     ))
                   ) : (
                     <div className="text-text-secondary py-8 text-center text-sm">
-                      Nhân viên chưa được phân quyền sự kiện nào đang diễn ra
+                      Không có sự kiện đang diễn ra
                     </div>
                   )}
                 </div>
