@@ -1,6 +1,6 @@
 // TicketCard.jsx - Horizontal Layout
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
@@ -17,6 +17,7 @@ import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
 import { usePrivy } from '@privy-io/react-auth';
 import { QRCodeSVG } from 'qrcode.react';
+import { getMyTickets } from '../../../services/ticketService';
 
 const STATUS_CONFIG = {
   pending: {
@@ -69,6 +70,7 @@ export default function TicketCard({ ticket }) {
   const [qrData, setQrData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [loadingQR, setLoadingQR] = useState(false);
+  const pollingIntervalRef = useRef(null);
   console.log('[TicketCard] status =', ticket.status, ticket);
   const { signMessage, user: privyUser, ready, authenticated } = usePrivy();
 
@@ -88,6 +90,51 @@ export default function TicketCard({ ticket }) {
   // Xác định icon location
   const isOnline = ticket.format === 'online';
   const LocationIcon = isOnline ? Globe : Building;
+
+  const startCheckinPolling = async (ticketId) => {
+    try {
+      if (!ticketId) return;
+
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+
+      const startTime = Date.now();
+
+      pollingIntervalRef.current = setInterval(async () => {
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= 60_000) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+          return;
+        }
+
+        try {
+          const tickets = await getMyTickets();
+          const currentId = ticketId;
+          const found = tickets?.find(
+            (t) => (t?._id || t?.id)?.toString() === currentId?.toString()
+          );
+
+          if (found && found.status === 'checkedIn') {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
+          }
+        } catch (err) {
+          console.error(
+            '[TicketCard] Lỗi khi kiểm tra trạng thái check-in:',
+            err
+          );
+        }
+      }, 3000);
+    } catch (err) {
+      console.error('[TicketCard] Không thể khởi tạo polling check-in:', err);
+    }
+  };
 
   const handleExportQR = async () => {
     try {
@@ -145,6 +192,7 @@ export default function TicketCard({ ticket }) {
       setQrData(JSON.stringify(payload));
       setTimeLeft(60);
       setShowQRModal(true);
+      startCheckinPolling(ticketId);
       setLoadingQR(false);
     } catch (error) {
       console.error('[TicketCard] Lỗi khi ký hoặc tạo QR:', error, {
@@ -178,6 +226,15 @@ export default function TicketCard({ ticket }) {
       setQrData(null);
     }
   }, [timeLeft, qrData, showQRModal]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -303,6 +360,10 @@ export default function TicketCard({ ticket }) {
                 </p>
                 <button
                   onClick={() => {
+                    if (pollingIntervalRef.current) {
+                      clearInterval(pollingIntervalRef.current);
+                      pollingIntervalRef.current = null;
+                    }
                     setShowQRModal(false);
                     setQrData(null);
                     // Reload lại trang sau khi đóng popup
