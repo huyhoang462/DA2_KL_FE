@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('customer');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otp, setOtp] = useState('');
@@ -70,7 +71,7 @@ export default function SignupPage() {
       password,
       name: fullName,
       phone,
-      role: 'user',
+      role,
     };
 
     try {
@@ -307,6 +308,16 @@ export default function SignupPage() {
               </button>
             }
           />
+          <select
+            name="role"
+            value={role}
+            className="bg-background-secondary text-text-primary placeholder-text-placeholder border-border-default focus:border-primary block w-full rounded-lg border p-2.5 transition outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-80"
+            onChange={(e) => setRole(e.target.value)}
+            disabled={loading}
+          >
+            <option value="customer">Khách hàng</option>
+            <option value="organizer">Nhà tổ chức</option>
+          </select>
 
           {serverError && (
             <p className="text-center text-sm text-red-500">{serverError}</p>

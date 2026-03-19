@@ -11,6 +11,7 @@ import {
   PlusCircle,
   LogIn,
   UserPlus,
+  MessageCircleMore,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import useClickOutside from '../../hooks/useClickOutside';
@@ -50,14 +51,7 @@ const Header = () => {
         setDropdownOpen(false);
       },
     },
-    {
-      label: 'Sự kiện của tôi',
-      icon: <Calendar className="mr-2 h-4 w-4" />,
-      onClick: () => {
-        window.open('/organizer/my-events', '_blank', 'noopener,noreferrer');
-        setDropdownOpen(false);
-      },
-    },
+
     {
       label: 'Đăng xuất',
       icon: <LogOut className="mr-2 h-4 w-4" />,
@@ -120,13 +114,11 @@ const Header = () => {
     return (
       <div className="relative flex h-8 items-center gap-4">
         <Link
-          to="/organizer/create-event"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:bg-background-secondary text-background-primary hover:text-primary flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition"
+          to="/community"
+          className="hover:bg-background-secondary text-primary-foreground hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
         >
-          <PlusCircle className="h-5 w-5" />
-          <span>Tổ chức sự kiện</span>
+          <MessageCircleMore className="h-5 w-5" />
+          <span>Cộng đồng</span>
         </Link>
         <div
           className="relative flex cursor-pointer items-center select-none"
@@ -188,20 +180,6 @@ const Header = () => {
             </>
           ) : (
             <>
-              <button
-                className="border-primary bg-background-secondary text-primary hover:bg-primary hover:text-primary-foreground flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-base font-medium transition"
-                onClick={() => {
-                  window.open(
-                    '/organizer/create-event',
-                    '_blank',
-                    'noopener,noreferrer'
-                  );
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <PlusCircle className="h-5 w-5" />
-                Tổ chức sự kiện
-              </button>
               {userMenuItems.slice(0, -1).map((item) => (
                 <button
                   key={item.label}

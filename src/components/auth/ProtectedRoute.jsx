@@ -20,10 +20,13 @@ export default function ProtectedRoute({ allowedRoles }) {
   const isAllowed = allowedRoles ? allowedRoles.includes(role) : true;
 
   if (!isAllowed) {
-    // Nếu đã đăng nhập nhưng sai vai trò:
-    // - Admin cố vào trang user -> Đẩy về trang chủ của Admin.
-    // - User cố vào trang admin -> Đẩy về trang chủ của User.
-    const redirectPath = role === 'admin' ? '/admin/dashboard' : '/';
+    // Nếu đã đăng nhập nhưng sai vai trò, điều hướng về trang chủ của role đó
+    const roleRedirectMap = {
+      admin: '/admin/dashboard',
+      organizer: '/organizer/my-events',
+      customer: '/',
+    };
+    const redirectPath = roleRedirectMap[role] || '/';
     return <Navigate to={redirectPath} replace />;
   }
 

@@ -38,21 +38,22 @@ axiosInstance.interceptors.response.use(
         let refreshedUser;
         if (data.user) {
           refreshedUser = data.user;
-        } else {
-          // Fallback: decode token để lấy basic info
-          const tokenPayload = JSON.parse(atob(data.accessToken.split('.')[1]));
-          const currentUser = store.getState().auth.user;
-
-          // Kiểm tra user ID có khớp không
-          if (currentUser && currentUser.id !== tokenPayload.id) {
-            console.error('🚨 [Security] User ID mismatch! Force logout.');
-            console.error('Expected:', currentUser.id, 'Got:', tokenPayload.id);
-            store.dispatch(logout());
-            window.location.href = '/login';
-            return Promise.reject(new Error('Session mismatch'));
-          }
-          refreshedUser = currentUser;
         }
+        //  else {
+        //   // Fallback: decode token để lấy basic info
+        //   const tokenPayload = JSON.parse(atob(data.accessToken.split('.')[1]));
+        //   const currentUser = store.getState().auth.user;
+
+        //   // Kiểm tra user ID có khớp không
+        //   if (currentUser && currentUser.id !== tokenPayload.id) {
+        //     console.error('🚨 [Security] User ID mismatch! Force logout.');
+        //     console.error('Expected:', currentUser.id, 'Got:', tokenPayload.id);
+        //     store.dispatch(logout());
+        //     window.location.href = '/login';
+        //     return Promise.reject(new Error('Session mismatch'));
+        //   }
+        //   refreshedUser = currentUser;
+        // }
 
         store.dispatch(
           login({

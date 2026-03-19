@@ -14,6 +14,8 @@ import VnpayReturnPage from './pages/user/VNPayReturnPage';
 import WalletSyncWrapper from './components/wrappers/WalletSyncWrapper';
 import PrivyJwtSyncWrapper from './components/wrappers/PrivyJwtSyncWrapper';
 
+import OrganizerProfilePage from './pages/organizer/OrganizerProfilePage';
+
 const MainLayout = lazy(() => import('./components/layouts/MainLayout'));
 const AccountLayout = lazy(() => import('./components/layouts/AccountLayout'));
 const OrganizerLayout = lazy(
@@ -34,6 +36,8 @@ const ProfilePage = lazy(() => import('./pages/user/ProfilePage'));
 const MyOrderPage = lazy(() => import('./pages/user/MyOrdersPage'));
 const MyTicketsPage = lazy(() => import('./pages/user/MyTicketsPage'));
 
+const PostsPage = lazy(() => import('./pages/organizer/PostsPage'));
+const Community = lazy(() => import('./pages/user/Community'));
 const CreateEventPage = lazy(() => import('./pages/organizer/CreateEventPage'));
 const MyEventsPage = lazy(() => import('./pages/organizer/MyEventsPage'));
 const CheckinAccountsPage = lazy(
@@ -101,9 +105,14 @@ function App() {
                     element={<EventDetailPage />}
                   />
                   <Route path="/search" element={<SearchPage />} />
+                  <Route path="/community" element={<Community />} />
                 </Route>
                 <Route
-                  element={<ProtectedRoute allowedRoles={['user', 'staff']} />}
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={['user', 'customer', 'staff']}
+                    />
+                  }
                 >
                   <Route
                     path="/select-tickets/:id/:showId"
@@ -116,13 +125,19 @@ function App() {
                 </Route>
               </Route>
               <Route
-                element={<ProtectedRoute allowedRoles={['user', 'staff']} />}
+                element={
+                  <ProtectedRoute
+                    allowedRoles={['user', 'customer', 'staff']}
+                  />
+                }
               >
                 <Route path="/user" element={<AccountLayout />}>
                   <Route path="profile" element={<ProfilePage />} />
                   <Route path="orders" element={<MyOrderPage />} />
                   <Route path="tickets" element={<MyTicketsPage />} />
                 </Route>
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['organizer']} />}>
                 <Route path="/organizer" element={<OrganizerLayout />}>
                   <Route index element={<Navigate to="my-events" replace />} />
                   <Route path="create-event" element={<CreateEventPage />} />
@@ -131,6 +146,8 @@ function App() {
                     path="checkin-accounts"
                     element={<CheckinAccountsPage />}
                   />
+                  <Route path="profile" element={<OrganizerProfilePage />} />
+                  <Route path="posts" element={<PostsPage />} />
                 </Route>
                 <Route path="/manage/:id" element={<EventLayout />}>
                   <Route index element={<Navigate to="dashboard" replace />} />
