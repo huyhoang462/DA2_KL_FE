@@ -11,7 +11,7 @@ const variants = {
   warning: 'bg-warning text-white hover:bg-warning/90',
   info: 'bg-blue-500 text-white hover:bg-blue-600',
   outline: 'border border-border bg-transparent hover:bg-accent-hover',
-  secondary: 'bg-foreground text-text-primary hover:bg-accent-hover',
+  secondary: 'bg-gray-200 text-text-primary hover:bg-accent-hover',
   ghost: 'bg-transparent hover:bg-accent-hover',
   disabled: 'bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200',
   link: 'bg-transparent text-text-link underline-offset-4 hover:underline p-0',

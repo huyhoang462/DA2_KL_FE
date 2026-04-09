@@ -127,7 +127,7 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
             Không thể tải thông tin sự kiện
           </p>
           <p className="text-text-secondary mt-2 text-sm">{error.message}</p>
-          <Button onClick={onClose} className="mt-4" variant="outline">
+          <Button onClick={onClose} className="mt-4" variant="secondary">
             Đóng
           </Button>
         </div>

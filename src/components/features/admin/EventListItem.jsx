@@ -40,7 +40,7 @@ const EventListItem = ({ event, onViewDetails }) => (
           </div>
           <Button
             onClick={() => onViewDetails(event.id)}
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="flex items-center gap-2"
           >

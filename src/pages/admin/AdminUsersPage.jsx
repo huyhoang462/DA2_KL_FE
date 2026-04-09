@@ -296,7 +296,7 @@ const AdminUsersPage = () => {
                         {/* View Detail Button */}
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="secondary"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/admin/users/${user.id}`);
@@ -335,7 +335,7 @@ const AdminUsersPage = () => {
                         {/* {user.role !== 'admin' && (
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="secondary"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteUser(user);
@@ -365,7 +365,7 @@ const AdminUsersPage = () => {
             <Button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -374,7 +374,7 @@ const AdminUsersPage = () => {
             <Button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === pagination.totalPages}
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               Sau

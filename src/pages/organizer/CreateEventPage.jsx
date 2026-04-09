@@ -320,7 +320,7 @@ const CreateEventPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleSaveDraft} size="sm">
+            <Button variant="secondary" onClick={handleSaveDraft} size="sm">
               Lưu nháp
             </Button>
             <Button

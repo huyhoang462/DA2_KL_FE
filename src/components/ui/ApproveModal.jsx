@@ -48,7 +48,7 @@ export default function ApproveModal({
         <Button
           type="button"
           className="mt-3 w-full sm:mt-0"
-          variant="outline"
+          variant="secondary"
           onClick={handleCancel}
           disabled={isLoading}
         >

@@ -2,39 +2,75 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Menu,
+  Bell,
   UserIcon,
   ChevronDown,
   LogOut,
   Ticket,
   User,
-  Calendar,
-  PlusCircle,
   LogIn,
   UserPlus,
   MessageCircleMore,
 } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import useClickOutside from '../../hooks/useClickOutside';
-import { logout } from '../../store/slices/authSlice';
 import SearchBar from '../features/search/SearchBar';
+import { useNotifications } from '../../hooks/useNotifications';
+import NotificationBell from '../features/notification/NotificationBell';
+import NotificationDropdown from '../features/notification/NotificationDropdown';
+import { getNotificationTargetPath } from '../../utils/notification';
+import { toast } from 'react-toastify';
+import { useAppLogout } from '../../hooks/useAppLogout';
 
 const Header = () => {
   const auth = useSelector((state) => state.auth);
   const isLoggedIn = auth.isAuthenticated;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const dropdownRef = useClickOutside(() => setDropdownOpen(false));
   const mobileMenuRef = useClickOutside(() => setMobileMenuOpen(false));
+  const notificationRef = useClickOutside(() => setNotificationOpen(false));
   const nav = useNavigate();
-  const dispatch = useDispatch();
+  const appLogout = useAppLogout();
 
-  const handleLogout = () => {
-    dispatch(logout());
-    setDropdownOpen(false);
-    nav('/');
+  const {
+    notifications,
+    unreadCount,
+    loadingList,
+    loadingCount,
+    listError,
+    hasMore,
+    loadMore,
+    refreshAll,
+    markOneAsRead,
+    markAllAsRead,
+    isMarkingAllRead,
+  } = useNotifications({
+    role: 'customer',
+    autoLoadList: false,
+  });
+
+  const handleLogout = async () => {
+    await appLogout({
+      onBeforeClearAuth: () => {
+        setDropdownOpen(false);
+      },
+      onAfterClearAuth: () => {
+        nav('/');
+      },
+    });
   };
 
   const userMenuItems = [
+    {
+      label: 'Thông báo',
+      icon: <Bell className="mr-2 h-4 w-4" />,
+      onClick: () => {
+        nav('/notifications');
+        setDropdownOpen(false);
+      },
+    },
     {
       label: 'Thông tin tài khoản',
       icon: <User className="mr-2 h-4 w-4" />,
@@ -113,9 +149,54 @@ const Header = () => {
 
     return (
       <div className="relative flex h-8 items-center gap-4">
+        <div ref={notificationRef} className="relative">
+          <NotificationBell
+            unreadCount={unreadCount}
+            loading={loadingCount}
+            isOpen={notificationOpen}
+            onClick={async () => {
+              const nextOpen = !notificationOpen;
+              setNotificationOpen(nextOpen);
+
+              if (nextOpen) {
+                await refreshAll();
+              }
+            }}
+            className="text-primary-foreground hover:bg-background-secondary"
+          />
+
+          {notificationOpen && (
+            <NotificationDropdown
+              notifications={notifications.slice(0, 8)}
+              unreadCount={unreadCount}
+              loading={loadingList}
+              error={listError}
+              onRefresh={refreshAll}
+              onMarkAllAsRead={markAllAsRead}
+              isMarkingAllRead={isMarkingAllRead}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              onItemClick={async (item) => {
+                try {
+                  if (!item.isRead) {
+                    await markOneAsRead(item.id);
+                  }
+                } catch (error) {
+                  toast.error(
+                    error?.message || 'Không thể cập nhật trạng thái thông báo.'
+                  );
+                }
+
+                setNotificationOpen(false);
+                nav(getNotificationTargetPath(item, 'customer'));
+              }}
+            />
+          )}
+        </div>
+
         <Link
           to="/community"
-          className="hover:bg-background-secondary text-primary-foreground hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
+          className="hover:bg-background-secondary bg-background-secondary text-primary-foreground hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
         >
           <MessageCircleMore className="h-5 w-5" />
           <span>Cộng đồng</span>

@@ -189,7 +189,7 @@ export default function SearchFilter({ initialFilters, onApply }) {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        variant="outline"
+        variant="secondary"
         className="relative gap-1.5"
         size="sm"
       >
@@ -432,7 +432,7 @@ export default function SearchFilter({ initialFilters, onApply }) {
           <div className="border-border-default mt-4 flex items-center justify-between gap-2 border-t pt-3">
             <Button
               onClick={handleReset}
-              variant="outline"
+              variant="secondary"
               size="sm"
               className="h-8 text-xs"
             >

@@ -217,7 +217,7 @@ export default function SearchPage() {
             <Button
               onClick={() => handlePageChange(filters.page - 1)}
               disabled={filters.page === 1}
-              variant="outline"
+              variant="secondary"
               className="px-4 py-2"
             >
               Trước
@@ -256,7 +256,7 @@ export default function SearchPage() {
             <Button
               onClick={() => handlePageChange(filters.page + 1)}
               disabled={filters.page === pagination.totalPages}
-              variant="outline"
+              variant="secondary"
               className="px-4 py-2"
             >
               Sau

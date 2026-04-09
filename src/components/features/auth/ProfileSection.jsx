@@ -111,7 +111,7 @@ const ProfileSection = () => {
             <Button
               type="button"
               size="sm"
-              variant="outline"
+              variant="secondary"
               className="flex items-center"
               onClick={() => {
                 setEditMode(false);

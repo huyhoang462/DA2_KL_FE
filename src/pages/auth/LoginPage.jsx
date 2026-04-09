@@ -14,7 +14,7 @@ import { usePrivy } from '@privy-io/react-auth';
 export default function LoginPage() {
   const privyData = usePrivy();
   const { authenticated, ready, user: privyUser } = privyData;
-  console.log('🔍 [LoginPage] PRIVY OBJECT:', privyData);
+  // console.log('🔍 [LoginPage] PRIVY OBJECT:', privyData);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState({});
@@ -60,7 +60,6 @@ export default function LoginPage() {
         authenticated,
         hasPrivyUser: !!privyUser,
       });
-      // 2. (Tạm thời) Không gọi loginWithCustomToken vì SDK v3 không còn hàm này
       if (data.user.role === 'admin') {
         nav('/admin/dashboard', { replace: true });
       } else if (from) {

@@ -191,7 +191,7 @@ export default function ShowtimeItem({
       {isEditable && (
         <div className="border-border-subtle mt-6 flex items-center justify-between border-t pt-6">
           <Button
-            variant="outline"
+            variant="secondary"
             className="text-destructive hover:text-destructive"
             onClick={handleRemoveShow}
           >

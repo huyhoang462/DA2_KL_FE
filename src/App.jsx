@@ -35,6 +35,7 @@ const PaymentPage = lazy(() => import('./pages/user/PaymentPage'));
 const ProfilePage = lazy(() => import('./pages/user/ProfilePage'));
 const MyOrderPage = lazy(() => import('./pages/user/MyOrdersPage'));
 const MyTicketsPage = lazy(() => import('./pages/user/MyTicketsPage'));
+const NotificationsPage = lazy(() => import('./pages/user/NotificationsPage'));
 
 const PostsPage = lazy(() => import('./pages/organizer/PostsPage'));
 const Community = lazy(() => import('./pages/user/Community'));
@@ -49,6 +50,9 @@ const OrgDashboardPage = lazy(
 const OrgOrdersPage = lazy(() => import('./pages/organizer/OrgOrdersPage'));
 const OrgCheckInPage = lazy(() => import('./pages/organizer/OrgCheckInPage'));
 const OrgEventDetail = lazy(() => import('./pages/organizer/OrgEventDetail'));
+const OrganizerNotificationsPage = lazy(
+  () => import('./pages/organizer/OrganizerNotificationsPage')
+);
 
 const AdminDashboardPage = lazy(
   () => import('./pages/admin/AdminDashboardPage')
@@ -69,6 +73,9 @@ const AdminCategoriesPage = lazy(
   () => import('./pages/admin/AdminCategoriesPage')
 );
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
+const AdminNotificationsPage = lazy(
+  () => import('./pages/admin/AdminNotificationsPage')
+);
 
 const ProtectedRoute = lazy(() => import('./components/auth/ProtectedRoute'));
 
@@ -76,6 +83,8 @@ const UserPublicWrapper = () => {
   const { role } = useAuth();
   if (role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
+  } else if (role === 'organizer') {
+    return <Navigate to="/organizer/my-events" replace />;
   }
   return <Outlet />;
 };
@@ -115,6 +124,10 @@ function App() {
                   }
                 >
                   <Route
+                    path="/notifications"
+                    element={<NotificationsPage />}
+                  />
+                  <Route
                     path="/select-tickets/:id/:showId"
                     element={<SelectTicketsPage />}
                   />
@@ -143,6 +156,10 @@ function App() {
                   <Route path="create-event" element={<CreateEventPage />} />
                   <Route path="my-events" element={<MyEventsPage />} />
                   <Route
+                    path="notifications"
+                    element={<OrganizerNotificationsPage />}
+                  />
+                  <Route
                     path="checkin-accounts"
                     element={<CheckinAccountsPage />}
                   />
@@ -161,6 +178,10 @@ function App() {
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<AdminDashboardPage />} />
+                  <Route
+                    path="notifications"
+                    element={<AdminNotificationsPage />}
+                  />
                   <Route path="users" element={<AdminUsersPage />} />
                   <Route path="users/:id" element={<AdminUserDetailPage />} />
                   <Route path="events" element={<AdminEventsPage />} />

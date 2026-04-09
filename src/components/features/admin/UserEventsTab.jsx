@@ -259,7 +259,7 @@ const UserEventsTab = ({ userId }) => {
               <Button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                variant="outline"
+                variant="secondary"
                 size="sm"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -269,7 +269,7 @@ const UserEventsTab = ({ userId }) => {
                   setPage((p) => Math.min(pagination.totalPages, p + 1))
                 }
                 disabled={page === pagination.totalPages}
-                variant="outline"
+                variant="secondary"
                 size="sm"
               >
                 <ChevronRight className="h-4 w-4" />

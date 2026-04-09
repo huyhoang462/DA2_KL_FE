@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
+import { useNotifications } from '../../hooks/useNotifications';
+import useClickOutside from '../../hooks/useClickOutside';
 import {
   LayoutDashboard,
   Users,
@@ -19,17 +20,45 @@ import {
   UserCheck,
   CreditCard,
 } from 'lucide-react';
+import NotificationBell from '../features/notification/NotificationBell';
+import NotificationDropdown from '../features/notification/NotificationDropdown';
+import { getNotificationTargetPath } from '../../utils/notification';
+import { toast } from 'react-toastify';
+import { useAppLogout } from '../../hooks/useAppLogout';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const dispatch = useDispatch();
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const navigate = useNavigate();
+  const appLogout = useAppLogout();
   const user = useSelector((state) => state.auth.user);
+  const notificationRef = useClickOutside(() => setNotificationOpen(false));
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+  const {
+    notifications,
+    unreadCount,
+    loadingList,
+    loadingCount,
+    listError,
+    hasMore,
+    ensureNotificationsLoaded,
+    loadMore,
+    refreshAll,
+    markOneAsRead,
+    markAllAsRead,
+    isMarkingAllRead,
+  } = useNotifications({
+    role: 'admin',
+    autoLoadList: false,
+  });
+
+  const handleLogout = async () => {
+    await appLogout({
+      onAfterClearAuth: () => {
+        navigate('/login');
+      },
+    });
   };
 
   const menuItems = [
@@ -178,11 +207,49 @@ const AdminLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Notifications */}
-            {/* <button className="text-text-secondary hover:text-text-primary relative">
-              <Bell className="h-5 w-5" />
-              <span className="bg-destructive absolute -top-1 -right-1 h-2 w-2 rounded-full"></span>
-            </button> */}
+            <div ref={notificationRef} className="relative">
+              <NotificationBell
+                unreadCount={unreadCount}
+                loading={loadingCount}
+                isOpen={notificationOpen}
+                onClick={async () => {
+                  const nextOpen = !notificationOpen;
+                  setNotificationOpen(nextOpen);
+                  if (nextOpen) {
+                    await ensureNotificationsLoaded();
+                  }
+                }}
+              />
+
+              {notificationOpen && (
+                <NotificationDropdown
+                  notifications={notifications.slice(0, 8)}
+                  unreadCount={unreadCount}
+                  loading={loadingList}
+                  error={listError}
+                  onRefresh={refreshAll}
+                  onMarkAllAsRead={markAllAsRead}
+                  isMarkingAllRead={isMarkingAllRead}
+                  hasMore={hasMore}
+                  onLoadMore={loadMore}
+                  onItemClick={async (item) => {
+                    try {
+                      if (!item.isRead) {
+                        await markOneAsRead(item.id);
+                      }
+                    } catch (error) {
+                      toast.error(
+                        error?.message ||
+                          'Không thể cập nhật trạng thái thông báo.'
+                      );
+                    }
+
+                    setNotificationOpen(false);
+                    navigate(getNotificationTargetPath(item, 'admin'));
+                  }}
+                />
+              )}
+            </div>
 
             {/* Profile Dropdown */}
             <div className="relative">

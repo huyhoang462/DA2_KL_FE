@@ -246,7 +246,7 @@ const AdminTransactionsPage = () => {
             >
               Áp dụng
             </Button>
-            <Button onClick={handleResetFilters} variant="outline">
+            <Button onClick={handleResetFilters} variant="secondary">
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
@@ -474,7 +474,7 @@ const AdminTransactionsPage = () => {
                   <Button
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
                     disabled={pagination.currentPage === 1}
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -517,7 +517,7 @@ const AdminTransactionsPage = () => {
                   <Button
                     onClick={() => handlePageChange(pagination.currentPage + 1)}
                     disabled={pagination.currentPage === pagination.totalPages}
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                   >
                     <ChevronRight className="h-4 w-4" />

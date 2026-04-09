@@ -90,7 +90,7 @@ const AdminEventApprovalsPage = () => {
             <Button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={!hasPreviousPage} // ✅ Dùng hasPreviousPage thay vì currentPage === 1
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -99,7 +99,7 @@ const AdminEventApprovalsPage = () => {
             <Button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={!hasNextPage}
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               Sau

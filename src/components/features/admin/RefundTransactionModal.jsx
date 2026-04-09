@@ -86,7 +86,7 @@ const RefundTransactionModal = ({
         <Button
           type="button"
           className="w-full sm:w-auto sm:min-w-[120px]"
-          variant="outline"
+          variant="secondary"
           onClick={handleClose}
           disabled={isLoading}
         >

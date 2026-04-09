@@ -145,7 +145,7 @@ export default function TicketTypeFormModal({
 
           <div className="mt-4 flex justify-end gap-4">
             <Dialog.Close asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="secondary">
                 Hủy
               </Button>
             </Dialog.Close>

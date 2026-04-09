@@ -116,7 +116,7 @@ const EventRow = React.memo(
           <div className="flex items-center justify-end gap-1.5">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={(e) => {
                 e.stopPropagation();
                 onViewDetails(event.id);

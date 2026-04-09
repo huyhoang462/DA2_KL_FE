@@ -312,7 +312,7 @@ const AdminEventsPage = () => {
                 handlePageChange(currentPage - 1);
               }}
               disabled={currentPage === 1}
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -377,7 +377,7 @@ const AdminEventsPage = () => {
                 handlePageChange(currentPage + 1);
               }}
               disabled={currentPage === pagination.totalPages}
-              variant="outline"
+              variant="secondary"
               size="sm"
             >
               <ChevronRight className="h-4 w-4" />

@@ -129,7 +129,7 @@ const ChangePasswordSection = () => {
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               className="flex items-center gap-1"
               disabled={pwLoading}
               onClick={() => {

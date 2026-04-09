@@ -6,8 +6,7 @@ import {
   NavLink,
   useNavigate,
 } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getEventById } from '../../services/eventService';
+import { useAppLogout } from '../../hooks/useAppLogout';
 
 const Breadcrumbs = ({ eventName }) => (
   <nav className="text-text-secondary flex items-center space-x-2 text-sm">
@@ -38,13 +38,16 @@ export default function EventLayout() {
   const { id } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const appLogout = useAppLogout();
   const user = useSelector((state) => state.auth.user);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+  const handleLogout = async () => {
+    await appLogout({
+      onAfterClearAuth: () => {
+        navigate('/login');
+      },
+    });
   };
 
   const { data: event } = useQuery({
