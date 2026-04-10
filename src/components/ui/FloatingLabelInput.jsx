@@ -17,6 +17,7 @@ const FloatingLabelInput = ({
     <div>
       <div className="relative">
         <input
+          spellCheck={false}
           id={id}
           value={value}
           type={type}

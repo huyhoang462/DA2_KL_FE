@@ -50,6 +50,7 @@ const OrganizerLayout = () => {
   const appLogout = useAppLogout();
   const user = useSelector((state) => state.auth.user);
   const notificationRef = useClickOutside(() => setNotificationOpen(false));
+  const displayName = user?.name || user?.fullName || 'Organizer';
 
   const {
     notifications,
@@ -138,12 +139,12 @@ const OrganizerLayout = () => {
             <div className="flex items-center gap-3">
               <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full">
                 <span className="text-primary-foreground text-sm font-semibold">
-                  {user?.name?.charAt(0)?.toUpperCase() || 'O'}
+                  {displayName.charAt(0)?.toUpperCase() || 'O'}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-text-primary truncate text-sm font-medium">
-                  {user?.name || 'Organizer'}
+                  {displayName}
                 </p>
                 <p className="text-text-secondary truncate text-xs">
                   {user?.email}
@@ -220,7 +221,7 @@ const OrganizerLayout = () => {
               >
                 <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full">
                   <span className="text-primary-foreground text-sm font-semibold">
-                    {user?.name?.charAt(0)?.toUpperCase() || 'O'}
+                    {displayName.charAt(0)?.toUpperCase() || 'O'}
                   </span>
                 </div>
                 <ChevronDown className="text-text-secondary h-4 w-4" />
