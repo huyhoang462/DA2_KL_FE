@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import set from 'lodash.set';
 
 import Stepper from '../../components/features/createEvent/Stepper';
 import Button from '../../components/ui/Button';
@@ -14,8 +12,6 @@ import PaymentInfoForm from '../../components/features/createEvent/PaymentInfoFo
 import {
   setCurrentStep,
   updateEventField,
-  clearEvent,
-  clearPayoutMethod,
 } from '../../store/slices/eventSlice';
 import {
   validateStepOne,
@@ -25,7 +21,6 @@ import {
 import { createEvent } from '../../services/eventService';
 
 const CreateEventPage = () => {
-  const nav = useNavigate();
   const dispatch = useDispatch();
 
   const currentStep = useSelector((state) => state.event.currentStep);
@@ -57,31 +52,46 @@ const CreateEventPage = () => {
       });
     }
   };
-  const handleChangeStep2 = (showIndex, field) => {
-    if (
-      errors.shows &&
-      errors.shows[showIndex] &&
-      errors.shows[showIndex][field]
-    ) {
-      setErrors((prevErrors) => {
-        const newShowErrors = [...prevErrors.shows];
-        const currentShowErrors = newShowErrors[showIndex]
-          ? { ...newShowErrors[showIndex] }
-          : {};
+  const buildCreatePayload = (status) => {
+    const restEventData = { ...eventData };
+    delete restEventData.organizer;
 
-        delete currentShowErrors[field];
-
-        newShowErrors[showIndex] =
-          Object.keys(currentShowErrors).length > 0
-            ? currentShowErrors
-            : undefined;
-
-        return {
-          ...prevErrors,
-          shows: newShowErrors,
+    const transformedEventData = {
+      ...restEventData,
+      status,
+      shows: eventData.shows.map((show) => {
+        const showDateTime = {
+          ...show,
         };
-      });
+
+        if (show.date && show.startTime) {
+          showDateTime.startTime = `${show.date}T${show.startTime}`;
+        }
+
+        if (show.date && show.endTime) {
+          showDateTime.endTime = `${show.date}T${show.endTime}`;
+        }
+
+        delete showDateTime.date;
+        return showDateTime;
+      }),
+    };
+
+    if (transformedEventData.shows.length > 0) {
+      const showDates = transformedEventData.shows
+        .filter((show) => show.startTime)
+        .map((show) => new Date(show.startTime));
+
+      if (showDates.length > 0) {
+        const minDate = new Date(Math.min(...showDates));
+        const maxDate = new Date(Math.max(...showDates));
+
+        transformedEventData.startDate = minDate.toISOString().split('T')[0];
+        transformedEventData.endDate = maxDate.toISOString().split('T')[0];
+      }
     }
+
+    return transformedEventData;
   };
 
   const handleNextStep = () => {
@@ -118,50 +128,12 @@ const CreateEventPage = () => {
     if (isSubmitting) return;
 
     // Transform data: combine date + time thành datetime cho shows
-    const transformedEventData = {
-      ...eventData,
-      status: 'pending', // Mặc định là pending khi gửi duyệt
-      shows: eventData.shows.map((show) => {
-        const showDateTime = {
-          ...show,
-        };
-
-        // Combine date + startTime thành startTime datetime
-        if (show.date && show.startTime) {
-          showDateTime.startTime = `${show.date}T${show.startTime}`;
-        }
-
-        // Combine date + endTime thành endTime datetime
-        if (show.date && show.endTime) {
-          showDateTime.endTime = `${show.date}T${show.endTime}`;
-        }
-
-        // Xóa field date vì API không cần
-        delete showDateTime.date;
-
-        return showDateTime;
-      }),
-    };
-
-    // Tính startDate và endDate cho event từ các shows
-    if (transformedEventData.shows.length > 0) {
-      const showDates = transformedEventData.shows
-        .filter((show) => show.startTime)
-        .map((show) => new Date(show.startTime));
-
-      if (showDates.length > 0) {
-        const minDate = new Date(Math.min(...showDates));
-        const maxDate = new Date(Math.max(...showDates));
-
-        transformedEventData.startDate = minDate.toISOString().split('T')[0];
-        transformedEventData.endDate = maxDate.toISOString().split('T')[0];
-      }
-    }
+    const transformedEventData = buildCreatePayload('pending');
 
     console.log('Submitting event data:', transformedEventData);
     setIsSubmitting(true);
     try {
-      const result = await createEvent(transformedEventData);
+      await createEvent(transformedEventData);
       setNotificationInfo({
         type: 'success',
         title: 'Thành công!',
@@ -206,50 +178,12 @@ const CreateEventPage = () => {
     }
 
     // Transform data giống như handleSubmit
-    const transformedEventData = {
-      ...eventData,
-      status: 'draft', // Lưu nháp với status='draft'
-      shows: eventData.shows.map((show) => {
-        const showDateTime = {
-          ...show,
-        };
-
-        // Combine date + startTime thành startTime datetime
-        if (show.date && show.startTime) {
-          showDateTime.startTime = `${show.date}T${show.startTime}`;
-        }
-
-        // Combine date + endTime thành endTime datetime
-        if (show.date && show.endTime) {
-          showDateTime.endTime = `${show.date}T${show.endTime}`;
-        }
-
-        // Xóa field date vì API không cần
-        delete showDateTime.date;
-
-        return showDateTime;
-      }),
-    };
-
-    // Tính startDate và endDate cho event từ các shows
-    if (transformedEventData.shows.length > 0) {
-      const showDates = transformedEventData.shows
-        .filter((show) => show.startTime)
-        .map((show) => new Date(show.startTime));
-
-      if (showDates.length > 0) {
-        const minDate = new Date(Math.min(...showDates));
-        const maxDate = new Date(Math.max(...showDates));
-
-        transformedEventData.startDate = minDate.toISOString().split('T')[0];
-        transformedEventData.endDate = maxDate.toISOString().split('T')[0];
-      }
-    }
+    const transformedEventData = buildCreatePayload('draft');
 
     console.log('Saving draft event data:', transformedEventData);
     setIsSubmitting(true);
     try {
-      const result = await createEvent(transformedEventData);
+      await createEvent(transformedEventData);
       setNotificationInfo({
         type: 'success',
         title: 'Thành công!',

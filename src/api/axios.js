@@ -8,6 +8,26 @@ const axiosInstance = axios.create({
   withCredentials: true, //  trình duyệt tự động gửi cookie (chứa refresh token)
 });
 
+let isRefreshing = false;
+let pendingRequests = [];
+
+const processPendingRequests = (error, accessToken = null) => {
+  pendingRequests.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+      return;
+    }
+    resolve(accessToken);
+  });
+  pendingRequests = [];
+};
+
+const forceLogout = () => {
+  if (store.getState().auth.isAuthenticated) {
+    store.dispatch(logout());
+  }
+};
+
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = store.getState().auth.token;
@@ -23,57 +43,79 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config || {};
+    const status = error.response?.status;
+    const requestUrl = originalRequest.url || '';
+    const isAuthenticated = store.getState().auth.isAuthenticated;
 
-    // Kiểm tra nếu lỗi là 401 và request này chưa được thử lại
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; // Đánh dấu là đã thử lại để tránh vòng lặp vô hạn
+    const isRefreshRequest = requestUrl.includes('/auth/refresh-token');
+    const isLoginRequest =
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/staff-login');
 
-      try {
-        // Gọi API /refresh-token để lấy access token mới
-        // axiosInstance.post sẽ tự động thêm cookie `jwt` vào request
-        const { data } = await axiosInstance.post('/auth/refresh-token');
-
-        // Nếu BE trả về user, dùng data.user; nếu không, decode token
-        let refreshedUser;
-        if (data.user) {
-          refreshedUser = data.user;
-        }
-        //  else {
-        //   // Fallback: decode token để lấy basic info
-        //   const tokenPayload = JSON.parse(atob(data.accessToken.split('.')[1]));
-        //   const currentUser = store.getState().auth.user;
-
-        //   // Kiểm tra user ID có khớp không
-        //   if (currentUser && currentUser.id !== tokenPayload.id) {
-        //     console.error('🚨 [Security] User ID mismatch! Force logout.');
-        //     console.error('Expected:', currentUser.id, 'Got:', tokenPayload.id);
-        //     store.dispatch(logout());
-        //     window.location.href = '/login';
-        //     return Promise.reject(new Error('Session mismatch'));
-        //   }
-        //   refreshedUser = currentUser;
-        // }
-
-        store.dispatch(
-          login({
-            user: refreshedUser,
-            accessToken: data.accessToken,
-          })
-        );
-
-        originalRequest.headers['Authorization'] = `Bearer ${data.accessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        if (store.getState().auth.isAuthenticated) {
-          store.dispatch(logout());
-        }
-
-        return Promise.reject(refreshError);
-      }
+    if (status !== 401) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    // Không cố refresh khi user chưa đăng nhập.
+    if (!isAuthenticated) {
+      return Promise.reject(error);
+    }
+
+    // Nếu chính request refresh bị 401 thì kết thúc phiên luôn, không retry thêm.
+    if (isRefreshRequest) {
+      forceLogout();
+      return Promise.reject(error);
+    }
+
+    // Không tự refresh cho login/staff-login để tránh hành vi khó đoán.
+    if (isLoginRequest) {
+      return Promise.reject(error);
+    }
+
+    if (originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    // Nếu đã có luồng refresh đang chạy, xếp request hiện tại vào hàng đợi.
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
+      }).then((newAccessToken) => {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return axiosInstance(originalRequest);
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      // axiosInstance.post sẽ tự động thêm cookie `jwt` vào request
+      const { data } = await axiosInstance.post('/auth/refresh-token');
+
+      const refreshedUser = data.user || store.getState().auth.user;
+      store.dispatch(
+        login({
+          user: refreshedUser,
+          accessToken: data.accessToken,
+        })
+      );
+
+      processPendingRequests(null, data.accessToken);
+      isRefreshing = false;
+
+      originalRequest.headers = originalRequest.headers || {};
+      originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+      return axiosInstance(originalRequest);
+    } catch (refreshError) {
+      isRefreshing = false;
+      processPendingRequests(refreshError, null);
+      forceLogout();
+      return Promise.reject(refreshError);
+    }
   }
 );
 

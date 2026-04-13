@@ -3,9 +3,7 @@ import ImageUploader from '../../ui/ImageUploader';
 import RichTextEditor from '../../ui/RichTextEditor';
 import LocationInput from './LocationInput';
 import CategoryInput from './CategoryInput';
-import OrganizerInput from './OrganizerInput';
 import useImageUpload from '../../../hooks/useImageUpload';
-import { is } from 'date-fns/locale/is';
 
 export default function BasicInfoForm({
   value: eventData,
@@ -33,22 +31,30 @@ export default function BasicInfoForm({
       onChange('bannerImageUrl', { url: '', publicId: '' });
       return;
     }
-
-    if (bannerImage.publicId) await deleteImage(bannerImage.publicId);
-
+    const previousBannerImage = bannerImage;
     onChange('bannerImageUrl', { url: file.preview, publicId: '' });
 
     try {
       const uploadedImage = await uploadImage(file);
-      if (uploadedImage) {
-        onChange('bannerImageUrl', {
-          url: uploadedImage.url,
-          publicId: uploadedImage.publicId,
-        });
+      if (!uploadedImage) {
+        onChange('bannerImageUrl', previousBannerImage);
+        return;
+      }
+
+      onChange('bannerImageUrl', {
+        url: uploadedImage.url,
+        publicId: uploadedImage.publicId,
+      });
+
+      if (
+        previousBannerImage.publicId &&
+        previousBannerImage.publicId !== uploadedImage.publicId
+      ) {
+        await deleteImage(previousBannerImage.publicId);
       }
     } catch (error) {
       console.error('Upload failed:', error);
-      onChange('bannerImageUrl', { url: '', publicId: '' });
+      onChange('bannerImageUrl', previousBannerImage);
     }
   };
 
@@ -164,16 +170,6 @@ export default function BasicInfoForm({
             />
           </div>
         )}
-        <div className="sm:col-span-6">
-          <OrganizerInput
-            value={eventData.organizer}
-            onChange={(field, value) =>
-              handleFieldChange(`organizer.${field}`, value)
-            }
-            error={errors?.organizer}
-            disabled={!isEditable}
-          />
-        </div>
       </div>
     </div>
   );

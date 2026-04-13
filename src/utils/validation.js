@@ -74,35 +74,6 @@ export const validateStepOne = (eventData) => {
     }
   }
 
-  const organizerInfo = eventData.organizer || {};
-  const organizerErrors = {};
-
-  if (!organizerInfo.name || organizerInfo.name.trim() === '') {
-    organizerErrors.name = 'Vui lòng nhập tên nhà tổ chức.';
-  }
-
-  if (!organizerInfo.email || organizerInfo.email.trim() === '') {
-    organizerErrors.email = 'Vui lòng nhập email nhà tổ chức.';
-  }
-
-  if (!organizerInfo.phone || organizerInfo.phone.trim() === '') {
-    organizerErrors.phone = 'Vui lòng nhập số điện thoại nhà tổ chức.';
-  }
-
-  const emailError = validateEmail(organizerInfo.email);
-  if (!emailError) {
-    organizerErrors.email = 'Email không hợp lệ.';
-  }
-
-  const phoneError = validatePhone(organizerInfo.phone);
-  if (!phoneError) {
-    organizerErrors.phone = 'Số điện thoại không hợp lệ.';
-  }
-
-  if (Object.keys(organizerErrors).length > 0) {
-    errors.organizer = organizerErrors;
-  }
-
   return errors;
 };
 
