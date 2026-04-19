@@ -135,6 +135,35 @@ export const updateEvent = async (id, data) => {
   }
 };
 
+export const startEventMinting = async (id) => {
+  try {
+    const response = await axiosInstance.patch(
+      `${API_BASE_URL}/events/${id}/mint/start`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+export const submitEventMintResult = async (
+  id,
+  { isSuccess, failureReason = null }
+) => {
+  try {
+    const response = await axiosInstance.patch(
+      `${API_BASE_URL}/events/${id}/mint/result`,
+      {
+        isSuccess,
+        failureReason,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 export const deleteEvent = async (id) => {
   try {
     const response = await axiosInstance.delete(`${API_BASE_URL}/events/${id}`);

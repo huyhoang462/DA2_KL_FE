@@ -14,8 +14,20 @@ const EventStatusBadge = ({ status }) => {
       textColor: 'text-warning',
       borderColor: 'border-warning/30',
     },
-    upcoming: {
+    approved: {
       text: 'Đã duyệt',
+      bgColor: 'bg-cyan-500/10',
+      textColor: 'text-cyan-500',
+      borderColor: 'border-cyan-500/30',
+    },
+    minting: {
+      text: 'Đang mint',
+      bgColor: 'bg-indigo-500/10',
+      textColor: 'text-indigo-500',
+      borderColor: 'border-indigo-500/30',
+    },
+    upcoming: {
+      text: 'Sắp diễn ra',
       bgColor: 'bg-success/10',
       textColor: 'text-success',
       borderColor: 'border-success/30',

@@ -1,12 +1,23 @@
 import React from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Loader2 } from 'lucide-react';
+import Button from '../../ui/Button';
+import { startEventMinting } from '../../../services/eventService';
 
 const statusStyles = {
   draft: { label: 'Nháp', className: 'bg-foreground text-text-secondary' },
   pending: {
     label: 'Chờ duyệt',
     className: 'bg-warning-background text-warning-text-on-subtle',
+  },
+  approved: {
+    label: 'Đã duyệt',
+    className: 'bg-cyan-500/10 text-cyan-500',
+  },
+  minting: {
+    label: 'Đang mint',
+    className: 'bg-indigo-500/10 text-indigo-500',
   },
   upcoming: {
     label: 'Sắp diễn ra',
@@ -32,10 +43,18 @@ const statusStyles = {
 
 export default function MyEventCard({ event }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const statusInfo = statusStyles[event.status] || {
     label: 'Không xác định',
     className: 'bg-foreground text-text-secondary',
   };
+
+  const startMintMutation = useMutation({
+    mutationFn: () => startEventMinting(event.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['events', 'user']);
+    },
+  });
 
   const actionLinks = [
     { label: 'Tổng quan', path: `/manage/${event.id}/dashboard` },
@@ -95,17 +114,31 @@ export default function MyEventCard({ event }) {
             </div>
           </div>
 
-          <div className="border-border-subtle mt-4 flex items-center space-x-6 border-t pt-4">
+          <div className="border-border-subtle mt-4 flex items-center justify-between gap-4 border-t pt-4">
             <div>
               <p className="text-text-secondary text-xs">Vé đã bán</p>
               <p className="text-text-primary font-semibold">
                 {event?.totalTicketsSold} / {event?.totalTicketsAvailable}
               </p>
             </div>
-            <div>
-              {/* <p className="text-text-secondary text-xs">Doanh thu</p>
-              <p className="text-text-primary font-semibold">123,456,000 đ</p> */}
-            </div>
+
+            {event.status === 'approved' && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startMintMutation.mutate();
+                }}
+                disabled={startMintMutation.isPending}
+                className="shrink-0"
+              >
+                {startMintMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Mint vé
+              </Button>
+            )}
           </div>
         </div>
       </div>

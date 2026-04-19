@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import Input from '../../ui/Input';
 import Button from '../../ui/Button';
 import { Plus, Trash2 } from 'lucide-react';
 import TicketTypeFormModal from './TicketTypeFormModal';
 import ConfirmModal from '../../ui/ConfirmModal';
-import {
-  updateShowtimeField,
-  removeShowtime,
-  addTicketToShowtime,
-  updateTicketInShowtime,
-  removeTicketFromShowtime,
-} from '../../../store/slices/eventSlice';
+
+const formatVndAmount = (amount) =>
+  new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 0,
+  }).format(Math.round(amount || 0));
+
+const formatUsdtAmount = (amount) =>
+  new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
 
 const TicketTypePill = ({ ticket, onEdit, onRemove, disabled }) => (
   <div
@@ -24,10 +26,10 @@ const TicketTypePill = ({ ticket, onEdit, onRemove, disabled }) => (
         {ticket.name}
       </p>
       <p className="text-text-secondary text-sm">
-        {new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(ticket.price)}{' '}
+        {formatUsdtAmount(ticket.price)} USDT
+        {ticket.exchangeRateVndPerUsdt
+          ? ` (~${formatVndAmount(ticket.price * ticket.exchangeRateVndPerUsdt)} VND)`
+          : ''}{' '}
         - SL: {ticket.quantityTotal}
       </p>
     </div>

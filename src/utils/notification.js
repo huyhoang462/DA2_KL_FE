@@ -3,6 +3,9 @@ export const NOTIFICATION_TYPES = {
   payment_failed: 'payment_failed',
   payment_cancelled: 'payment_cancelled',
   event_approved: 'event_approved',
+  event_minting_started: 'event_minting_started',
+  event_minting_success: 'event_minting_success',
+  event_minting_failed: 'event_minting_failed',
   event_rejected: 'event_rejected',
   event_cancelled: 'event_cancelled',
   comment_reply: 'comment_reply',
@@ -19,6 +22,9 @@ const PAYMENT_TYPES = new Set([
 
 const EVENT_TYPES = new Set([
   NOTIFICATION_TYPES.event_approved,
+  NOTIFICATION_TYPES.event_minting_started,
+  NOTIFICATION_TYPES.event_minting_success,
+  NOTIFICATION_TYPES.event_minting_failed,
   NOTIFICATION_TYPES.event_rejected,
   NOTIFICATION_TYPES.event_cancelled,
 ]);

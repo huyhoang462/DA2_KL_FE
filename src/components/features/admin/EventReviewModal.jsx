@@ -89,7 +89,7 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
   };
 
   const handleApproveConfirm = () => {
-    updateStatusMutation.mutate({ eventId, status: 'upcoming' });
+    updateStatusMutation.mutate({ eventId, status: 'approved' });
   };
 
   const handleRejectConfirm = (reason) => {
@@ -479,9 +479,19 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
                       Trạng thái hiện tại:
                     </div>
                     <div>
-                      {event.status === 'upcoming' && (
+                      {event.status === 'approved' && (
                         <span className="bg-success/10 text-success border-success/30 inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold">
                           ✓ Đã duyệt
+                        </span>
+                      )}
+                      {event.status === 'minting' && (
+                        <span className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm font-semibold text-indigo-500">
+                          ⏳ Đang mint
+                        </span>
+                      )}
+                      {event.status === 'upcoming' && (
+                        <span className="bg-success/10 text-success border-success/30 inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold">
+                          ✓ Sắp diễn ra
                         </span>
                       )}
                       {event.status === 'ongoing' && (

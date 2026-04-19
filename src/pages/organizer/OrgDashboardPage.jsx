@@ -87,6 +87,14 @@ export default function OrgDashboardPage() {
         label: 'Chờ duyệt',
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       },
+      approved: {
+        label: 'Đã duyệt',
+        color: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      },
+      minting: {
+        label: 'Đang mint',
+        color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      },
       upcoming: {
         label: 'Sắp diễn ra',
         color: 'bg-blue-100 text-blue-800 border-blue-200',

@@ -5,6 +5,8 @@ import {
   getEventById,
   updateEvent,
   deleteEvent,
+  startEventMinting,
+  submitEventMintResult,
 } from '../../services/eventService';
 
 import Button from '../../components/ui/Button';
@@ -600,6 +602,56 @@ export default function OrgEventDetail() {
     },
   });
 
+  const startMintMutation = useMutation({
+    mutationFn: () => startEventMinting(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['eventDetailForEdit', id]);
+      setNotificationInfo({
+        type: 'success',
+        title: 'Đã bắt đầu mint',
+        message: data?.message || 'Sự kiện đã chuyển sang trạng thái minting.',
+      });
+      setShowNotification(true);
+    },
+    onError: (err) => {
+      setNotificationInfo({
+        type: 'error',
+        title: 'Không thể bắt đầu mint',
+        message: err.message || 'Đã có lỗi xảy ra khi bắt đầu mint.',
+      });
+      setShowNotification(true);
+    },
+  });
+
+  const mintResultMutation = useMutation({
+    mutationFn: ({ isSuccess, failureReason = null }) =>
+      submitEventMintResult(id, { isSuccess, failureReason }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['eventDetailForEdit', id]);
+      setNotificationInfo({
+        type: 'success',
+        title:
+          data?.data?.newStatus === 'upcoming'
+            ? 'Mint thành công'
+            : 'Mint thất bại',
+        message:
+          data?.message ||
+          (data?.data?.newStatus === 'upcoming'
+            ? 'Sự kiện đã chuyển sang trạng thái upcoming.'
+            : 'Sự kiện đã quay về trạng thái approved để thử lại.'),
+      });
+      setShowNotification(true);
+    },
+    onError: (err) => {
+      setNotificationInfo({
+        type: 'error',
+        title: 'Không thể cập nhật kết quả mint',
+        message: err.message || 'Đã có lỗi xảy ra khi gửi kết quả mint.',
+      });
+      setShowNotification(true);
+    },
+  });
+
   const hasChanges = firstData && editData && !deepEqual(firstData, editData);
 
   const handleFieldChange = (fieldPath, value) => {
@@ -753,7 +805,8 @@ export default function OrgEventDetail() {
   const isEditable =
     originalEvent?.status === 'draft' ||
     originalEvent?.status === 'pending' ||
-    originalEvent?.status === 'rejected';
+    originalEvent?.status === 'rejected' ||
+    originalEvent?.status === 'cancelled';
 
   const getStatusInfo = (status) => {
     const statusMap = {
@@ -764,6 +817,14 @@ export default function OrgEventDetail() {
       pending: {
         label: 'Chờ duyệt',
         color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      },
+      approved: {
+        label: 'Đã duyệt',
+        color: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      },
+      minting: {
+        label: 'Đang mint',
+        color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
       },
       upcoming: {
         label: 'Sắp diễn ra',
@@ -858,6 +919,79 @@ export default function OrgEventDetail() {
                     </Button>
                   </>
                 ) : null}
+
+                {originalEvent?.status === 'approved' && (
+                  <Button
+                    size="sm"
+                    onClick={() => startMintMutation.mutate()}
+                    disabled={
+                      startMintMutation.isPending ||
+                      mintResultMutation.isPending ||
+                      updateMutation.isPending ||
+                      deleteMutation.isPending
+                    }
+                    className="text-primary-foreground"
+                  >
+                    {startMintMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Clock className="mr-2 h-4 w-4" />
+                    )}
+                    Start mint
+                  </Button>
+                )}
+
+                {originalEvent?.status === 'minting' && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="success"
+                      onClick={() =>
+                        mintResultMutation.mutate({
+                          isSuccess: true,
+                          failureReason: null,
+                        })
+                      }
+                      disabled={
+                        startMintMutation.isPending ||
+                        mintResultMutation.isPending ||
+                        updateMutation.isPending ||
+                        deleteMutation.isPending
+                      }
+                    >
+                      {mintResultMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="mr-2 h-4 w-4" />
+                      )}
+                      Mint thành công
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() =>
+                        mintResultMutation.mutate({
+                          isSuccess: false,
+                          failureReason: 'Mint failed on blockchain',
+                        })
+                      }
+                      disabled={
+                        startMintMutation.isPending ||
+                        mintResultMutation.isPending ||
+                        updateMutation.isPending ||
+                        deleteMutation.isPending
+                      }
+                    >
+                      {mintResultMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="mr-2 h-4 w-4" />
+                      )}
+                      Mint thất bại
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -867,7 +1001,10 @@ export default function OrgEventDetail() {
       <div className="flex-1 overflow-auto">
         <div
           className={`container mx-auto px-4 py-8 transition-all duration-200 ${
-            updateMutation.isPending || deleteMutation.isPending
+            updateMutation.isPending ||
+            deleteMutation.isPending ||
+            startMintMutation.isPending ||
+            mintResultMutation.isPending
               ? 'pointer-events-none opacity-60'
               : ''
           }`}

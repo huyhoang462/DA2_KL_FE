@@ -41,6 +41,14 @@ const UserEventsTab = ({ userId }) => {
         bg: 'bg-yellow-100 text-yellow-800',
         label: 'Chờ duyệt',
       },
+      approved: {
+        bg: 'bg-cyan-100 text-cyan-800',
+        label: 'Đã duyệt',
+      },
+      minting: {
+        bg: 'bg-indigo-100 text-indigo-800',
+        label: 'Đang mint',
+      },
       upcoming: {
         bg: 'bg-blue-100 text-blue-800',
         label: 'Sắp diễn ra',
@@ -134,6 +142,8 @@ const UserEventsTab = ({ userId }) => {
           <option value="">Tất cả trạng thái</option>
           <option value="draft">Bản nháp</option>
           <option value="pending">Chờ duyệt</option>
+          <option value="approved">Đã duyệt</option>
+          <option value="minting">Đang mint</option>
           <option value="upcoming">Sắp diễn ra</option>
           <option value="ongoing">Đang diễn ra</option>
           <option value="completed">Hoàn thành</option>

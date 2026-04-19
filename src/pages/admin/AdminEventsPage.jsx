@@ -72,7 +72,7 @@ const AdminEventsPage = () => {
   const stats = {
     total: pagination.totalEvents || 0,
     pending: events.filter((e) => e.status === 'pending').length,
-    upcoming: events.filter((e) => e.status === 'upcoming').length,
+    approved: events.filter((e) => e.status === 'approved').length,
     featured: events.filter((e) => e.featured).length,
   };
 
@@ -182,7 +182,9 @@ const AdminEventsPage = () => {
         >
           <option value="">Tất cả trạng thái</option>
           <option value="pending">Chờ duyệt</option>
-          <option value="upcoming">Đã duyệt</option>
+          <option value="approved">Đã duyệt</option>
+          <option value="minting">Đang mint</option>
+          <option value="upcoming">Sắp diễn ra</option>
           <option value="ongoing">Đang diễn ra</option>
           <option value="rejected">Từ chối</option>
           <option value="cancelled">Đã hủy</option>
@@ -236,7 +238,7 @@ const AdminEventsPage = () => {
         <div className="bg-background-secondary border-border-default rounded-lg border p-4">
           <p className="text-text-secondary text-sm font-medium">Đã duyệt</p>
           <p className="text-success mt-1 text-2xl font-bold">
-            {stats.upcoming}
+            {stats.approved}
           </p>
         </div>
         <div className="bg-background-secondary border-border-default rounded-lg border p-4">

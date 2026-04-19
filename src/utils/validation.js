@@ -79,20 +79,30 @@ export const validateStepOne = (eventData) => {
 
 export const validateTicketType = (data) => {
   const errors = {};
+  const price = Number(data.price);
+  const quantityTotal = Number(data.quantityTotal);
+  const minPurchase = Number(data.minPurchase);
+  const maxPurchase = Number(data.maxPurchase);
+  const exchangeRateVndPerUsdt = Number(data.exchangeRateVndPerUsdt);
+
   if (!data.name || data.name.trim().length < 3) {
     errors.name = 'Tên vé phải có ít nhất 3 ký tự.';
   }
-  if (!data.price || data.price < 0) {
-    errors.price = 'Giá vé không hợp lệ.';
+  if (!Number.isFinite(price) || price <= 0) {
+    errors.price = 'Giá vé USDT không hợp lệ.';
   }
-  if (!data.quantityTotal || data.quantityTotal < 1) {
+  if (!Number.isFinite(quantityTotal) || quantityTotal < 1) {
     errors.quantityTotal = 'Số lượng vé phải lớn hơn 0.';
   }
-  if (data.minPurchase < 1) {
+  if (!Number.isFinite(minPurchase) || minPurchase < 1) {
     errors.minPurchase = 'Mua tối thiểu phải lớn hơn 0.';
   }
-  if (data.maxPurchase < data.minPurchase) {
+  if (!Number.isFinite(maxPurchase) || maxPurchase < minPurchase) {
     errors.maxPurchase = 'Mua tối đa phải lớn hơn hoặc bằng mức tối thiểu.';
+  }
+  if (!Number.isFinite(exchangeRateVndPerUsdt) || exchangeRateVndPerUsdt <= 0) {
+    errors.exchangeRateVndPerUsdt =
+      'Không lấy được tỷ giá USDT/VND hiện tại. Vui lòng mở lại modal để tải lại.';
   }
   return errors;
 };
