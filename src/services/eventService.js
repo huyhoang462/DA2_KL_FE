@@ -148,13 +148,14 @@ export const startEventMinting = async (id) => {
 
 export const submitEventMintResult = async (
   id,
-  { isSuccess, failureReason = null }
+  { isSuccess, txHash = null, failureReason = null }
 ) => {
   try {
     const response = await axiosInstance.patch(
       `${API_BASE_URL}/events/${id}/mint/result`,
       {
         isSuccess,
+        txHash,
         failureReason,
       }
     );
@@ -187,6 +188,7 @@ export const getEventById = async (id) => {
 export const getEventsByUserId = async (userId) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events/user/${userId}`);
+    console.log('EVENTS BY USER ID: ', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);

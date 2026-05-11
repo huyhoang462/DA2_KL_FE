@@ -1,9 +1,9 @@
 import React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Loader2 } from 'lucide-react';
 import Button from '../../ui/Button';
-import { startEventMinting } from '../../../services/eventService';
+import { useMintTicket } from '../../../hooks/useMintTicket';
 
 const statusStyles = {
   draft: { label: 'Nháp', className: 'bg-foreground text-text-secondary' },
@@ -49,12 +49,7 @@ export default function MyEventCard({ event }) {
     className: 'bg-foreground text-text-secondary',
   };
 
-  const startMintMutation = useMutation({
-    mutationFn: () => startEventMinting(event.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['events', 'user']);
-    },
-  });
+  const { isMinting, handleMintTicket } = useMintTicket();
 
   const actionLinks = [
     { label: 'Tổng quan', path: `/manage/${event.id}/dashboard` },
@@ -128,12 +123,12 @@ export default function MyEventCard({ event }) {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  startMintMutation.mutate();
+                  handleMintTicket(event);
                 }}
-                disabled={startMintMutation.isPending}
+                disabled={isMinting}
                 className="shrink-0"
               >
-                {startMintMutation.isPending ? (
+                {isMinting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
                 Mint vé

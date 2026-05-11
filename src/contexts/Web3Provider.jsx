@@ -28,12 +28,6 @@ export const Web3Provider = ({ children }) => {
       const newAddress = await newSigner.getAddress();
       const newNetwork = await newProvider.getNetwork();
 
-      if (newNetwork.chainId !== 11155111n) {
-        setError("Vui lòng chuyển sang mạng Sepolia!");
-        setLoading(false);
-        return;
-      }
-
       setProvider(newProvider);
       setSigner(newSigner);
       setAddress(newAddress);
