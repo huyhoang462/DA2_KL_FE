@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Loader2 } from 'lucide-react';
 import Button from '../../ui/Button';
+import FullScreenLoader from '../../ui/FullScreenLoader';
 import { useMintTicket } from '../../../hooks/useMintTicket';
 
 const statusStyles = {
@@ -63,97 +64,104 @@ export default function MyEventCard({ event }) {
   };
 
   return (
-    <div className="border-border-default bg-background-secondary relative rounded-lg border shadow-sm transition-shadow hover:shadow-md">
-      <div
-        className={`absolute top-4 right-0 rounded-l-md px-3 py-1 text-xs font-semibold shadow-sm ${statusInfo.className} `}
-      >
-        {statusInfo.label}
-      </div>
-
-      <div
-        onClick={handleCardClick}
-        className="flex cursor-pointer flex-col p-4 sm:flex-row sm:p-6"
-      >
-        <div className="bg-foreground mb-4 h-40 w-full flex-shrink-0 overflow-hidden rounded-md sm:mb-0 sm:h-40 sm:w-40">
-          <img
-            src={event.bannerImageUrl}
-            className="h-full w-full object-cover"
-            alt={event.name}
-          />
+    <>
+      {isMinting && (
+        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm">
+          <FullScreenLoader />
+        </div>
+      )}
+      <div className="border-border-default bg-background-secondary relative rounded-lg border shadow-sm transition-shadow hover:shadow-md">
+        <div
+          className={`absolute top-4 right-0 rounded-l-md px-3 py-1 text-xs font-semibold shadow-sm ${statusInfo.className} `}
+        >
+          {statusInfo.label}
         </div>
 
-        <div className="flex flex-1 flex-col sm:ml-6">
-          <h3 className="text-text-primary hover:text-primary mt-2 text-lg leading-tight font-bold md:pr-20">
-            {event.name}
-          </h3>
-
-          <div className="text-text-secondary mt-2 space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 flex-shrink-0" />
-              <span>
-                {new Date(event.startDate).toLocaleDateString('vi-VN', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span>
-                {event.format === 'offline'
-                  ? event.location.address || event.location.province.name
-                  : 'Sự kiện online'}
-              </span>
-            </div>
+        <div
+          onClick={handleCardClick}
+          className="flex cursor-pointer flex-col p-4 sm:flex-row sm:p-6"
+        >
+          <div className="bg-foreground mb-4 h-40 w-full flex-shrink-0 overflow-hidden rounded-md sm:mb-0 sm:h-40 sm:w-40">
+            <img
+              src={event.bannerImageUrl}
+              className="h-full w-full object-cover"
+              alt={event.name}
+            />
           </div>
 
-          <div className="border-border-subtle mt-4 flex items-center justify-between gap-4 border-t pt-4">
-            <div>
-              <p className="text-text-secondary text-xs">Vé đã bán</p>
-              <p className="text-text-primary font-semibold">
-                {event?.totalTicketsSold} / {event?.totalTicketsAvailable}
-              </p>
+          <div className="flex flex-1 flex-col sm:ml-6">
+            <h3 className="text-text-primary hover:text-primary mt-2 text-lg leading-tight font-bold md:pr-20">
+              {event.name}
+            </h3>
+
+            <div className="text-text-secondary mt-2 space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  {new Date(event.startDate).toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  {event.format === 'offline'
+                    ? event.location.address || event.location.province.name
+                    : 'Sự kiện online'}
+                </span>
+              </div>
             </div>
 
-            {event.status === 'approved' && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMintTicket(event);
-                }}
-                disabled={isMinting}
-                className="shrink-0"
+            <div className="border-border-subtle mt-4 flex items-center justify-between gap-4 border-t pt-4">
+              <div>
+                <p className="text-text-secondary text-xs">Vé đã bán</p>
+                <p className="text-text-primary font-semibold">
+                  {event?.totalTicketsSold} / {event?.totalTicketsAvailable}
+                </p>
+              </div>
+
+              {event.status === 'approved' && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMintTicket(event);
+                  }}
+                  disabled={isMinting}
+                  className="shrink-0"
+                >
+                  {isMinting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Mint vé
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-border-default bg-foreground/50 flex items-center justify-around border-t px-4 py-2">
+          {actionLinks.map((link, index) => (
+            <React.Fragment key={link.path}>
+              <Link
+                to={link.path}
+                onClick={(e) => e.stopPropagation()}
+                className="text-text-secondary hover:bg-foreground hover:text-primary cursor-pointer rounded-md px-3 py-1 text-sm font-semibold transition-colors"
               >
-                {isMinting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                Mint vé
-              </Button>
-            )}
-          </div>
+                {link.label}
+              </Link>
+              {index < actionLinks.length - 1 && (
+                <div className="bg-border-default h-4 w-px"></div>
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </div>
-
-      <div className="border-border-default bg-foreground/50 flex items-center justify-around border-t px-4 py-2">
-        {actionLinks.map((link, index) => (
-          <React.Fragment key={link.path}>
-            <Link
-              to={link.path}
-              onClick={(e) => e.stopPropagation()}
-              className="text-text-secondary hover:bg-foreground hover:text-primary cursor-pointer rounded-md px-3 py-1 text-sm font-semibold transition-colors"
-            >
-              {link.label}
-            </Link>
-            {index < actionLinks.length - 1 && (
-              <div className="bg-border-default h-4 w-px"></div>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
+    </>
   );
 }
