@@ -131,8 +131,19 @@ export const useMintTicket = () => {
       console.log('4. Chữ ký (Signature) gửi lên:', signature);
       console.log('--------------------------------');
 
-      // Gọi hàm mintEventTickets (MetaMask sẽ tự lo việc tính toán Gas)
-      const tx = await contract.mintEventTickets(voucherTuple, signature);
+      // Mạng Polygon Amoy yêu cầu cấu hình Gas tối thiểu 25 Gwei
+      // MetaMask thỉnh thoảng ước tính sai (xuống còn 1.5 Gwei) nên ta chèn cứng 30 Gwei
+      const txOptions = {
+        maxPriorityFeePerGas: 30000000000n, // 30 Gwei
+        maxFeePerGas: 30000000000n, // 30 Gwei
+      };
+
+      // Gọi hàm mintEventTickets với txOptions
+      const tx = await contract.mintEventTickets(
+        voucherTuple, 
+        signature,
+        txOptions
+      );
 
       toast.info('Giao dịch đang được xử lý trên Blockchain...');
 
