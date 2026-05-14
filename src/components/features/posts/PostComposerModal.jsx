@@ -25,7 +25,7 @@ const PostComposerModal = ({
   images = [],
   onAddImage,
   onRemoveImage,
-  addImageLabel = 'Thêm ảnh mẫu',
+  addImageLabel,
   error = '',
   onClose,
   onSubmit,
@@ -34,6 +34,25 @@ const PostComposerModal = ({
 }) => {
   if (!isOpen) return null;
 
+  const formatDateTimeWithoutSeconds = (value) => {
+    if (!value) return '';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
+  };
+
+  const selectedTicket =
+    entityOptions && entityValue
+      ? entityOptions.find((o) => String(o.id) === String(entityValue)) || null
+      : null;
   return (
     <Modal
       isOpen={isOpen}
@@ -64,7 +83,7 @@ const PostComposerModal = ({
 
         <TextArea
           label={contentLabel}
-          rows={6}
+          rows={4}
           value={content}
           onChange={(event) => onContentChange(event.target.value)}
           placeholder={contentPlaceholder}
@@ -133,14 +152,36 @@ const PostComposerModal = ({
           </div>
         )}
 
-        <Button
-          variant="secondary"
-          onClick={onAddImage}
-          className="w-full sm:w-auto"
-        >
-          <ImagePlus className="mr-2 h-4 w-4" />
-          {addImageLabel}
-        </Button>
+        {roleLabel === 'customer' && entityValue && (
+          <div className="px-2">
+            {selectedTicket ? (
+              <div className="text-sm">
+                {console.log(selectedTicket)}
+                {selectedTicket.startTime && (
+                  <div className="text-text-secondary">
+                    {formatDateTimeWithoutSeconds(selectedTicket.startTime)} -{' '}
+                    {selectedTicket.format === 'offline'
+                      ? selectedTicket.location || 'Offline'
+                      : 'Online'}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-text-secondary text-sm">Chọn vé để đăng bán</p>
+            )}
+          </div>
+        )}
+
+        {roleLabel === 'organizer' && (
+          <Button
+            variant="secondary"
+            onClick={onAddImage}
+            className="w-full sm:w-auto"
+          >
+            <ImagePlus className="mr-2 h-4 w-4" />
+            {addImageLabel}
+          </Button>
+        )}
 
         {error && (
           <p className="text-destructive bg-destructive-background rounded-lg px-3 py-2 text-sm">
@@ -160,5 +201,4 @@ const PostComposerModal = ({
     </Modal>
   );
 };
-
 export default PostComposerModal;

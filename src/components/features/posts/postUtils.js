@@ -151,8 +151,12 @@ export const normalizeTicket = (ticket) => ({
   id: ticket?.id || ticket?._id,
   eventName: ticket?.eventName || 'Sự kiện',
   showName: ticket?.showName || 'Suất diễn',
+  ticketTypeName: ticket?.ticketTypeName || 'Loại vé',
+  price: ticket?.price?.toLocaleString() || '0',
   startTime: ticket?.startTime,
   status: ticket?.status,
+  format: ticket?.format,
+  location: ticket.location,
 });
 
 export const normalizeEventOption = (event) => ({

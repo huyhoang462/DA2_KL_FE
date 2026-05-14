@@ -188,7 +188,6 @@ export const getEventById = async (id) => {
 export const getEventsByUserId = async (userId) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/events/user/${userId}`);
-    console.log('EVENTS BY USER ID: ', response.data);
     return response.data;
   } catch (error) {
     throw extractError(error);

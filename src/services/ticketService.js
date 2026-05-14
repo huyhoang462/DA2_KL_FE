@@ -16,6 +16,19 @@ export const getMyTickets = async () => {
   }
 };
 
+export const getMyPendingTickets = async () => {
+  try {
+    const response = await axiosInstance.get(
+      `${API_BASE_URL}/tickets/my-pending-tickets`
+    );
+
+    console.log('My Pending Tickets: ', response.data.data);
+    return response.data.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 export const getTicketTypesByShowId = async (showId) => {
   try {
     const response = await axiosInstance.get(
