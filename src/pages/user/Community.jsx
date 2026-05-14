@@ -16,7 +16,7 @@ import {
   normalizeTicket,
 } from '../../components/features/posts/postUtils';
 import { createPost, getAllPosts } from '../../services/postService';
-import { getMyTickets } from '../../services/ticketService';
+import { getMyPendingTickets } from '../../services/ticketService';
 
 const PostSkeleton = () => (
   <div className="bg-background-secondary border-border-default animate-pulse rounded-2xl border p-5">
@@ -71,7 +71,7 @@ const Community = () => {
     error: ticketsError,
   } = useQuery({
     queryKey: ['community-my-tickets', userId],
-    queryFn: getMyTickets,
+    queryFn: getMyPendingTickets,
     enabled: !!userId,
     staleTime: 60000,
   });
@@ -202,7 +202,7 @@ const Community = () => {
           alt="Avatar"
         />
         <div className="bg-disabled-background text-text-secondary flex-1 rounded-full px-5 py-2.5 text-sm font-medium">
-          Bạn đang nghĩ gì? Chia sẻ ngay...
+           Đăng bán lại vé của bạn...
         </div>
       </section>
 
@@ -288,8 +288,10 @@ const Community = () => {
         }
         entityOptions={myTickets.map((ticket) => ({
           id: ticket.id,
-          label: `${ticket.eventName} - ${ticket.showName}`,
+   label: `${ticket.eventName} - ${ticket.showName} - Loại vé: ${ticket.ticketTypeName} - ${ticket?.price} đ`,
+          ...ticket,
         }))}
+      
         entityLoading={isTicketsLoading || isTicketsFetching}
         entityLoadingLabel="Đang tải vé..."
         entityEmptyMessage="Bạn chưa có vé nào để tạo bài post pass vé."
@@ -302,7 +304,6 @@ const Community = () => {
             images: prev.images.filter((_, imageIndex) => imageIndex !== index),
           }))
         }
-        addImageLabel="Thêm ảnh mẫu"
         error={composerError}
         onClose={closeComposer}
         onSubmit={handleCreatePost}

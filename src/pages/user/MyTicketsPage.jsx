@@ -43,6 +43,14 @@ const TABS = [
   },
 ];
 
+const STATUS_TAB_MAP = {
+  pending: 'upcoming',
+  checkedIn: 'ongoing',
+  out: 'ongoing',
+  expired: 'past',
+  cancelled: 'cancelled',
+};
+
 export default function MyTicketsPage() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,8 +73,6 @@ export default function MyTicketsPage() {
   const filteredTickets = useMemo(() => {
     if (isLoading || !allTickets) return [];
 
-    const now = new Date();
-
     let filtered = allTickets.filter((ticket) => {
       // Filter theo search
       const matchesSearch =
@@ -76,40 +82,8 @@ export default function MyTicketsPage() {
 
       if (!matchesSearch) return false;
 
-      // Filter theo tab
-      const startTime = new Date(ticket.startTime);
-      const endTime = new Date(ticket.endTime);
-
-      switch (activeTab) {
-        case 'upcoming':
-          // Sắp diễn ra: chưa đến startTime và status = pending
-          return startTime > now && ticket.status === 'pending';
-
-        case 'ongoing':
-          // Đang diễn ra: trong khoảng startTime - endTime, chưa cancelled/expired
-          return (
-            startTime <= now &&
-            endTime >= now &&
-            ticket.status !== 'cancelled' &&
-            ticket.status !== 'expired'
-          );
-
-        case 'past':
-          // Đã qua: sau endTime hoặc status = expired/checkedIn/out
-          return (
-            endTime < now ||
-            ticket.status === 'expired' ||
-            ticket.status === 'checkedIn' ||
-            ticket.status === 'out'
-          );
-
-        case 'cancelled':
-          // Đã hủy: status = cancelled
-          return ticket.status === 'cancelled';
-
-        default:
-          return true;
-      }
+      // Filter theo tab dựa trên status từ BE
+      return STATUS_TAB_MAP[ticket.status] === activeTab;
     });
 
     // Sort theo tab
@@ -132,31 +106,12 @@ export default function MyTicketsPage() {
   // Tính số lượng vé cho mỗi tab
   const tabCounts = useMemo(() => {
     if (!allTickets) return {};
-    const now = new Date();
     const counts = { upcoming: 0, ongoing: 0, past: 0, cancelled: 0 };
 
     allTickets.forEach((ticket) => {
-      const startTime = new Date(ticket.startTime);
-      const endTime = new Date(ticket.endTime);
-
-      if (ticket.status === 'cancelled') {
-        counts.cancelled++;
-      } else if (startTime > now && ticket.status === 'pending') {
-        counts.upcoming++;
-      } else if (
-        startTime <= now &&
-        endTime >= now &&
-        ticket.status !== 'cancelled' &&
-        ticket.status !== 'expired'
-      ) {
-        counts.ongoing++;
-      } else if (
-        endTime < now ||
-        ticket.status === 'expired' ||
-        ticket.status === 'checkedIn' ||
-        ticket.status === 'out'
-      ) {
-        counts.past++;
+      const tabKey = STATUS_TAB_MAP[ticket.status];
+      if (tabKey && counts[tabKey] !== undefined) {
+        counts[tabKey]++;
       }
     });
 
@@ -253,7 +208,7 @@ export default function MyTicketsPage() {
           </p>
           <div className="space-y-3">
             {paginatedTickets.map((ticket) => (
-              <TicketCard key={ticket.id} ticket={ticket} />
+              <TicketCard key={ticket._id || ticket.id} ticket={ticket} />
             ))}
           </div>
 
