@@ -25,11 +25,10 @@ export const useMintTicket = () => {
       setIsMinting(true);
 
       // Bước 1: Kiểm tra môi trường ví (Wallet Environment Check)
-      if (typeof window.ethereum === 'undefined') {
-        toast.error(
-          'Hệ thống không tìm thấy ví Web3. Vui lòng cài đặt tiện ích MetaMask trên trình duyệt của bạn để tiếp tục.'
+      if (!window.ethereum) {
+        throw new Error(
+          'Hệ thống không tìm thấy ví Web3. Vui lòng cài đặt ví MetaMask trên trình duyệt của bạn để tiếp tục.'
         );
-        return;
       }
 
       let currentSigner = signer;
@@ -75,6 +74,11 @@ export const useMintTicket = () => {
             throw switchError;
           }
         }
+
+        // Bắt buộc khởi tạo lại Provider và Signer sau khi ví vừa đổi mạng
+        // Nếu không ethers.js sẽ báo lỗi "network changed: 1 => 80002"
+        const newProvider = new ethers.BrowserProvider(window.ethereum);
+        currentSigner = await newProvider.getSigner();
       }
 
       // Bước 3: Chuẩn bị Dữ liệu Voucher (Data Formatting)
@@ -120,28 +124,15 @@ export const useMintTicket = () => {
         currentSigner
       );
 
-      // Thay vì truyền thủ công maxFee/maxPriorityFee (có thể không được hỗ trợ chuẩn xác trên một số RPC của Polygon Amoy),
-      // hãy thiết lập gasPrice tiêu chuẩn (Legacy) vả tăng lên xíu để đảm bảo không bị "below minimum".
-      const feeData = await currentSigner.provider.getFeeData();
+      console.log('--- DEBUG INFO CHUẨN BỊ MINT ---');
+      console.log('1. Địa chỉ contract:', CONTRACT_ADDRESS);
+      console.log('2. Địa chỉ người gọi (ví):', currentSigner.address);
+      console.log('3. Voucher Tuple gửi lên:', voucherTuple);
+      console.log('4. Chữ ký (Signature) gửi lên:', signature);
+      console.log('--------------------------------');
 
-      const txOptions = {};
-
-      // Minimum Polygon Amoy gas price thường là 25 Gwei (25000000000)
-      // Sử dụng loại giao dịch Legacy (gasPrice) để tránh lỗi EIP-1559 thiếu support maxPriorityFeePerGas
-      const minimumGasPrice = 30000000000n; // Set an toàn 30 Gwei
-
-      if (feeData.gasPrice && feeData.gasPrice > minimumGasPrice) {
-        txOptions.gasPrice = (feeData.gasPrice * 120n) / 100n; // Tăng 20% so với network hiện tại
-      } else {
-        txOptions.gasPrice = minimumGasPrice;
-      }
-
-      // Gọi hàm mintEventTickets, nhét cục Tuple, chuỗi Signature và tuỳ chọn gas vào
-      const tx = await contract.mintEventTickets(
-        voucherTuple,
-        signature,
-        txOptions
-      );
+      // Gọi hàm mintEventTickets (MetaMask sẽ tự lo việc tính toán Gas)
+      const tx = await contract.mintEventTickets(voucherTuple, signature);
 
       toast.info('Giao dịch đang được xử lý trên Blockchain...');
 
@@ -180,15 +171,54 @@ export const useMintTicket = () => {
           'Phí Gas hiện tại đang quá cao hoặc bạn đặt Gas quá thấp. Vui lòng thử lại sau hoặc tăng phí Gas trong ví.';
       } else if (error.message && error.message.includes('user rejected')) {
         errorMessage = 'Giao dịch bị từ chối.';
+      } else if (
+        error.message &&
+        error.message.includes('missing revert data')
+      ) {
+        errorMessage =
+          'Giao dịch bị từ chối từ Smart Contract. Nguyên nhân có thể do Voucher hết hạn, chữ ký BE không hợp lệ, hoặc vé/nonce đã được mint.';
+      } else if (error.message && error.message.includes('CALL_EXCEPTION')) {
+        errorMessage =
+          'Lỗi gọi Smart Contract (CALL_EXCEPTION). Giao dịch không hợp lệ.';
       } else if (error.message) {
         // Cố gắng lấy lọi dễ hiểu cho các lỗi catch chung chung
-        errorMessage = `Lỗi ví: ${error.info?.error?.message || error.error?.message || error.shortMessage || errorMessage}`;
+        errorMessage =
+          error.info?.error?.message ||
+          error.error?.message ||
+          error.shortMessage ||
+          error.message;
       }
 
-      toast.error(errorMessage);
+      if (
+        errorMessage &&
+        errorMessage.includes('Hệ thống không tìm thấy ví Web3')
+      ) {
+        toast.error(
+          <div>
+            <p className="mb-2">
+              Hệ thống không tìm thấy ví Web3. Bạn cần cài đặt ví để tiếp tục.
+            </p>
+            <a
+              href="https://metamask.io/download/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-blue-500 underline hover:text-blue-700"
+            >
+              👉 Nhấn vào đây để tải và cài đặt MetaMask
+            </a>
+          </div>,
+          { autoClose: 10000 }
+        );
+      } else {
+        toast.error(errorMessage);
+      }
 
       // Gọi API báo fail nếu đã start
-      if (error.code !== 4001 && error.code !== 'ACTION_REJECTED') {
+      if (
+        error.code !== 4001 &&
+        error.code !== 'ACTION_REJECTED' &&
+        !error.message?.includes('MetaMask')
+      ) {
         // Lỗi người dùng reject trên ví không cần lưu fail lên db (hoặc tuỳ policy)
         try {
           await submitEventMintResult(event.id, {

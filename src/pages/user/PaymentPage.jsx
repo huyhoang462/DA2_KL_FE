@@ -14,7 +14,7 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import TimerCard from '../../components/features/buyTicket/TimerCard';
 import CartInfoCard from '../../components/features/buyTicket/CartInfoCard';
 import Button from '../../components/ui/Button';
-import { CreditCard, AlertCircle, ExternalLink } from 'lucide-react';
+import { CreditCard, AlertCircle, ExternalLink, Wallet } from 'lucide-react'; // Thêm icon Wallet
 
 export default function PaymentPage() {
   const { id, showId } = useParams();
@@ -30,6 +30,8 @@ export default function PaymentPage() {
   const [totalAmount, setTotalAmount] = useState(0);
   const [expiresAt, setExpiresAt] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending');
+
+  const [paymentMethod, setPaymentMethod] = useState('vnpay'); // Thêm state quản lý phương thức thanh toán
 
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['eventForPayment', id],
@@ -186,7 +188,7 @@ export default function PaymentPage() {
           <CreditCard className="h-8 w-8" />
         </div>
         <h2 className="text-text-primary mb-2 text-2xl font-bold">
-          Thanh toán qua VNPay
+          Cổng thanh toán
         </h2>
         <p className="text-text-secondary text-sm">
           Mã đơn hàng:{' '}
@@ -198,43 +200,112 @@ export default function PaymentPage() {
 
       <div className="border-border-subtle border-t"></div>
 
-      <div className="space-y-4">
-        <div className="bg-background-primary rounded-lg p-4">
-          <h3 className="text-text-primary mb-3 text-sm font-semibold">
-            Hướng dẫn thanh toán:
-          </h3>
-          <ol className="text-text-secondary space-y-2 text-sm">
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">1.</span>
-              <span>Nhấn nút bên dưới để mở trang thanh toán VNPay</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">2.</span>
-              <span>Điền thông tin thanh toán</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">3.</span>
-              <span>Nhập mã OTP và hoàn tất thanh toán</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-semibold">4.</span>
-              <span>
-                Trang này sẽ tự động cập nhật sau khi thanh toán thành công
-              </span>
-            </li>
-          </ol>
-        </div>
-
-        <Button
-          onClick={() =>
-            window.open(paymentUrl, '_blank', 'noopener,noreferrer')
-          }
-          variant="default"
-          className="w-full py-6 text-lg font-semibold"
+      {/* Lựa chọn phương thức thanh toán */}
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={() => setPaymentMethod('vnpay')}
+          className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
+            paymentMethod === 'vnpay'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border-default hover:border-primary/50 text-text-secondary'
+          }`}
         >
-          <ExternalLink className="mr-2 h-5 w-5" />
-          Mở trang thanh toán VNPay
-        </Button>
+          <CreditCard className="h-5 w-5" />
+          <span className="font-semibold">VNPay</span>
+        </button>
+        <button
+          onClick={() => setPaymentMethod('web3')}
+          className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
+            paymentMethod === 'web3'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border-default hover:border-primary/50 text-text-secondary'
+          }`}
+        >
+          <Wallet className="h-5 w-5" />
+          <span className="font-semibold">Ví Web3</span>
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {paymentMethod === 'vnpay' ? (
+          <>
+            <div className="bg-background-primary rounded-lg p-4">
+              <h3 className="text-text-primary mb-3 text-sm font-semibold">
+                Hướng dẫn thanh toán qua VNPay:
+              </h3>
+              <ol className="text-text-secondary space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">1.</span>
+                  <span>Nhấn nút bên dưới để mở trang thanh toán VNPay</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">2.</span>
+                  <span>Điền thông tin thanh toán</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">3.</span>
+                  <span>Nhập mã OTP và hoàn tất thanh toán</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">4.</span>
+                  <span>
+                    Trang này sẽ tự động cập nhật sau khi thanh toán thành công
+                  </span>
+                </li>
+              </ol>
+            </div>
+
+            <Button
+              onClick={() =>
+                window.open(paymentUrl, '_blank', 'noopener,noreferrer')
+              }
+              variant="default"
+              className="w-full py-6 text-lg font-semibold"
+            >
+              <ExternalLink className="mr-2 h-5 w-5" />
+              Mở trang thanh toán VNPay
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="bg-background-primary rounded-lg p-4">
+              <h3 className="text-text-primary mb-3 text-sm font-semibold">
+                Hướng dẫn thanh toán qua Ví Web3:
+              </h3>
+              <ol className="text-text-secondary space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">1.</span>
+                  <span>
+                    Đảm bảo bạn đã cài đặt ví MetaMask trên trình duyệt
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">2.</span>
+                  <span>
+                    Nhấn nút bên dưới để kết nối ví và xác nhận giao dịch
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-semibold">3.</span>
+                  <span>
+                    Phê duyệt giao dịch trên cửa sổ ví MetaMask pop-up
+                  </span>
+                </li>
+              </ol>
+            </div>
+
+            <Button
+              onClick={() => {
+                alert('Tính năng thanh toán ví Web3 đang được phát triển!');
+              }}
+              variant="primary"
+              className="w-full border-0 bg-gradient-to-r from-orange-400 to-rose-500 py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
+            >
+              <Wallet className="mr-2 h-5 w-5" />
+              Thanh toán với Ví Web3
+            </Button>
+          </>
+        )}
 
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <AlertCircle className="h-5 w-5 flex-shrink-0 text-blue-600" />
