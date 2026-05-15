@@ -11,7 +11,7 @@ const NotificationBell = ({
   return (
     <button
       onClick={onClick}
-      className={`text-text-primary hover:text-text-primary hover:bg-foreground relative rounded-lg p-2 transition ${className}`}
+      className={`text-text-primary hover:text-primary hover:bg-foreground relative rounded-lg p-2 transition ${className}`}
       aria-label="Mở thông báo"
     >
       <Bell className="h-5 w-5" />

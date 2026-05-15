@@ -1,6 +1,8 @@
 import React from 'react';
 import { Search, Calendar, Clock, TrendingUp, X, Tag } from 'lucide-react';
 import { cn } from '../../../utils/lib';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 const KeywordItem = ({ item, isHighlighted, onSelect }) => (
   <div
@@ -15,12 +17,13 @@ const KeywordItem = ({ item, isHighlighted, onSelect }) => (
   </div>
 );
 
-const EventItem = ({ item, isHighlighted, onSelect }) => {
+const EventItem = ({
+  item,
+  isHighlighted,
+  onSelect,
+  exchangeRateVndPerUsdt,
+}) => {
   const event = item.value;
-  const formatPrice = (price) => {
-    if (!price) return 'Liên hệ';
-    return price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')} ₫`;
-  };
 
   return (
     <div
@@ -44,9 +47,17 @@ const EventItem = ({ item, isHighlighted, onSelect }) => {
             <Calendar className="h-3 w-3" />
             {new Date(event.startDate).toLocaleDateString('vi-VN')}
           </span>
-          <span className="text-primary font-medium">
-            {formatPrice(event.lowestPrice)}
-          </span>
+          {event.lowestPrice === null || event.lowestPrice === undefined ? (
+            <span className="text-text-secondary font-medium">Liên hệ</span>
+          ) : (
+            <PriceDisplay
+              amountUsdt={event.lowestPrice}
+              rateVndPerUsdt={exchangeRateVndPerUsdt}
+              layout="inline"
+              usdtClassName="text-primary font-medium"
+              vndClassName="text-text-secondary text-[10px]"
+            />
+          )}
         </div>
       </div>
     </div>
@@ -113,6 +124,7 @@ export default function SearchSuggestions({
   onRemoveHistory,
   hasQuery = false,
 }) {
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
   const renderItem = (item, index) => {
     const isHighlighted = highlightedIndex === index;
 
@@ -134,6 +146,7 @@ export default function SearchSuggestions({
           item={item}
           isHighlighted={isHighlighted}
           onSelect={onSelect}
+          exchangeRateVndPerUsdt={exchangeRateVndPerUsdt}
         />
       );
     }
@@ -220,6 +233,7 @@ export default function SearchSuggestions({
                     item={{ type: 'event', value: event }}
                     isHighlighted={false}
                     onSelect={onSelect}
+                    exchangeRateVndPerUsdt={exchangeRateVndPerUsdt}
                   />
                 ))}
               </div>

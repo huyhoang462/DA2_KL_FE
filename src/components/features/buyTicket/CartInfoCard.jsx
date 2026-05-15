@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import useCartSummary from '../../../hooks/useCartSummary';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 export default function CartInfoCard({ event }) {
   const { summaryItems, totalAmount } = useCartSummary(event);
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
 
   return (
     <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
@@ -41,7 +44,14 @@ export default function CartInfoCard({ event }) {
               <span className="text-text-secondary">x{item.quantity}</span>
             </p>
             <p className="text-text-secondary font-medium">
-              {item.subtotal.toLocaleString()} đ
+              <PriceDisplay
+                amountUsdt={item.subtotal}
+                rateVndPerUsdt={exchangeRateVndPerUsdt}
+                layout="inline"
+                containerClassName="justify-end"
+                usdtClassName="text-text-primary font-semibold"
+                vndClassName="text-text-secondary text-xs font-medium"
+              />
             </p>
           </div>
         ))}
@@ -49,7 +59,15 @@ export default function CartInfoCard({ event }) {
 
       <div className="mt-4 flex justify-between text-lg font-bold">
         <span className="text-text-primary">Thành tiền</span>
-        <span className="text-primary">{totalAmount.toLocaleString()} VNĐ</span>
+        <span className="text-primary">
+          <PriceDisplay
+            amountUsdt={totalAmount}
+            rateVndPerUsdt={exchangeRateVndPerUsdt}
+            layout="inline"
+            usdtClassName="text-primary"
+            vndClassName="text-text-secondary text-sm font-medium"
+          />
+        </span>
       </div>
     </div>
   );

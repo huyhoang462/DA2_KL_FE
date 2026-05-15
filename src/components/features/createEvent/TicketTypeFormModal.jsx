@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import axios from 'axios';
 import { X } from 'lucide-react';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import TextArea from '../../ui/TextArea';
 import { validateTicketType } from '../../../utils/validation';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import { formatUsdtAmount, formatVndAmount } from '../../../utils/currency';
 
 const DEFAULT_TICKET = {
   name: '',
@@ -17,18 +18,6 @@ const DEFAULT_TICKET = {
   exchangeRateVndPerUsdt: '',
 };
 
-const USDT_PRICE_API_URL = 'https://api.coingecko.com/api/v3/simple/price';
-
-const formatVndAmount = (amount) =>
-  new Intl.NumberFormat('vi-VN', {
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount || 0));
-
-const formatUsdtAmount = (amount) =>
-  new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 2,
-  }).format(amount || 0);
-
 export default function TicketTypeFormModal({
   isOpen,
   onClose,
@@ -37,9 +26,13 @@ export default function TicketTypeFormModal({
 }) {
   const isEditing = !!initialData;
   const [modalErrors, setModalErrors] = useState({});
-  const [isLoadingExchangeRate, setIsLoadingExchangeRate] = useState(false);
-  const [exchangeRateError, setExchangeRateError] = useState('');
   const [ticket, setTicket] = useState(DEFAULT_TICKET);
+
+  const {
+    data: latestExchangeRateVndPerUsdt,
+    isLoading: isLoadingExchangeRate,
+    isError: isExchangeRateError,
+  } = useUsdtVndRate({ enabled: isOpen });
 
   useEffect(() => {
     if (!isOpen) {
@@ -47,7 +40,6 @@ export default function TicketTypeFormModal({
     }
 
     setModalErrors({});
-    setExchangeRateError('');
 
     if (isEditing) {
       setTicket({
@@ -65,56 +57,18 @@ export default function TicketTypeFormModal({
   }, [initialData, isEditing, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) {
-      return undefined;
+    if (!isOpen) return;
+
+    if (
+      Number.isFinite(latestExchangeRateVndPerUsdt) &&
+      latestExchangeRateVndPerUsdt > 0
+    ) {
+      setTicket((prev) => ({
+        ...prev,
+        exchangeRateVndPerUsdt: latestExchangeRateVndPerUsdt,
+      }));
     }
-
-    let isActive = true;
-
-    const loadExchangeRate = async () => {
-      const fallbackRate = initialData?.exchangeRateVndPerUsdt ?? '';
-
-      setIsLoadingExchangeRate(true);
-      try {
-        const response = await axios.get(USDT_PRICE_API_URL, {
-          params: {
-            ids: 'tether',
-            vs_currencies: 'vnd',
-          },
-        });
-
-        const rate = response.data?.tether?.vnd;
-
-        if (!Number.isFinite(rate) || rate <= 0) {
-          throw new Error('Invalid exchange rate');
-        }
-
-        if (isActive) {
-          setTicket((prev) => ({
-            ...prev,
-            exchangeRateVndPerUsdt: rate,
-          }));
-          setExchangeRateError('');
-        }
-      } catch {
-        if (isActive && !fallbackRate) {
-          setExchangeRateError(
-            'Không thể tải tỷ giá USDT/VND hiện tại. Vui lòng thử lại sau.'
-          );
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingExchangeRate(false);
-        }
-      }
-    };
-
-    loadExchangeRate();
-
-    return () => {
-      isActive = false;
-    };
-  }, [initialData, isOpen]);
+  }, [isOpen, latestExchangeRateVndPerUsdt]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -211,9 +165,9 @@ export default function TicketTypeFormModal({
                   </span>
                 )}
               </div>
-              {exchangeRateError && (
+              {isExchangeRateError && !initialData?.exchangeRateVndPerUsdt && (
                 <p className="text-destructive mt-2 text-sm">
-                  {exchangeRateError}
+                  Không thể tải tỷ giá USDT/VND hiện tại. Vui lòng thử lại sau.
                 </p>
               )}
               {modalErrors.exchangeRateVndPerUsdt && (

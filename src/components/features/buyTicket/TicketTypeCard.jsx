@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateTicketQuantity } from '../../../store/slices/cartSlice';
 import Button from '../../../components/ui/Button';
 import { Plus, Minus, Info } from 'lucide-react';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 const QuantitySelector = ({ ticket, quantity, onQuantityChange }) => {
   const availableQuantity = ticket.quantityTotal - ticket.quantitySold;
@@ -34,6 +36,7 @@ const QuantitySelector = ({ ticket, quantity, onQuantityChange }) => {
 export default function TicketTypeCard({ ticket }) {
   const dispatch = useDispatch();
   const quantity = useSelector((state) => state.cart.items[ticket._id] || 0);
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
 
   const availableQuantity = ticket.quantityTotal - ticket.quantitySold;
   const maxAllowed = Math.min(ticket.maxPurchase, availableQuantity);
@@ -61,7 +64,13 @@ export default function TicketTypeCard({ ticket }) {
       <div className="flex-1">
         <h3 className="text-text-primary font-bold">{ticket.name}</h3>
         <p className="text-primary mt-1 font-semibold">
-          {ticket.price.toLocaleString()} VNĐ
+          <PriceDisplay
+            amountUsdt={ticket.price}
+            rateVndPerUsdt={exchangeRateVndPerUsdt}
+            layout="inline"
+            usdtClassName="text-primary font-semibold"
+            vndClassName="text-text-secondary text-xs font-medium"
+          />
         </p>
         <p className="text-text-secondary mt-1 text-sm">{ticket.description}</p>
         {/*

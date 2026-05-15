@@ -4,8 +4,10 @@ import { ChevronDown, Clock, Calendar } from 'lucide-react';
 import { cn } from '../../../utils/lib';
 import Button from '../../ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
-const TicketItem = ({ ticket }) => {
+const TicketItem = ({ ticket, exchangeRateVndPerUsdt }) => {
   const available = ticket.quantityTotal - ticket.quantitySold;
   const isAvailable = available > 0;
 
@@ -32,7 +34,21 @@ const TicketItem = ({ ticket }) => {
               isAvailable ? 'text-primary' : 'text-gray-400'
             )}
           >
-            {ticket.price.toLocaleString()} VNĐ
+            <PriceDisplay
+              amountUsdt={ticket.price}
+              rateVndPerUsdt={exchangeRateVndPerUsdt}
+              layout="inline"
+              usdtClassName={cn(
+                isAvailable
+                  ? 'text-primary font-bold'
+                  : 'text-gray-400 font-bold'
+              )}
+              vndClassName={cn(
+                isAvailable
+                  ? 'text-text-secondary text-xs font-medium'
+                  : 'text-gray-400 text-xs font-medium'
+              )}
+            />
           </p>
         </div>
       </div>
@@ -40,7 +56,13 @@ const TicketItem = ({ ticket }) => {
   );
 };
 
-const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
+const ShowtimeAccordionItem = ({
+  show,
+  isOpen,
+  onToggle,
+  eventId,
+  exchangeRateVndPerUsdt,
+}) => {
   const navigate = useNavigate();
   const startTime = new Date(show.startTime);
   const endTime = new Date(show.endTime);
@@ -150,7 +172,11 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
           {show.tickets && show.tickets.length > 0 ? (
             <div className="divide-y divide-gray-100">
               {show.tickets.map((ticket) => (
-                <TicketItem key={ticket._id || ticket.id} ticket={ticket} />
+                <TicketItem
+                  key={ticket._id || ticket.id}
+                  ticket={ticket}
+                  exchangeRateVndPerUsdt={exchangeRateVndPerUsdt}
+                />
               ))}
             </div>
           ) : (
@@ -165,6 +191,7 @@ const ShowtimeAccordionItem = ({ show, isOpen, onToggle, eventId }) => {
 };
 
 export default function ShowtimeList({ shows, eventId }) {
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
   const [openShowId, setOpenShowId] = useState(
     shows?.[0]?._id || shows?.[0]?.id || null
   );
@@ -198,6 +225,7 @@ export default function ShowtimeList({ shows, eventId }) {
           isOpen={openShowId === (show._id || show.id)}
           onToggle={() => handleToggle(show._id || show.id)}
           eventId={eventId}
+          exchangeRateVndPerUsdt={exchangeRateVndPerUsdt}
         />
       ))}
     </div>
