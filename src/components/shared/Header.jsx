@@ -162,7 +162,7 @@ const Header = () => {
                 await refreshAll();
               }
             }}
-            className="text-primary-foreground hover:bg-background-secondary"
+            className="text-primary-foreground bg-background-secondary"
           />
 
           {notificationOpen && (

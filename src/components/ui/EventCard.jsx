@@ -1,8 +1,10 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { cn } from '../../utils/lib';
 import { trackEventView } from '../../services/eventService';
+import useUsdtVndRate from '../../hooks/useUsdtVndRate';
+import PriceDisplay from './PriceDisplay';
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -13,13 +15,9 @@ const formatDate = (dateString) => {
   });
 };
 
-const formatPrice = (price) => {
-  if (price === 0) return 'Miễn phí';
-  return `${price.toLocaleString('vi-VN')} ₫`;
-};
-
 export default function EventCard({ event, className }) {
   const navigate = useNavigate();
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
 
   if (!event) return null;
 
@@ -61,7 +59,15 @@ export default function EventCard({ event, className }) {
             {event.name}
           </h3>
           <p className="text-primary mt-2 text-sm font-semibold md:text-base">
-            Từ {formatPrice(event.lowestPrice)}
+            <PriceDisplay
+              prefix="Từ"
+              amountUsdt={event.lowestPrice}
+              rateVndPerUsdt={exchangeRateVndPerUsdt}
+              layout="stacked"
+              stackedVndAlign="start"
+              usdtClassName="text-primary font-semibold"
+              vndClassName="text-text-secondary text-xs font-medium"
+            />
           </p>
           <div className="text-text-secondary mt-2 space-y-2 text-xs md:text-sm">
             <div className="flex items-start">

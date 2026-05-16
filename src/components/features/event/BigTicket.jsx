@@ -3,8 +3,11 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin } from 'lucide-react';
 import Button from '../../../components/ui/Button';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 export default function BigTicket({ event }) {
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
   const getMinPrice = (shows) => {
     if (!shows || shows.length === 0) return 0;
     const allTickets = shows.flatMap((show) => show.tickets);
@@ -88,8 +91,15 @@ export default function BigTicket({ event }) {
                   Giá vé từ
                 </div>
 
-                <div className="text-primary text-xl font-bold md:text-2xl">
-                  {minPrice.toLocaleString()} VNĐ
+                <div className="mt-1">
+                  <PriceDisplay
+                    amountUsdt={minPrice}
+                    rateVndPerUsdt={exchangeRateVndPerUsdt}
+                    layout="stacked"
+                    vndWrapper="plain"
+                    usdtClassName="text-primary text-xl font-bold md:text-2xl"
+                    vndClassName="text-text-secondary text-sm font-medium md:text-base"
+                  />
                 </div>
               </div>
             )}

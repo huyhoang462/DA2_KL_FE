@@ -4,6 +4,8 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { cn } from '../../../utils/lib';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -27,10 +29,8 @@ const DotButton = ({ selected, onClick }) => (
   />
 );
 
-const formatPrice = (price) =>
-  price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')} ₫`;
-
 export default function BannerCarousel({ events }) {
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
       loop: true,
@@ -115,7 +115,13 @@ export default function BannerCarousel({ events }) {
                     </h2>
                     <div className="flex w-fit items-center rounded-lg bg-black/30 p-2 text-sm backdrop-blur-sm">
                       <span className="text-primary font-bold">
-                        {formatPrice(event.lowestPrice)}
+                        <PriceDisplay
+                          amountUsdt={event.lowestPrice}
+                          rateVndPerUsdt={exchangeRateVndPerUsdt}
+                          layout="inline"
+                          usdtClassName="text-primary font-bold"
+                          vndClassName="text-white/80 text-xs font-medium"
+                        />
                       </span>
                       <span className="mx-3 h-4 border-l border-gray-400"></span>
                       <span>{formatDate(event.startDate)}</span>

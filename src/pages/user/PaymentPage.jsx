@@ -205,17 +205,6 @@ export default function PaymentPage() {
       {/* Lựa chọn phương thức thanh toán */}
       <div className="grid grid-cols-2 gap-4">
         <button
-          onClick={() => setPaymentMethod('vnpay')}
-          className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
-            paymentMethod === 'vnpay'
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-border-default hover:border-primary/50 text-text-secondary'
-          }`}
-        >
-          <CreditCard className="h-5 w-5" />
-          <span className="font-semibold">VNPay</span>
-        </button>
-        <button
           onClick={() => setPaymentMethod('web3')}
           className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
             paymentMethod === 'web3'
@@ -225,6 +214,17 @@ export default function PaymentPage() {
         >
           <Wallet className="h-5 w-5" />
           <span className="font-semibold">Ví Web3</span>
+        </button>
+        <button
+          onClick={() => setPaymentMethod('vnpay')}
+          className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
+            paymentMethod === 'vnpay'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border-default hover:border-primary/50 text-text-secondary'
+          }`}
+        >
+          <CreditCard className="h-5 w-5" />
+          <span className="font-semibold">VNPay</span>
         </button>
       </div>
 

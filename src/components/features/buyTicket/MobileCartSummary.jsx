@@ -2,12 +2,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import useCartSummary from '../../../hooks/useCartSummary';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 export default function MobileCartSummary({ event }) {
   const navigate = useNavigate();
 
   const { totalAmount, totalQuantity, validationError, summaryItems } =
     useCartSummary(event);
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
 
   const handleCheckout = () => {
     if (validationError) {
@@ -26,7 +29,13 @@ export default function MobileCartSummary({ event }) {
         <div>
           <p className="text-text-secondary text-sm">{totalQuantity} vé</p>
           <p className="text-primary text-lg font-bold">
-            {totalAmount.toLocaleString()} VNĐ
+            <PriceDisplay
+              amountUsdt={totalAmount}
+              rateVndPerUsdt={exchangeRateVndPerUsdt}
+              layout="inline"
+              usdtClassName="text-primary text-lg font-bold"
+              vndClassName="text-text-secondary text-xs font-medium"
+            />
           </p>
         </div>
         <Button

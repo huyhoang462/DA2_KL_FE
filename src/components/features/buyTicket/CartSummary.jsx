@@ -4,6 +4,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import useCartSummary from '../../../hooks/useCartSummary';
+import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
+import PriceDisplay from '../../ui/PriceDisplay';
 
 // import { toast } from 'react-hot-toast';
 
@@ -11,6 +13,7 @@ export default function CartSummary({ event, selectedShow }) {
   const navigate = useNavigate();
   const { summaryItems, totalAmount, totalQuantity, validationError } =
     useCartSummary(event);
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
 
   const handleCheckout = () => {
     if (validationError) {
@@ -39,7 +42,14 @@ export default function CartSummary({ event, selectedShow }) {
                       </span>
                     </td>
                     <td className="text-text-secondary py-2 text-right font-medium">
-                      {item.subtotal.toLocaleString()} đ
+                      <PriceDisplay
+                        amountUsdt={item.subtotal}
+                        rateVndPerUsdt={exchangeRateVndPerUsdt}
+                        layout="stacked"
+                        containerClassName="justify-end"
+                        usdtClassName="text-text-primary font-semibold"
+                        vndClassName="text-text-secondary text-xs font-medium"
+                      />
                     </td>
                   </tr>
                 ))}
@@ -62,7 +72,13 @@ export default function CartSummary({ event, selectedShow }) {
         <div className="flex justify-between text-lg font-bold">
           <span className="text-text-primary">Tổng cộng</span>
           <span className="text-primary">
-            {totalAmount.toLocaleString()} VNĐ
+            <PriceDisplay
+              amountUsdt={totalAmount}
+              rateVndPerUsdt={exchangeRateVndPerUsdt}
+              layout="stacked"
+              usdtClassName="text-primary"
+              vndClassName="text-text-secondary text-sm font-medium"
+            />
           </span>
         </div>
         <Button
