@@ -83,39 +83,37 @@ export const useMintTicket = () => {
 
       // Bước 3: Chuẩn bị Dữ liệu Voucher (Data Formatting)
       // Lấy voucher từ cục dữ liệu Event (đã fetch từ BE về)
-      const voucherData = event.voucher;
+      const vouchersData = event.vouchers;
+      const signaturesData = event.signatures;
 
-      if (!voucherData) {
-        throw new Error('Không tìm thấy dữ liệu voucher từ sự kiện.');
+      if (
+        !vouchersData ||
+        !signaturesData ||
+        vouchersData.length !== signaturesData.length
+      ) {
+        throw new Error(
+          'Dữ liệu vouchers hoặc signatures không hợp lệ từ sự kiện.'
+        );
       }
 
-      // Thông báo BE bắt đầu mint (Tuỳ chọn nhưng giúp tracking trạng thái 'minting')
-      // try {
-      //   await startEventMinting(event.id);
-      // } catch (err) {
-      //   console.warn('Could not start minting on BE:', err);
-      // }
+      // Chuẩn hóa mảng vouchers để convert eventId sang BigInt giống với yêu cầu của smart contract nếu cần
+      const formattedVouchers = vouchersData.map((v) => {
+        const rawVoucher = v.voucher || v;
+        return [
+          String(rawVoucher.eventId).startsWith('0x')
+            ? BigInt(rawVoucher.eventId)
+            : BigInt(`0x${rawVoucher.eventId}`),
+          rawVoucher.quantity,
+          rawVoucher.commissionRateBps,
+          rawVoucher.relayerGasPerTicket,
+          rawVoucher.checkinGasPerTicket,
+          rawVoucher.expiryTime,
+          rawVoucher.nonce,
+        ];
+      });
 
-      // Tách Chữ ký (BE có thể trả về voucherSignature hoặc signature)
-      const signature = event.voucherSignature || event.signature;
-
-      // Chuẩn hóa payload voucher nếu BE bọc thêm { voucher, voucherSignature }
-      const rawVoucher = voucherData.voucher || voucherData;
-
-      if (!signature) {
-        throw new Error('Không tìm thấy chữ ký voucher từ BE.');
-      }
-
-      // Gom Tuple theo đúng thứ tự Struct MintVoucher
-      const voucherTuple = [
-        rawVoucher.eventId,
-        rawVoucher.quantity,
-        rawVoucher.commissionRateBps,
-        rawVoucher.relayerGasPerTicket,
-        rawVoucher.checkinGasPerTicket,
-        rawVoucher.expiryTime,
-        rawVoucher.nonce,
-      ];
+      // Lấy array ký
+      const signatures = signaturesData;
 
       // Bước 4: Khởi tạo Smart Contract và Giao dịch
       const contract = new ethers.Contract(
@@ -124,55 +122,75 @@ export const useMintTicket = () => {
         currentSigner
       );
 
-      console.log('--- DEBUG INFO CHUẨN BỊ MINT ---');
+      console.log('--- DEBUG INFO CHUẨN BỊ BATCH MINT ---');
       console.log('1. Địa chỉ contract:', CONTRACT_ADDRESS);
       console.log('2. Địa chỉ người gọi (ví):', currentSigner.address);
-      console.log('3. Voucher Tuple gửi lên:', voucherTuple);
-      console.log('4. Chữ ký (Signature) gửi lên:', signature);
+      console.log('3. Vouchers Array (đã format):', formattedVouchers);
+      console.log('4. Signatures Array:', signatures);
       console.log('--------------------------------');
 
       // Mạng Polygon Amoy yêu cầu cấu hình Gas tối thiểu 25 Gwei
-      // MetaMask thỉnh thoảng ước tính sai (xuống còn 1.5 Gwei) nên ta chèn cứng 30 Gwei
       const txOptions = {
         maxPriorityFeePerGas: 30000000000n, // 30 Gwei
         maxFeePerGas: 30000000000n, // 30 Gwei
       };
 
-      // Gọi hàm mintEventTickets với txOptions
-      const tx = await contract.mintEventTickets(
-        voucherTuple, 
-        signature,
+      // 🚨 BLOCK UI LÚC NÀY
+      toast.info(
+        'Hệ thống đang đúc toàn bộ các hạng vé lên Blockchain. Vui lòng KHÔNG ĐÓNG trình duyệt hay làm mới (F5) trang web lúc này!',
+        {
+          autoClose: false,
+          toastId: 'minting-toast',
+        }
+      );
+
+      // Gọi hàm batchMintEventTickets thay vì mintEventTickets
+      const tx = await contract.batchMintEventTickets(
+        formattedVouchers,
+        signatures,
         txOptions
       );
 
-      toast.info('Giao dịch đang được xử lý trên Blockchain...');
-
-      // Chờ đợi giao dịch hoàn tất
+      // Bước 4b: Đợi Blockchain xác nhận giao dịch (Await)
       const receipt = await tx.wait();
 
-      // Từ lúc có txHash trở đi, FE sẽ gọi API BE
-      await submitEventMintResult(event.id, {
-        isSuccess: true,
-        txHash: receipt.hash || tx.hash,
-      });
+      // Bước 5: Báo cáo Backend và Chốt hạ
+      try {
+        await submitEventMintResult(event.id, {
+          isSuccess: true,
+          txHash: receipt.hash || tx.hash,
+        });
 
-      toast.success('Mint vé thành công!');
-      queryClient.invalidateQueries(['events', 'user']);
+        toast.dismiss('minting-toast');
+        toast.success('Sự kiện đã mở bán thành công!');
+        queryClient.invalidateQueries(['events', 'user']);
+      } catch (beError) {
+        toast.dismiss('minting-toast');
+        throw new Error(
+          'Vé đã đúc trên mạng nhưng hệ thống gặp lỗi cập nhật. Vui lòng liên hệ Admin'
+        );
+      }
     } catch (error) {
+      toast.dismiss('minting-toast');
       console.error('Mint error:', error);
 
       let errorMessage = 'Mint vé thất bại. Vui lòng thử lại sau.';
 
-      // Xử lý các lỗi Ethers/MetaMask phổ biến
+      // Xử lý các lỗi theo tài liệu
       if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
-        errorMessage = 'Bạn đã từ chối giao dịch trên ví.';
+        errorMessage = 'Bạn đã hủy giao dịch trên ví.';
       } else if (
         error.code === 'INSUFFICIENT_FUNDS' ||
         (error.error &&
           error.error.message &&
           error.error.message.includes('insufficient funds'))
       ) {
-        errorMessage = 'Số dư trong ví không đủ để trả phí Gas.';
+        errorMessage = 'Ví của bạn không đủ POL/BNB để trả phí mạng.';
+      } else if (
+        error.message ===
+        'Vé đã đúc trên mạng nhưng hệ thống gặp lỗi cập nhật. Vui lòng liên hệ Admin'
+      ) {
+        errorMessage = error.message;
       } else if (
         error.error &&
         error.error.message &&
@@ -181,7 +199,7 @@ export const useMintTicket = () => {
         errorMessage =
           'Phí Gas hiện tại đang quá cao hoặc bạn đặt Gas quá thấp. Vui lòng thử lại sau hoặc tăng phí Gas trong ví.';
       } else if (error.message && error.message.includes('user rejected')) {
-        errorMessage = 'Giao dịch bị từ chối.';
+        errorMessage = 'Bạn đã hủy giao dịch trên ví.';
       } else if (
         error.message &&
         error.message.includes('missing revert data')

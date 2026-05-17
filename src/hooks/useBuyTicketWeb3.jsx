@@ -19,12 +19,7 @@ export const useBuyTicketWeb3 = () => {
   const [statusMessage, setStatusMessage] = useState('');
   const { provider, signer, connectWallet } = useWeb3();
 
-  const handleBuyWithWeb3 = async (
-    eventId,
-    totalQuantity,
-    orderId,
-    totalAmountUsdt = '1000'
-  ) => {
+  const handleBuyWithWeb3 = async (eventId, totalQuantity, orderId) => {
     try {
       console.log('====== [WEB3 PAYMENT] BẮT ĐẦU QUÁ TRÌNH MUA VÉ ======');
       console.log(
@@ -132,7 +127,7 @@ export const useBuyTicketWeb3 = () => {
           `[WEB3 PAYMENT] User chưa Approve hoặc Allowance về 0. Chuẩn bị gọi hàm Approve()...`
         );
         setStatusMessage('Đang chờ phê duyệt (Approve) USDT từ ví...');
-        
+
         const approveTxOptions = {
           maxPriorityFeePerGas: 30000000000n, // Cứng 30 Gwei tránh lỗi mạng Amoy
           maxFeePerGas: 30000000000n,
@@ -162,7 +157,15 @@ export const useBuyTicketWeb3 = () => {
         maxFeePerGas: 30000000000n,
       };
 
-      const buyTx = await contract.buyTicket(eventId, totalQuantity, txOptions);
+      const formattedEventId = String(eventId).startsWith('0x')
+        ? BigInt(eventId)
+        : BigInt(`0x${eventId}`);
+
+      const buyTx = await contract.buyTicket(
+        formattedEventId,
+        totalQuantity,
+        txOptions
+      );
       setStatusMessage('Giao dịch đang được xử lý trên Blockchain...');
       const receipt = await buyTx.wait();
 
