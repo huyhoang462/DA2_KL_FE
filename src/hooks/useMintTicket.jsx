@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import { toast } from 'react-toastify';
 import { useWeb3 } from '../contexts/Web3Provider';
-import {
-  startEventMinting,
-  submitEventMintResult,
-} from '../services/eventService';
+import { submitEventMintResult } from '../services/eventService';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   CONTRACT_ADDRESS,
@@ -16,7 +13,7 @@ import {
 
 export const useMintTicket = () => {
   const [isMinting, setIsMinting] = useState(false);
-  const { provider, signer, connectWallet } = useWeb3();
+  const { signer, connectWallet } = useWeb3();
   const queryClient = useQueryClient();
 
   const handleMintTicket = async (event) => {
@@ -100,10 +97,9 @@ export const useMintTicket = () => {
       const formattedVouchers = vouchersData.map((v) => {
         const rawVoucher = v.voucher || v;
         return [
-          String(rawVoucher.eventId).startsWith('0x')
-            ? BigInt(rawVoucher.eventId)
-            : BigInt(`0x${rawVoucher.eventId}`),
+          BigInt(rawVoucher.eventId),
           rawVoucher.quantity,
+          BigInt(rawVoucher.price), // Backend đã parse sẵn ra Wei, chỉ việc chuyển sang BigInt
           rawVoucher.commissionRateBps,
           rawVoucher.relayerGasPerTicket,
           rawVoucher.checkinGasPerTicket,
@@ -121,13 +117,6 @@ export const useMintTicket = () => {
         CONTRACT_ABI,
         currentSigner
       );
-
-      console.log('--- DEBUG INFO CHUẨN BỊ BATCH MINT ---');
-      console.log('1. Địa chỉ contract:', CONTRACT_ADDRESS);
-      console.log('2. Địa chỉ người gọi (ví):', currentSigner.address);
-      console.log('3. Vouchers Array (đã format):', formattedVouchers);
-      console.log('4. Signatures Array:', signatures);
-      console.log('--------------------------------');
 
       // Mạng Polygon Amoy yêu cầu cấu hình Gas tối thiểu 25 Gwei
       const txOptions = {
@@ -165,6 +154,7 @@ export const useMintTicket = () => {
         toast.success('Sự kiện đã mở bán thành công!');
         queryClient.invalidateQueries(['events', 'user']);
       } catch (beError) {
+        console.error('Backend update error:', beError); // Fix: Sử dụng hoặc log lỗi này thay vì bỏ không
         toast.dismiss('minting-toast');
         throw new Error(
           'Vé đã đúc trên mạng nhưng hệ thống gặp lỗi cập nhật. Vui lòng liên hệ Admin'
@@ -255,7 +245,9 @@ export const useMintTicket = () => {
             failureReason: error.message || 'Lỗi không xác định',
           });
           queryClient.invalidateQueries(['events', 'user']);
-        } catch (e) {}
+        } catch (e) {
+          console.error('Failed to submit mint result:', e);
+        }
       }
     } finally {
       setIsMinting(false);

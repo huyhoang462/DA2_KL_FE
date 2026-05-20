@@ -1,14 +1,16 @@
 // components/wrappers/WalletSyncWrapper.jsx
 import { useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { handleSyncWallet } from '../../services/authService';
+import { updateWalletAddress } from '../../store/slices/authSlice';
 
 const WalletSyncWrapper = ({ children }) => {
   const { user: privyUser, ready, authenticated } = usePrivy();
   const isBackendAuthenticated = useSelector(
     (state) => state.auth.isAuthenticated
   );
+  const dispatch = useDispatch();
 
   // Flags để ngăn race condition
   const isSyncing = useRef(false);
@@ -47,7 +49,8 @@ const WalletSyncWrapper = ({ children }) => {
           if (res) {
             hasSynced.current = true;
             lastSyncedAddress.current = walletAddress; // Lưu address đã sync
-            console.log('✅ [WalletSync] Synced successfully');
+            dispatch(updateWalletAddress(walletAddress)); // Lưu vào Redux store
+            console.log('✅ [WalletSync] Synced successfully and saved to Redux');
           }
         } catch (syncErr) {
           console.error('❌ [WalletSync] Error:', syncErr);
@@ -58,7 +61,7 @@ const WalletSyncWrapper = ({ children }) => {
     };
 
     checkAndSync();
-  }, [privyUser, isBackendAuthenticated, ready, authenticated]);
+  }, [privyUser, isBackendAuthenticated, ready, authenticated, dispatch]);
 
   return <>{children}</>;
 };

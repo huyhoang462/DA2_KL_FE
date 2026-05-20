@@ -151,6 +151,7 @@ export const submitEventMintResult = async (
   { isSuccess, txHash = null, failureReason = null }
 ) => {
   try {
+    //gọi sang API để cập nhật kết quả mint, update status của event, gửi thông báo`(thành công hay thất bại, kèm txHash hoặc lý do thất bại)
     const response = await axiosInstance.patch(
       `${API_BASE_URL}/events/${id}/mint/result`,
       {
