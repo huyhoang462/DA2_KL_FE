@@ -66,6 +66,9 @@ const AdminEventDetailPage = lazy(
   () => import('./pages/admin/AdminEventDetailPage')
 );
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
+const AdminContenReportsPage = lazy(
+  () => import('./pages/admin/AdminContenReportsPage')
+);
 const AdminTransactionsPage = lazy(
   () => import('./pages/admin/AdminTransactionsPage')
 );
@@ -187,6 +190,10 @@ function App() {
                   <Route path="events" element={<AdminEventsPage />} />
                   <Route path="events/:id" element={<AdminEventDetailPage />} />
                   <Route path="reports" element={<AdminReportsPage />} />
+                  <Route
+                    path="content-reports"
+                    element={<AdminContenReportsPage />}
+                  />
                   <Route
                     path="transactions"
                     element={<AdminTransactionsPage />}

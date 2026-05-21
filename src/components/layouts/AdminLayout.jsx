@@ -14,6 +14,7 @@ import {
   X,
   Bell,
   Search,
+  Flag,
   ChevronDown,
   Shield,
   BarChart3,
@@ -83,9 +84,14 @@ const AdminLayout = () => {
     //   path: '/admin/event-approvals',
     // },
     {
-      label: 'Báo cáo & Thống kê',
+      label: 'Thống kê',
       icon: BarChart3,
       path: '/admin/reports',
+    },
+    {
+      label: 'Báo cáo nội dung',
+      icon: Flag,
+      path: '/admin/content-reports',
     },
     {
       label: 'Giao dịch',

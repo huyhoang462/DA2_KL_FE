@@ -12,6 +12,15 @@ export const getAllPosts = async (params = {}) => {
   } catch (error) {
     throw extractError(error);
   }
+}
+
+export const getPostById = async (postId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/posts/${postId}`);
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
 };
 
 export const createPost = async (payload) => {

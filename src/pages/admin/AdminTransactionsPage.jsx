@@ -261,7 +261,7 @@ const AdminTransactionsPage = () => {
               onChange={(e) =>
                 setTempFilters((prev) => ({ ...prev, status: e.target.value }))
               }
-              className="bg-background-secondary border-border-default text-text-primary focus:border-primary w-full rounded-lg border px-3 py-2 text-sm"
+              className="bg-background-secondary border-border-default text-text-primary focus:border-primary w-full rounded-lg border px-3 py-2 text-sm focus:outline-none"
             >
               <option value="">Tất cả</option>
               <option value="success">Thành công</option>
@@ -283,7 +283,7 @@ const AdminTransactionsPage = () => {
                   paymentMethod: e.target.value,
                 }))
               }
-              className="bg-background-secondary border-border-default text-text-primary focus:border-primary w-full rounded-lg border px-3 py-2 text-sm"
+              className="bg-background-secondary border-border-default text-text-primary focus:border-primary w-full rounded-lg border px-3 py-2 text-sm focus:outline-none"
             >
               <option value="">Tất cả</option>
               <option value="vnpay">VNPay</option>
