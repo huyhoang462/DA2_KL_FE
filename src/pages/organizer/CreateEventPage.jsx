@@ -16,7 +16,6 @@ import {
 import {
   validateStepOne,
   validateStepTwo,
-  validateStepThree,
 } from '../../utils/validation';
 import { createEvent } from '../../services/eventService';
 
@@ -26,7 +25,7 @@ const CreateEventPage = () => {
   const currentStep = useSelector((state) => state.event.currentStep);
   const eventData = useSelector((state) => state.event.event);
 
-  const totalSteps = 3;
+  const totalSteps = 2;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [showNotification, setShowNotification] = useState(false);
@@ -100,9 +99,10 @@ const CreateEventPage = () => {
       validationErrors = validateStepOne(eventData);
     } else if (currentStep === 2) {
       validationErrors = validateStepTwo(eventData);
-    } else if (currentStep === 3) {
-      validationErrors = validateStepThree(eventData);
-    }
+    } 
+    // else if (currentStep === 3) {
+    //   validationErrors = validateStepThree(eventData);
+    // }
 
     setErrors(validationErrors);
 
@@ -161,9 +161,10 @@ const CreateEventPage = () => {
       validationErrors = validateStepOne(eventData);
     } else if (currentStep === 2) {
       validationErrors = validateStepTwo(eventData);
-    } else if (currentStep === 3) {
-      validationErrors = validateStepThree(eventData);
-    }
+    } 
+    // else if (currentStep === 3) {
+    //   validationErrors = validateStepThree(eventData);
+    // }
 
     // Nếu có lỗi, hiển thị thông báo
     if (Object.keys(validationErrors).length > 0) {
@@ -228,14 +229,14 @@ const CreateEventPage = () => {
             errors={errors}
           />
         );
-      case 3:
-        return (
-          <PaymentInfoForm
-            value={eventData.payoutMethod}
-            onChange={handleFieldChange}
-            errors={errors}
-          />
-        );
+      // case 3:
+      //   return (
+      //     <PaymentInfoForm
+      //       value={eventData.payoutMethod}
+      //       onChange={handleFieldChange}
+      //       errors={errors}
+      //     />
+      //   );
       default:
         return (
           <div className="w-full text-center text-5xl font-medium">ERROR</div>

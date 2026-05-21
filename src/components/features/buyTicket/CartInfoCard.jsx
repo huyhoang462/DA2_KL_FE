@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useCartSummary from '../../../hooks/useCartSummary';
 import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
@@ -7,6 +7,8 @@ import PriceDisplay from '../../ui/PriceDisplay';
 export default function CartInfoCard({ event }) {
   const { summaryItems, totalAmount } = useCartSummary(event);
   const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
+
+  
 
   return (
     <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">

@@ -9,6 +9,7 @@ import { orderService } from '../../services/orderService';
 import { clearCart } from '../../store/slices/cartSlice';
 import useCountdown from '../../hooks/useCountdown';
 import { useBuyTicketWeb3 } from '../../hooks/useBuyTicketWeb3';
+import useUsdtVndRate from '../../hooks/useUsdtVndRate';
 
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
@@ -29,11 +30,14 @@ export default function PaymentPage() {
   const [paymentUrl, setPaymentUrl] = useState('');
   const [orderId, setOrderId] = useState(null);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmountVnd , setTotalAmountVnd] = useState(0);
   const [expiresAt, setExpiresAt] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending');
 
   const [paymentMethod, setPaymentMethod] = useState('vnpay'); // Thêm state quản lý phương thức thanh toán
 
+    const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
+  
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['eventForPayment', id],
     queryFn: () => getEventById(id),
@@ -65,6 +69,7 @@ export default function PaymentPage() {
       setPaymentUrl(data.paymentUrl);
       setOrderId(data.orderId);
       setTotalAmount(data.totalAmount);
+      setTotalAmountVnd(data.totalAmountVnd);
       setExpiresAt(data.expiresAt);
       startPolling(data.orderId);
     },
@@ -128,6 +133,7 @@ export default function PaymentPage() {
       const orderPayload = {
         eventId: event.id,
         showId: showId,
+        exchangeRateVndPerUsdt,
         items: Object.entries(cart.items).map(([ticketTypeId, quantity]) => ({
           ticketTypeId,
           quantity,
@@ -135,7 +141,7 @@ export default function PaymentPage() {
       };
       createPaymentMutation.mutate(orderPayload);
     }
-  }, [event, cart.items, showId, createPaymentMutation]);
+  }, [event, cart.items, showId, exchangeRateVndPerUsdt, createPaymentMutation]);
 
   useEffect(() => {
     if (paymentStatus === 'paid') {

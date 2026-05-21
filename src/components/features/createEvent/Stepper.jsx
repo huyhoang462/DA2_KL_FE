@@ -7,7 +7,7 @@ import { setCurrentStep } from '../../../store/slices/eventSlice';
 const steps = [
   { id: 1, name: 'Thông tin sự kiện' },
   { id: 2, name: 'Lịch diễn & Vé' },
-  { id: 3, name: 'Thông tin thanh toán' },
+  // { id: 3, name: 'Thông tin thanh toán' },
 ];
 
 export default function Stepper() {
