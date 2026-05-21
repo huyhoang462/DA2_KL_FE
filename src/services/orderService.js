@@ -141,11 +141,20 @@ const updateOrderMintStatus = async (orderId, mintResult) => {
 
 // (VND) API gọi khi thanh toán thành công/thất bại để cập nhật trạng thái order trên backend
 const finalizeOrder = async (orderData) => {
-  const response = await axiosInstance.post(
-    '/payment/finalize-order',
-    orderData
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/payment/finalize-order`,
+      orderData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
 };
 export const orderService = {
   createPayment,

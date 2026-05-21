@@ -134,6 +134,12 @@ export const useMintTicket = () => {
       );
 
       // Gọi hàm batchMintEventTickets thay vì mintEventTickets
+      console.log('--- DEBUG: MINT PARAMS ---');
+      console.log('formattedVouchers:', formattedVouchers);
+      console.log('signatures:', signatures);
+      console.log('txOptions:', txOptions);
+      console.log('--------------------------');
+
       const tx = await contract.batchMintEventTickets(
         formattedVouchers,
         signatures,
@@ -162,7 +168,16 @@ export const useMintTicket = () => {
       }
     } catch (error) {
       toast.dismiss('minting-toast');
-      console.error('Mint error:', error);
+
+      console.error('====== MINT ERROR DETAILS ======');
+      console.error('Full Error Object:', error);
+      console.error('Error Code:', error.code);
+      console.error('Error Reason:', error.reason);
+      console.error('Error Message:', error.message);
+      console.error('Error Data (Hex):', error.data);
+      console.error('Transaction Params:', error.transaction);
+      if (error.info) console.error('Error Info:', error.info);
+      console.error('================================');
 
       let errorMessage = 'Mint vé thất bại. Vui lòng thử lại sau.';
 
@@ -190,6 +205,14 @@ export const useMintTicket = () => {
           'Phí Gas hiện tại đang quá cao hoặc bạn đặt Gas quá thấp. Vui lòng thử lại sau hoặc tăng phí Gas trong ví.';
       } else if (error.message && error.message.includes('user rejected')) {
         errorMessage = 'Bạn đã hủy giao dịch trên ví.';
+      } else if (
+        error.message?.includes('One of the events is not active') ||
+        error.error?.message?.includes('One of the events is not active') ||
+        error.data?.message?.includes('One of the events is not active') ||
+        error.reason?.includes('One of the events is not active')
+      ) {
+        errorMessage =
+          'Vé chưa được kích hoạt trên hệ thống Backend hoặc dữ liệu vé đã bị sai lệch so với Backend. Vui lòng liên hệ hỗ trợ.';
       } else if (
         error.message &&
         error.message.includes('missing revert data')

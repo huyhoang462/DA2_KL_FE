@@ -16,7 +16,40 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import TimerCard from '../../components/features/buyTicket/TimerCard';
 import CartInfoCard from '../../components/features/buyTicket/CartInfoCard';
 import Button from '../../components/ui/Button';
-import { CreditCard, AlertCircle, ExternalLink, Wallet } from 'lucide-react'; // Thêm icon Wallet
+import { CreditCard, AlertCircle, ExternalLink, Wallet } from 'lucide-react';
+
+const normalizePlan = (plan) => {
+  if (!plan) return null;
+
+  const quantity =
+    plan.quantity ?? plan.ticketQuantity ?? plan.totalQuantity ?? null;
+  const totalPrice =
+    plan.totalPrice ?? plan.totalAmount ?? plan.totalAmountUsdt ?? null;
+  const totalPriceVnd =
+    plan.totalPriceVnd ??
+    plan.totalAmountVnd ??
+    plan.totalAmountVND ??
+    plan.totalVnd ??
+    null;
+  const unitPrice =
+    plan.unitPrice ??
+    plan.ticketPrice ??
+    plan.price ??
+    (quantity && totalPrice != null
+      ? Number(totalPrice) / Number(quantity)
+      : null);
+
+  return {
+    ...plan,
+    quantity,
+    totalPrice,
+    totalPriceVnd,
+    unitPrice,
+  };
+};
+
+const displayValue = (value) =>
+  value === null || value === undefined || value === '' ? 'N/A' : String(value);
 
 export default function PaymentPage() {
   const { id, showId } = useParams();
@@ -26,18 +59,20 @@ export default function PaymentPage() {
 
   const hasInitialized = useRef(false);
   const pollingInterval = useRef(null);
+  const finalizeOnceRef = useRef(false);
 
   const [paymentUrl, setPaymentUrl] = useState('');
   const [orderId, setOrderId] = useState(null);
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [totalAmountVnd , setTotalAmountVnd] = useState(0);
+  const [paymentPlans, setPaymentPlans] = useState({ web3: null, vnd: null });
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vnd');
+  const [paymentFlowMethod, setPaymentFlowMethod] = useState('vnd');
   const [expiresAt, setExpiresAt] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending');
+  const [paymentError, setPaymentError] = useState('');
 
-  const [paymentMethod, setPaymentMethod] = useState('vnpay'); // Thêm state quản lý phương thức thanh toán
+  const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
+  const { isProcessing, statusMessage, handleBuyWithWeb3 } = useBuyTicketWeb3();
 
-    const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
-  
   const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ['eventForPayment', id],
     queryFn: () => getEventById(id),
@@ -60,21 +95,52 @@ export default function PaymentPage() {
   };
 
   const { minutes, seconds } = useCountdown(getTimeLeft(), handleTimeout);
-  const { isProcessing, statusMessage, handleBuyWithWeb3 } = useBuyTicketWeb3();
 
   const createPaymentMutation = useMutation({
     mutationFn: (orderData) => orderService.createPayment(orderData),
     onSuccess: (data) => {
-      console.log('[SUCCESS] Tạo link thanh toán thành công:', data);
-      setPaymentUrl(data.paymentUrl);
-      setOrderId(data.orderId);
-      setTotalAmount(data.totalAmount);
-      setTotalAmountVnd(data.totalAmountVnd);
-      setExpiresAt(data.expiresAt);
-      startPolling(data.orderId);
+      console.log('[SUCCESS] Tạo payment plans thành công:', data);
+
+      const baseOrderParams = {
+        totalPrice: data.order?.totalAmountUsdt || null,
+        totalPriceVnd: data.order?.totalAmountVnd || null,
+        quantity:
+          data.order?.items?.reduce((acc, item) => acc + item.quantity, 0) ||
+          null,
+        totalAmount: data.order?.totalAmountUsdt || null,
+        totalAmountVnd: data.order?.totalAmountVnd || null,
+      };
+
+      const rawWeb3Plan = data.cryptoConfig || data.paymentPlans?.web3 || null;
+      const rawVndPlan = data.vndConfig || data.paymentPlans?.vnd || null;
+
+      const web3Plan = normalizePlan(
+        rawWeb3Plan ? { ...baseOrderParams, ...rawWeb3Plan } : null
+      );
+      const vndPlan = normalizePlan(
+        rawVndPlan ? { ...baseOrderParams, ...rawVndPlan } : null
+      );
+
+      setPaymentPlans({ web3: web3Plan, vnd: vndPlan });
+      setSelectedPaymentMethod(vndPlan ? 'vnd' : 'web3');
+      setPaymentFlowMethod(vndPlan ? 'vnd' : 'web3');
+      setPaymentUrl(
+        vndPlan?.paymentUrl ||
+          data.vndConfig?.paymentUrl ||
+          data.paymentUrl ||
+          ''
+      );
+      setOrderId(data.order?.orderId || data.orderId || null);
+      setExpiresAt(data.order?.expiresAt || data.expiresAt || null);
+      setPaymentError('');
+
+      const orderIdToPoll = data.order?.orderId || data.orderId;
+      if (orderIdToPoll) {
+        startPolling(orderIdToPoll);
+      }
     },
     onError: (error) => {
-      console.error('[ERROR] Lỗi khi tạo link thanh toán:', error);
+      console.error('[ERROR] Lỗi khi tạo payment:', error);
       alert(
         error.message || 'Không thể tạo phiên thanh toán. Vui lòng thử lại.'
       );
@@ -123,45 +189,100 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (
-      event &&
-      cart.items &&
-      Object.keys(cart.items).length > 0 &&
-      !hasInitialized.current &&
-      !createPaymentMutation.isPending
+      !event ||
+      !cart.items ||
+      Object.keys(cart.items).length === 0 ||
+      hasInitialized.current ||
+      createPaymentMutation.isPending
     ) {
-      hasInitialized.current = true;
-      const orderPayload = {
-        eventId: event.id,
-        showId: showId,
-        exchangeRateVndPerUsdt,
-        items: Object.entries(cart.items).map(([ticketTypeId, quantity]) => ({
-          ticketTypeId,
-          quantity,
-        })),
-      };
-      createPaymentMutation.mutate(orderPayload);
+      return;
     }
-  }, [event, cart.items, showId, exchangeRateVndPerUsdt, createPaymentMutation]);
+
+    if (!showId) {
+      setPaymentError('Thiếu showId để tạo phiên thanh toán.');
+      return;
+    }
+
+    if (!exchangeRateVndPerUsdt) {
+      return;
+    }
+
+    hasInitialized.current = true;
+    // Build items array including onChainId when available so backend receives
+    // a single source-of-truth for on-chain operations (cartItems[].onChainId)
+    const allTickets = event.shows?.flatMap((s) => s.tickets) || [];
+    const orderPayload = {
+      eventId: event.id,
+      showId,
+      exchangeRateVndPerUsdt,
+      items: Object.entries(cart.items).map(([ticketTypeId, quantity]) => {
+        const ticket = allTickets.find((t) => (t._id || t.id) === ticketTypeId);
+        return {
+          ticketTypeId,
+          onChainId: ticket?.onChainId ?? ticket?.onChainIdNumber ?? null,
+          quantity,
+        };
+      }),
+    };
+
+    createPaymentMutation.mutate(orderPayload);
+  }, [
+    event,
+    cart.items,
+    showId,
+    exchangeRateVndPerUsdt,
+    createPaymentMutation,
+  ]);
 
   useEffect(() => {
-    if (paymentStatus === 'paid') {
-      console.log('🎉 Payment successful for order:', orderId);
-
-      // Clear cart
-      dispatch(clearCart());
-
-      // Stop polling
-      if (pollingInterval.current) {
-        clearInterval(pollingInterval.current);
-        pollingInterval.current = null;
-      }
-
-      // Navigate to tickets page sau 2 giây
-      setTimeout(() => {
-        navigate(`/user/tickets`); // Hoặc `/order/${orderId}` để xem chi tiết
-      }, 2000);
+    if (paymentStatus !== 'paid' || finalizeOnceRef.current) {
+      return;
     }
-  }, [paymentStatus, dispatch, navigate, orderId]);
+
+    finalizeOnceRef.current = true;
+
+    const handlePaid = async () => {
+      try {
+        if (paymentFlowMethod === 'vnd' && paymentPlans.vnd?.workerPayload) {
+          await orderService.finalizeOrder({
+            orderId,
+            workerPayload: paymentPlans.vnd.workerPayload,
+            paymentPlan: paymentPlans.vnd,
+            contractCall: paymentPlans.vnd.contractCall,
+            buyerAddress:
+              paymentPlans.vnd.buyerAddress ||
+              paymentPlans.vnd.recipient ||
+              null,
+            recipient: paymentPlans.vnd.recipient || null,
+          });
+        }
+
+        dispatch(clearCart());
+
+        if (pollingInterval.current) {
+          clearInterval(pollingInterval.current);
+          pollingInterval.current = null;
+        }
+
+        setTimeout(() => {
+          navigate('/user/tickets');
+        }, 2000);
+      } catch (error) {
+        finalizeOnceRef.current = false;
+        console.error('[FINALIZE ERROR]', error);
+        setPaymentError(error.message || 'Không thể hoàn tất xử lý đơn hàng.');
+      }
+    };
+
+    handlePaid();
+  }, [
+    paymentStatus,
+    paymentFlowMethod,
+    paymentPlans.vnd,
+    orderId,
+    dispatch,
+    navigate,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -169,7 +290,51 @@ export default function PaymentPage() {
     };
   }, []);
 
-  // --- RENDER LOGIC ---
+  const totalQuantityFromPlan =
+    paymentPlans.web3?.quantity ?? paymentPlans.vnd?.quantity;
+  const activePlan =
+    selectedPaymentMethod === 'web3' ? paymentPlans.web3 : paymentPlans.vnd;
+  const displayUnitPrice =
+    activePlan?.unitPrice ??
+    (activePlan?.quantity && activePlan?.totalPrice != null
+      ? Number(activePlan.totalPrice) / Number(activePlan.quantity)
+      : null);
+  const displayTotalPriceVnd =
+    activePlan?.totalPriceVnd ??
+    (activePlan?.totalPrice != null && exchangeRateVndPerUsdt
+      ? Number(activePlan.totalPrice) * Number(exchangeRateVndPerUsdt)
+      : null);
+
+  const handleWeb3Checkout = async () => {
+    if (!event || !orderId || !paymentPlans.web3) return;
+
+    setPaymentFlowMethod('web3');
+
+    try {
+      await handleBuyWithWeb3({
+        eventId: event.id,
+        quantity: totalQuantityFromPlan,
+        orderId,
+        recipient: paymentPlans.web3.recipient,
+        buyerAddress: paymentPlans.web3.buyerAddress,
+        web3Plan: paymentPlans.web3,
+      });
+
+      setPaymentStatus('paid');
+    } catch (error) {
+      console.error('Web3 Checkout failed:', error);
+      setPaymentError(error.message || 'Thanh toán Web3 thất bại.');
+    }
+  };
+
+  const handleOpenVndPayment = () => {
+    setPaymentFlowMethod('vnd');
+
+    if (!paymentUrl) return;
+
+    window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+  };
+
   if (isLoadingEvent) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -188,7 +353,6 @@ export default function PaymentPage() {
     return <ErrorDisplay message="Không thể tải thông tin sự kiện." />;
   }
 
-  // --- PAYMENT DISPLAY COMPONENT ---
   const PaymentDisplay = () => (
     <div className="bg-background-secondary border-border-default space-y-6 rounded-xl border p-8 shadow-lg">
       <div className="text-center">
@@ -208,34 +372,39 @@ export default function PaymentPage() {
 
       <div className="border-border-subtle border-t"></div>
 
-      {/* Lựa chọn phương thức thanh toán */}
+      {paymentError ? (
+        <div className="border-destructive/20 bg-destructive/5 text-destructive rounded-lg border p-4 text-sm">
+          {paymentError}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-4">
         <button
-          onClick={() => setPaymentMethod('web3')}
+          onClick={() => setSelectedPaymentMethod('web3')}
           className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
-            paymentMethod === 'web3'
+            selectedPaymentMethod === 'web3'
               ? 'border-primary bg-primary/5 text-primary'
               : 'border-border-default hover:border-primary/50 text-text-secondary'
           }`}
         >
           <Wallet className="h-5 w-5" />
-          <span className="font-semibold">Ví Web3</span>
+          <span className="font-semibold">Web3 bằng USDT</span>
         </button>
         <button
-          onClick={() => setPaymentMethod('vnpay')}
+          onClick={() => setSelectedPaymentMethod('vnd')}
           className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-colors ${
-            paymentMethod === 'vnpay'
+            selectedPaymentMethod === 'vnd'
               ? 'border-primary bg-primary/5 text-primary'
               : 'border-border-default hover:border-primary/50 text-text-secondary'
           }`}
         >
           <CreditCard className="h-5 w-5" />
-          <span className="font-semibold">VNPay</span>
+          <span className="font-semibold">VND qua VNPay</span>
         </button>
       </div>
 
       <div className="space-y-4">
-        {paymentMethod === 'vnpay' ? (
+        {selectedPaymentMethod === 'vnd' ? (
           <>
             <div className="bg-background-primary rounded-lg p-4">
               <h3 className="text-text-primary mb-3 text-sm font-semibold">
@@ -257,16 +426,16 @@ export default function PaymentPage() {
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-semibold">4.</span>
                   <span>
-                    Trang này sẽ tự động cập nhật sau khi thanh toán thành công
+                    Sau khi callback/return thành công, hệ thống sẽ tiếp tục xử
+                    lý đơn hàng
                   </span>
                 </li>
               </ol>
             </div>
 
             <Button
-              onClick={() =>
-                window.open(paymentUrl, '_blank', 'noopener,noreferrer')
-              }
+              onClick={handleOpenVndPayment}
+              disabled={!paymentUrl}
               variant="default"
               className="w-full py-6 text-lg font-semibold"
             >
@@ -290,45 +459,50 @@ export default function PaymentPage() {
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-semibold">2.</span>
                   <span>
-                    Nhấn nút bên dưới để kết nối ví và xác nhận giao dịch
+                    Nhấn nút bên dưới để phê duyệt USDT và xác nhận giao dịch
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-semibold">3.</span>
                   <span>
-                    Phê duyệt giao dịch trên cửa sổ ví MetaMask pop-up
+                    Contract sẽ gọi{' '}
+                    {paymentPlans.web3?.contractCall?.method || 'buyTicket'}
                   </span>
                 </li>
               </ol>
             </div>
 
             <Button
-              onClick={async () => {
-                if (!event || !orderId) return;
-                try {
-                  const totalQuantity = Object.values(cart.items).reduce(
-                    (sum, q) => sum + q,
-                    0
-                  );
-                  await handleBuyWithWeb3(event.id, totalQuantity, orderId);
-                  // Web3 buying succeeded, UI will auto-update because orderStatus polling will catch MINTING_ON_CHAIN or PAID
-                  // Alternatively, we can force success state to navigate:
-                  setPaymentStatus('paid');
-                } catch (error) {
-                  console.error('Web3 Checkout failed:', error);
-                }
-              }}
-              disabled={isProcessing || paymentStatus === 'expired'}
+              onClick={handleWeb3Checkout}
+              disabled={
+                isProcessing ||
+                paymentStatus === 'expired' ||
+                !paymentPlans.web3
+              }
+              loading={isProcessing}
               variant="primary"
               className="w-full border-0 bg-gradient-to-r from-orange-400 to-rose-500 py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
             >
               <Wallet className="mr-2 h-5 w-5" />
               {isProcessing
                 ? statusMessage || 'Đang xử lý...'
-                : 'Thanh toán với Ví Web3'}
+                : 'Approve rồi mua vé bằng USDT'}
             </Button>
           </>
         )}
+
+        {selectedPaymentMethod === 'web3' && (isProcessing || statusMessage) ? (
+          <div className="border-border-default bg-background-primary rounded-lg border p-4 text-sm">
+            <p className="text-text-primary font-semibold">
+              Trạng thái giao dịch
+            </p>
+            <p className="text-text-secondary mt-1">
+              {isProcessing
+                ? statusMessage || 'Đang xử lý giao dịch...'
+                : statusMessage}
+            </p>
+          </div>
+        ) : null}
 
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <AlertCircle className="h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -348,7 +522,6 @@ export default function PaymentPage() {
     </div>
   );
 
-  // --- RENDER CONTENT ---
   const renderContent = () => {
     if (createPaymentMutation.isPending) {
       return (
@@ -444,7 +617,6 @@ export default function PaymentPage() {
       );
     }
 
-    // Default: hiển thị payment display
     return <PaymentDisplay />;
   };
 
