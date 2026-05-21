@@ -2,7 +2,8 @@
 import ShineTicketArtifact from '../abis/ShineTicket.json';
 
 // Địa chỉ Smart Contract của bạn (Cập nhật sau mỗi lần deploy)
-export const CONTRACT_ADDRESS = '0x9E8B7a527bD2e678E73265b21A3f0736D50208bC';
+// cu export const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+export const CONTRACT_ADDRESS = '0xf14d7dadf33aB3E2335B5C0280d23F49FFD157d5';
 
 // Bóc tách đúng cái mảng "abi" từ trong file JSON ra
 export const CONTRACT_ABI = ShineTicketArtifact.abi;

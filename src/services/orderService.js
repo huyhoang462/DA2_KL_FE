@@ -120,6 +120,26 @@ const getOrderStatus = async (orderId) => {
   }
 };
 
+// (Crypto) API gọi khi mint vé thành công/thất bại để cập nhật trạng thái order trên backend
+const updateOrderMintStatus = async (orderId, mintResult) => {
+  try {
+    // xử lý mintResult để gửi lên backend, ví dụ: { isSuccess: true/false, failureReason: '...' }
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/orders/${orderId}/update-mint-status`,
+      mintResult,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+// (VND) API gọi khi thanh toán thành công/thất bại để cập nhật trạng thái order trên backend
 const finalizeOrder = async (orderData) => {
   const response = await axiosInstance.post(
     '/payment/finalize-order',
@@ -136,4 +156,5 @@ export const orderService = {
   getOrderDetails,
   cancelOrder,
   resendPaymentLink,
+  updateOrderMintStatus,
 };

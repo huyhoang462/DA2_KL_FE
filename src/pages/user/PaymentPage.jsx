@@ -8,6 +8,7 @@ import { getEventById } from '../../services/eventService';
 import { orderService } from '../../services/orderService';
 import { clearCart } from '../../store/slices/cartSlice';
 import useCountdown from '../../hooks/useCountdown';
+import { useBuyTicketWeb3 } from '../../hooks/useBuyTicketWeb3';
 
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
@@ -55,6 +56,7 @@ export default function PaymentPage() {
   };
 
   const { minutes, seconds } = useCountdown(getTimeLeft(), handleTimeout);
+  const { isProcessing, statusMessage, handleBuyWithWeb3 } = useBuyTicketWeb3();
 
   const createPaymentMutation = useMutation({
     mutationFn: (orderData) => orderService.createPayment(orderData),
@@ -295,14 +297,29 @@ export default function PaymentPage() {
             </div>
 
             <Button
-              onClick={() => {
-                alert('Tính năng thanh toán ví Web3 đang được phát triển!');
+              onClick={async () => {
+                if (!event || !orderId) return;
+                try {
+                  const totalQuantity = Object.values(cart.items).reduce(
+                    (sum, q) => sum + q,
+                    0
+                  );
+                  await handleBuyWithWeb3(event.id, totalQuantity, orderId);
+                  // Web3 buying succeeded, UI will auto-update because orderStatus polling will catch MINTING_ON_CHAIN or PAID
+                  // Alternatively, we can force success state to navigate:
+                  setPaymentStatus('paid');
+                } catch (error) {
+                  console.error('Web3 Checkout failed:', error);
+                }
               }}
+              disabled={isProcessing || paymentStatus === 'expired'}
               variant="primary"
               className="w-full border-0 bg-gradient-to-r from-orange-400 to-rose-500 py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
             >
               <Wallet className="mr-2 h-5 w-5" />
-              Thanh toán với Ví Web3
+              {isProcessing
+                ? statusMessage || 'Đang xử lý...'
+                : 'Thanh toán với Ví Web3'}
             </Button>
           </>
         )}
