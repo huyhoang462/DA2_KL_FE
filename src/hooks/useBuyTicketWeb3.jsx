@@ -25,7 +25,7 @@ const toBigIntSafe = (value) => {
 export const useBuyTicketWeb3 = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  const { provider, signer, connectWallet } = useWeb3();
+  const { signer, connectWallet } = useWeb3();
 
   const handleBuyWithWeb3 = async ({
     eventId,
@@ -217,13 +217,51 @@ export const useBuyTicketWeb3 = () => {
       setStatusMessage('Giao dịch đang được xử lý trên Blockchain...');
       const receipt = await buyTx.wait();
 
-      setStatusMessage('Đang xác nhận với máy chủ...');
-      // Báo cáo thành công cho Backend
-      await orderService.updateOrderMintStatus(orderId, {
-        txHash: receipt.hash || buyTx.hash,
-      });
+      setStatusMessage(
+        'Thanh toán thành công! Hệ thống đang cập nhật vé vào tài khoản của bạn...'
+      );
 
-      return receipt.hash || buyTx.hash;
+      // Thử tự động đồng bộ với backend nhiều lần trước khi trả về lỗi
+      const maxAttempts = 3;
+      const baseDelayMs = 2000; // 2s
+      let lastErr = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          setStatusMessage(
+            `Thanh toán thành công! Hệ thống đang cập nhật vé (đồng bộ ${attempt}/${maxAttempts})...`
+          );
+          await orderService.updateOrderMintStatus(orderId, {
+            txHash: receipt.hash || buyTx.hash,
+          });
+          // Đồng bộ thành công
+          return receipt.hash || buyTx.hash;
+        } catch (err) {
+          lastErr = err;
+          console.warn(
+            `[WEB3 PAYMENT] Backend sync attempt ${attempt} failed for tx`,
+            receipt.hash,
+            err
+          );
+          if (attempt < maxAttempts) {
+            // Exponential backoff
+            const delay = baseDelayMs * Math.pow(2, attempt - 1);
+            setStatusMessage(
+              `Đang thử lại đồng bộ với máy chủ... (thử lại ${attempt + 1}/${maxAttempts})`
+            );
+            await new Promise((r) => setTimeout(r, delay));
+            continue;
+          }
+        }
+      }
+
+      // Nếu tất cả attempts đều thất bại, ném lỗi SYNC_PENDING để FE hiển thị modal/cho phép resync thủ công
+      const syncError = new Error(
+        'Giao dịch đã thành công trên Blockchain nhưng hệ thống đang nghẽn mạch cập nhật.'
+      );
+      syncError.code = 'SYNC_PENDING';
+      syncError.txHash = receipt.hash || buyTx.hash;
+      syncError.cause = lastErr;
+      throw syncError;
     } catch (error) {
       console.error('Web3 Buy Error:', error);
       let errorMessage = 'Giao dịch thất bại. Vui lòng thử lại sau.';

@@ -13,6 +13,8 @@ import useUsdtVndRate from '../../hooks/useUsdtVndRate';
 
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import ConfirmModal from '../../components/ui/ConfirmModal';
+import { toast } from 'react-toastify';
 import TimerCard from '../../components/features/buyTicket/TimerCard';
 import CartInfoCard from '../../components/features/buyTicket/CartInfoCard';
 import Button from '../../components/ui/Button';
@@ -69,6 +71,9 @@ export default function PaymentPage() {
   const [expiresAt, setExpiresAt] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [paymentError, setPaymentError] = useState('');
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncTxHash, setSyncTxHash] = useState(null);
+  const [isResyncing, setIsResyncing] = useState(false);
 
   const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
   const { isProcessing, statusMessage, handleBuyWithWeb3 } = useBuyTicketWeb3();
@@ -311,7 +316,7 @@ export default function PaymentPage() {
     setPaymentFlowMethod('web3');
 
     try {
-      await handleBuyWithWeb3({
+      const txHash = await handleBuyWithWeb3({
         eventId: event.id,
         quantity: totalQuantityFromPlan,
         orderId,
@@ -321,9 +326,43 @@ export default function PaymentPage() {
       });
 
       setPaymentStatus('paid');
+      toast.success('Mua vé thành công!');
+      navigate('/user/tickets');
     } catch (error) {
       console.error('Web3 Checkout failed:', error);
-      setPaymentError(error.message || 'Thanh toán Web3 thất bại.');
+      if (error?.code === 'SYNC_PENDING') {
+        // Transaction succeeded on-chain but backend didn't confirm
+        setSyncTxHash(error.txHash || null);
+        setShowSyncModal(true);
+        setPaymentError(
+          'Giao dịch đã thành công trên Blockchain nhưng hệ thống đang nghẽn mạch cập nhật. Vui lòng Đồng bộ lại hoặc liên hệ Support.'
+        );
+      } else if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
+        setPaymentError('Bạn đã từ chối giao dịch trên ví.');
+      } else {
+        setPaymentError(error.message || 'Thanh toán Web3 thất bại.');
+      }
+    }
+  };
+
+  const handleResync = async () => {
+    if (!syncTxHash || !orderId) return;
+    setIsResyncing(true);
+    try {
+      const resp = await orderService.updateOrderMintStatus(orderId, {
+        txHash: syncTxHash,
+      });
+      setShowSyncModal(false);
+      setPaymentError('');
+      toast.success('Đồng bộ thành công! Vé đã được cập nhật.');
+      setPaymentStatus('paid');
+      dispatch(clearCart());
+      navigate('/user/tickets');
+    } catch (err) {
+      console.error('Resync failed', err);
+      toast.error('Đồng bộ thất bại. Vui lòng thử lại hoặc liên hệ Support.');
+    } finally {
+      setIsResyncing(false);
     }
   };
 
@@ -644,6 +683,20 @@ export default function PaymentPage() {
           </div>
         </div>
       </main>
+      {showSyncModal && (
+        <ConfirmModal
+          isOpen={showSyncModal}
+          title="Đồng bộ giao dịch"
+          message={`Giao dịch ${syncTxHash} đã được xác nhận trên Blockchain nhưng hệ thống chưa cập nhật đơn ${orderId}. Bạn muốn thử 'Đồng bộ lại' bây giờ?`}
+          onConfirm={handleResync}
+          onCancel={() => setShowSyncModal(false)}
+          confirmText="Đồng bộ lại"
+          cancelText="Đóng"
+          isLoading={isResyncing}
+          iconBgColor="bg-primary/10"
+          iconColor="text-primary"
+        />
+      )}
     </div>
   );
 }
