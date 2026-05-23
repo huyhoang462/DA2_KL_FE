@@ -120,13 +120,25 @@ const getOrderStatus = async (orderId) => {
   }
 };
 
-// (Crypto) API gọi khi mint vé thành công/thất bại để cập nhật trạng thái order trên backend
+// (Crypto) API gọi khi mint vé thành công trên Blockchain để BE finalize đơn Web3
+// Backend expects: POST /api/payment/finalize-order-web3 with body { orderId, txHash }
 const updateOrderMintStatus = async (orderId, mintResult) => {
   try {
-    // xử lý mintResult để gửi lên backend, ví dụ: { isSuccess: true/false, failureReason: '...' }
+    // Extract txHash from possible input shapes (string or object)
+    const txHash =
+      typeof mintResult === 'string'
+        ? mintResult
+        : mintResult && mintResult.txHash
+        ? mintResult.txHash
+        : mintResult && mintResult.hash
+        ? mintResult.hash
+        : null;
+
+    const payload = { orderId, txHash };
+
     const response = await axiosInstance.post(
-      `${API_BASE_URL}/orders/${orderId}/update-mint-status`,
-      mintResult,
+      `${API_BASE_URL}/payment/finalize-order-web3`,
+      payload,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -141,11 +153,20 @@ const updateOrderMintStatus = async (orderId, mintResult) => {
 
 // (VND) API gọi khi thanh toán thành công/thất bại để cập nhật trạng thái order trên backend
 const finalizeOrder = async (orderData) => {
-  const response = await axiosInstance.post(
-    '/payment/finalize-order',
-    orderData
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/payment/finalize-order`,
+      orderData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
 };
 export const orderService = {
   createPayment,
