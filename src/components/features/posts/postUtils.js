@@ -1,4 +1,4 @@
-export const POST_CONTENT_MIN_LENGTH = 30;
+export const POST_CONTENT_MIN_LENGTH = 10;
 export const POST_CONTENT_MAX_LENGTH = 5000;
 export const COMMENT_CONTENT_MAX_LENGTH = 1000;
 export const COMMENT_DESCRIPTION_MAX_LENGTH = 500;
@@ -103,12 +103,14 @@ export const normalizePost = (post) => {
   const authorId = author.id || author._id || 'unknown-author';
   const relatedEvent = post?.relatedEvent || null;
   const relatedTicket = post?.relatedTicket || null;
+  const ticketType = relatedTicket?.ticketType || null;
 
   return {
     id: post?.id || post?._id,
     content: post?.content || '',
     images: Array.isArray(post?.images) ? post.images : [],
     createdAt: post?.createdAt,
+    price: Number(post?.price ?? 0),
     author: {
       id: authorId,
       name: author.fullName || author.name || 'Người dùng',
@@ -142,6 +144,10 @@ export const normalizePost = (post) => {
           showName:
             relatedTicket.showName || relatedTicket.show?.name || 'Suất diễn',
           startTime: relatedTicket.startTime || relatedTicket.show?.startTime,
+          status: relatedTicket.status,
+          ticketTypeId: ticketType?.id || ticketType?._id,
+          ticketTypeName: ticketType?.name,
+          originalPrice: Number(ticketType?.price ?? 0),
         }
       : null,
   };
@@ -149,14 +155,24 @@ export const normalizePost = (post) => {
 
 export const normalizeTicket = (ticket) => ({
   id: ticket?.id || ticket?._id,
-  eventName: ticket?.eventName || 'Sự kiện',
-  showName: ticket?.showName || 'Suất diễn',
-  ticketTypeName: ticket?.ticketTypeName || 'Loại vé',
-  price: ticket?.price?.toLocaleString() || '0',
-  startTime: ticket?.startTime,
+  qrCode: ticket?.qrCode,
   status: ticket?.status,
+  mintStatus: ticket?.mintStatus,
+  createdAt: ticket?.createdAt,
+  updatedAt: ticket?.updatedAt,
+  ticketTypeId: ticket?.ticketTypeId,
+  ticketTypeName: ticket?.ticketTypeName || 'Loại vé',
+  price: Number(ticket?.price ?? 0),
+  description: ticket?.description,
+  showId: ticket?.showId,
+  showName: ticket?.showName || 'Suất diễn',
+  startTime: ticket?.startTime,
+  endTime: ticket?.endTime,
+  eventId: ticket?.eventId,
+  eventName: ticket?.eventName || 'Sự kiện',
+  bannerImageUrl: ticket?.bannerImageUrl,
+  location: ticket?.location,
   format: ticket?.format,
-  location: ticket.location,
 });
 
 export const normalizeEventOption = (event) => ({

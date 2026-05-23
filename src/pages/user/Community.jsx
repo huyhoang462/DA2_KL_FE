@@ -4,18 +4,21 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import PostComposerModal from '../../components/features/posts/PostComposerModal';
+import PostTicketModal from '../../components/features/posts/PostTicketModal';
 import PostThread from '../../components/features/posts/PostThread';
 import {
   POST_CONTENT_MAX_LENGTH,
   POST_CONTENT_MIN_LENGTH,
-  buildImageFromSeed,
   extractArray,
   getPostCategory,
   normalizePost,
   normalizeTicket,
 } from '../../components/features/posts/postUtils';
-import { createPost, getAllPosts } from '../../services/postService';
+import {
+  createPost,
+  getAllPosts,
+  deletePost,
+} from '../../services/postService';
 import { getMyPendingTickets } from '../../services/ticketService';
 
 const PostSkeleton = () => (
@@ -45,7 +48,8 @@ const Community = () => {
   const [composerForm, setComposerForm] = useState({
     content: '',
     relatedTicketId: '',
-    images: [],
+    relatedEventId: '',
+    salePrice: '',
   });
   const [composerError, setComposerError] = useState('');
 
@@ -82,10 +86,28 @@ const Community = () => {
       closeComposer();
       toast.success('Đăng bài thành công.');
       queryClient.invalidateQueries({ queryKey: ['community-feed'] });
+      queryClient.invalidateQueries({
+        queryKey: ['community-my-tickets', userId],
+      });
     },
     onError: (error) => {
       setComposerError(
         error?.message || 'Không thể đăng bài. Vui lòng thử lại sau.'
+      );
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: deletePost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-feed'] });
+      queryClient.invalidateQueries({
+        queryKey: ['community-my-tickets', userId],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.message || 'Không thể xóa bài viết. Vui lòng thử lại.'
       );
     },
   });
@@ -113,7 +135,8 @@ const Community = () => {
     setComposerForm({
       content: '',
       relatedTicketId: '',
-      images: [],
+      relatedEventId: '',
+      salePrice: '',
     });
   };
 
@@ -125,13 +148,6 @@ const Community = () => {
 
     setComposerError('');
     setIsComposerOpen(true);
-  };
-
-  const handleAddImageToComposer = () => {
-    setComposerForm((prev) => ({
-      ...prev,
-      images: [...prev.images, buildImageFromSeed()].slice(0, 4),
-    }));
   };
 
   const handleCreatePost = () => {
@@ -151,6 +167,13 @@ const Community = () => {
       return;
     }
 
+    const salePrice = Number(composerForm.salePrice);
+
+    if (!Number.isFinite(salePrice) || salePrice <= 0) {
+      setComposerError('Vui lòng nhập giá muốn bán hợp lệ.');
+      return;
+    }
+
     const selectedTicket = myTickets.find(
       (ticket) => ticket.id === composerForm.relatedTicketId
     );
@@ -162,8 +185,10 @@ const Community = () => {
 
     createPostMutation.mutate({
       content: trimmedContent,
-      images: composerForm.images,
+      images: [],
       relatedTicket: composerForm.relatedTicketId,
+      relatedEvent: composerForm.relatedEventId,
+      price: salePrice,
       postType: 'marketplace_listing',
     });
   };
@@ -202,7 +227,7 @@ const Community = () => {
           alt="Avatar"
         />
         <div className="bg-disabled-background text-text-secondary flex-1 rounded-full px-5 py-2.5 text-sm font-medium">
-           Đăng bán lại vé của bạn...
+          Đăng bán lại vé của bạn...
         </div>
       </section>
 
@@ -259,51 +284,51 @@ const Community = () => {
           posts={posts}
           allPosts={feedPosts}
           currentUser={user}
+          onDeletePost={(postId) => deletePostMutation.mutateAsync(postId)}
           feedQueryKey="community-feed"
         />
       )}
 
-      <PostComposerModal
+      <PostTicketModal
         isOpen={isComposerOpen}
         title="Tạo bài viết"
         currentUser={user}
         roleLabel="customer"
         content={composerForm.content}
-        onContentChange={(value) =>
+        onContentChange={(value) => {
           setComposerForm((prev) => ({
             ...prev,
             content: value.slice(0, POST_CONTENT_MAX_LENGTH),
-          }))
-        }
+          }));
+          setComposerError('');
+        }}
         contentLabel="Nội dung bài viết"
         contentPlaceholder="Chia sẻ về chiếc vé bạn muốn pass lại..."
         contentLengthText={`${composerForm.content.trim().length}/${POST_CONTENT_MAX_LENGTH} ký tự`}
-        entityLabel="Vé liên quan"
-        entityValue={composerForm.relatedTicketId}
-        onEntityChange={(value) =>
+        ticketLabel="Vé muốn bán"
+        ticketValue={composerForm.relatedTicketId}
+        onTicketChange={({ ticketId, eventId }) => {
           setComposerForm((prev) => ({
             ...prev,
-            relatedTicketId: value,
-          }))
-        }
-        entityOptions={myTickets.map((ticket) => ({
-          id: ticket.id,
-   label: `${ticket.eventName} - ${ticket.showName} - Loại vé: ${ticket.ticketTypeName} - ${ticket?.price} đ`,
-          ...ticket,
-        }))}
-      
-        entityLoading={isTicketsLoading || isTicketsFetching}
-        entityLoadingLabel="Đang tải vé..."
-        entityEmptyMessage="Bạn chưa có vé nào để tạo bài post pass vé."
-        entityError={ticketsError?.message || ''}
-        images={composerForm.images}
-        onAddImage={handleAddImageToComposer}
-        onRemoveImage={(index) =>
+            relatedTicketId: ticketId,
+            relatedEventId: eventId,
+          }));
+
+          setComposerError('');
+        }}
+        salePrice={composerForm.salePrice}
+        onSalePriceChange={(value) => {
           setComposerForm((prev) => ({
             ...prev,
-            images: prev.images.filter((_, imageIndex) => imageIndex !== index),
-          }))
-        }
+            salePrice: value,
+          }));
+          setComposerError('');
+        }}
+        ticketOptions={myTickets}
+        ticketLoading={isTicketsLoading || isTicketsFetching}
+        ticketLoadingLabel="Đang tải vé..."
+        ticketEmptyMessage="Bạn chưa có vé nào để tạo bài post pass vé."
+        ticketError={ticketsError?.message || ''}
         error={composerError}
         onClose={closeComposer}
         onSubmit={handleCreatePost}
