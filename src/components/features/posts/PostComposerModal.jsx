@@ -7,12 +7,11 @@ const PostComposerModal = ({
   isOpen,
   title = 'Tạo bài viết',
   currentUser,
-  roleLabel = '',
+  roleLabel = 'organizer',
   content,
   onContentChange,
   contentLabel = 'Nội dung bài viết',
   contentPlaceholder = '',
-  contentMaxLength = 5000,
   contentLengthText = '',
   entityLabel,
   entityValue,
@@ -33,26 +32,6 @@ const PostComposerModal = ({
   submitLabel = 'Đăng bài',
 }) => {
   if (!isOpen) return null;
-
-  const formatDateTimeWithoutSeconds = (value) => {
-    if (!value) return '';
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${hours}:${minutes} ${day}/${month}/${year}`;
-  };
-
-  const selectedTicket =
-    entityOptions && entityValue
-      ? entityOptions.find((o) => String(o.id) === String(entityValue)) || null
-      : null;
   return (
     <Modal
       isOpen={isOpen}
@@ -61,8 +40,8 @@ const PostComposerModal = ({
       xButton
       maxWidth="max-w-2xl"
     >
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
+      <div className="">
+        <div className="mb-4 flex items-center gap-3">
           <img
             src={
               currentUser?.avatar ||
@@ -83,13 +62,13 @@ const PostComposerModal = ({
 
         <TextArea
           label={contentLabel}
-          rows={4}
+          rows={roleLabel === 'organizer' ? 4 : 3}
           value={content}
           onChange={(event) => onContentChange(event.target.value)}
           placeholder={contentPlaceholder}
         />
 
-        <div className="flex justify-end">
+        <div className="my-2 flex justify-end">
           <p className="text-text-secondary text-xs">{contentLengthText}</p>
         </div>
 
@@ -152,36 +131,14 @@ const PostComposerModal = ({
           </div>
         )}
 
-        {roleLabel === 'customer' && entityValue && (
-          <div className="px-2">
-            {selectedTicket ? (
-              <div className="text-sm">
-                {console.log(selectedTicket)}
-                {selectedTicket.startTime && (
-                  <div className="text-text-secondary">
-                    {formatDateTimeWithoutSeconds(selectedTicket.startTime)} -{' '}
-                    {selectedTicket.format === 'offline'
-                      ? selectedTicket.location || 'Offline'
-                      : 'Online'}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-text-secondary text-sm">Chọn vé để đăng bán</p>
-            )}
-          </div>
-        )}
-
-        {roleLabel === 'organizer' && (
-          <Button
-            variant="secondary"
-            onClick={onAddImage}
-            className="w-full sm:w-auto"
-          >
-            <ImagePlus className="mr-2 h-4 w-4" />
-            {addImageLabel}
-          </Button>
-        )}
+        <Button
+          variant="secondary"
+          onClick={onAddImage}
+          className="w-full sm:w-auto"
+        >
+          <ImagePlus className="mr-2 h-4 w-4" />
+          {addImageLabel}
+        </Button>
 
         {error && (
           <p className="text-destructive bg-destructive-background rounded-lg px-3 py-2 text-sm">
@@ -189,7 +146,7 @@ const PostComposerModal = ({
           </p>
         )}
 
-        <div className="border-border-default flex justify-end gap-3 border-t pt-4">
+        <div className="border-border-default mt-2 flex justify-end gap-3 border-t pt-4">
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Hủy
           </Button>

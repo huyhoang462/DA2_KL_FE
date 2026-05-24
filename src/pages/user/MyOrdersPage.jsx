@@ -5,14 +5,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Eye,
   CreditCard,
   RefreshCw,
   Ban,
-  Ticket,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { orderService } from '../../services/orderService';
 import Input from '../../components/ui/Input';
@@ -81,11 +79,13 @@ const STATUS_CONFIG = {
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('paid');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const ITEMS_PER_PAGE = 10;
+
+  const orderIdFromUrl = searchParams.get('orderId');
 
   // Fetch orders data
   const {
@@ -100,7 +100,49 @@ export default function MyOrdersPage() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const allOrders = ordersData?.orders || [];
+  const allOrders = useMemo(() => ordersData?.orders || [], [ordersData]);
+
+  const openOrderModal = (order) => {
+    if (!order?.id) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('orderId', order.id);
+    setSearchParams(nextParams);
+  };
+
+  const closeOrderModal = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('orderId');
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const selectedOrder = useMemo(() => {
+    if (!orderIdFromUrl) return null;
+    return (
+      allOrders.find((order) => String(order?.id) === String(orderIdFromUrl)) ||
+      null
+    );
+  }, [allOrders, orderIdFromUrl]);
+
+  React.useEffect(() => {
+    if (!orderIdFromUrl) return;
+    if (isLoading || isError) return;
+
+    if (selectedOrder) return;
+
+    // Order id not found -> clean the param to avoid a dead link.
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('orderId');
+    setSearchParams(nextParams, { replace: true });
+  }, [
+    orderIdFromUrl,
+    allOrders,
+    isLoading,
+    isError,
+    searchParams,
+    setSearchParams,
+    selectedOrder,
+  ]);
 
   // Filter orders based on status and search
   const filteredOrders = useMemo(() => {
@@ -135,7 +177,7 @@ export default function MyOrdersPage() {
     const counts = { pending: 0, paid: 0, failed: 0, cancelled: 0 };
 
     allOrders.forEach((order) => {
-      if (counts.hasOwnProperty(order.status)) {
+      if (Object.prototype.hasOwnProperty.call(counts, order.status)) {
         counts[order.status]++;
       }
     });
@@ -177,11 +219,6 @@ export default function MyOrdersPage() {
   const handleRetryPayment = (order) => {
     // Navigate to payment retry
     navigate(`/payment/${order.id}`);
-  };
-
-  const handleViewTickets = (order) => {
-    // Navigate to tickets page
-    navigate('/my-tickets');
   };
 
   const currentTab = STATUS_TABS.find((tab) => tab.key === activeTab);
@@ -394,7 +431,7 @@ export default function MyOrdersPage() {
                             {order.status === 'paid' && (
                               <>
                                 <button
-                                  onClick={() => setSelectedOrder(order)}
+                                  onClick={() => openOrderModal(order)}
                                   className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
                                 >
                                   <Eye className="h-4 w-4" />
@@ -413,7 +450,7 @@ export default function MyOrdersPage() {
                                   Đặt lại
                                 </button>
                                 <button
-                                  onClick={() => setSelectedOrder(order)}
+                                  onClick={() => openOrderModal(order)}
                                   className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
                                 >
                                   <Eye className="h-4 w-4" />
@@ -425,7 +462,7 @@ export default function MyOrdersPage() {
                             {(order.status === 'cancelled' ||
                               (order.status === 'pending' && expired)) && (
                               <button
-                                onClick={() => setSelectedOrder(order)}
+                                onClick={() => openOrderModal(order)}
                                 className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
                               >
                                 <Eye className="h-4 w-4" />
@@ -523,10 +560,7 @@ export default function MyOrdersPage() {
 
       {/* Order Detail Modal */}
       {selectedOrder && (
-        <OrderDetailModal
-          order={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
-        />
+        <OrderDetailModal order={selectedOrder} onClose={closeOrderModal} />
       )}
     </div>
   );

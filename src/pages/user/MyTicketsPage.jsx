@@ -6,6 +6,7 @@ import {
   Search,
   Calendar,
   PlayCircle,
+  ShoppingCart,
   CheckCircle,
   XCircle,
 } from 'lucide-react';
@@ -30,6 +31,12 @@ const TABS = [
     emptyMessage: 'Không có sự kiện nào đang diễn ra',
   },
   {
+    key: 'selling',
+    label: 'Đang bán',
+    icon: ShoppingCart,
+    emptyMessage: 'Không có vé nào đang bán',
+  },
+  {
     key: 'past',
     label: 'Đã qua',
     icon: CheckCircle,
@@ -46,6 +53,7 @@ const TABS = [
 const STATUS_TAB_MAP = {
   pending: 'upcoming',
   checkedIn: 'ongoing',
+  selling: 'selling',
   out: 'ongoing',
   expired: 'past',
   cancelled: 'cancelled',

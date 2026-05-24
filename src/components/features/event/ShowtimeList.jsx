@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Clock, Calendar } from 'lucide-react';
 import { cn } from '../../../utils/lib';
 import Button from '../../ui/Button';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
 import PriceDisplay from '../../ui/PriceDisplay';
 
@@ -70,11 +70,15 @@ const ShowtimeAccordionItem = ({
   const formattedStartTime = startTime.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
   });
 
   const formattedEndTime = endTime.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
   });
 
   const formattedDate = startTime.toLocaleDateString('vi-VN', {

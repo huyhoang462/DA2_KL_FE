@@ -3,15 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import {
-  MapPin,
-  Calendar,
-  Clock,
-  QrCode,
-  Globe,
-  Building,
-  Ticket,
-} from 'lucide-react';
+import { Calendar, QrCode, Globe, Building, Ticket } from 'lucide-react';
 
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
@@ -29,6 +21,11 @@ const STATUS_CONFIG = {
     label: 'Đã check-in',
     bgColor: 'bg-green-100',
     textColor: 'text-green-800',
+  },
+  selling: {
+    label: 'Đang đăng bán',
+    bgColor: 'bg-yellow-100',
+    textColor: 'text-yellow-800',
   },
   out: {
     label: 'Đã ra ngoài',
@@ -78,13 +75,21 @@ export default function TicketCard({ ticket }) {
   const mintStatusConfig =
     MINT_STATUS_CONFIG[ticket.mintStatus] || MINT_STATUS_CONFIG.default;
 
+  const formatUtcTime = (dateValue) => {
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '';
+
+    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(
+      date.getUTCMinutes()
+    ).padStart(2, '0')}`;
+  };
+
   // Format ngày giờ
   const formattedDate = format(new Date(ticket.startTime), 'EEE, dd MMM yyyy', {
     locale: vi,
   });
-  const formattedTime = `${format(new Date(ticket.startTime), 'HH:mm')} - ${format(
-    new Date(ticket.endTime),
-    'HH:mm'
+  const formattedTime = `${formatUtcTime(ticket.startTime)} - ${formatUtcTime(
+    ticket.endTime
   )}`;
 
   // Xác định icon location

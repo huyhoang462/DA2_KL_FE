@@ -517,6 +517,7 @@ const PostThread = ({
             commentCount={post.metrics.commentCount}
             isLiked={Boolean(likedPostIds[post.id])}
             likeCount={likeCountByPost[post.id] || 0}
+            currentUser={currentUser}
             onOpen={handleOpenPost}
             onToggleLike={handleToggleLike}
             onToggleComments={handleOpenPost}
