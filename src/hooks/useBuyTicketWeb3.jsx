@@ -274,7 +274,8 @@ export const useBuyTicketWeb3 = () => {
         error.data?.message?.includes('One of the events is not active') ||
         error.reason?.includes('One of the events is not active')
       ) {
-        errorMessage = 'Vé chưa được kích hoạt on-chain (Chưa Mint). Vui lòng thử thanh toán VND hoặc liên hệ hỗ trợ.';
+        errorMessage =
+          'Vé chưa được kích hoạt on-chain (Chưa Mint). Vui lòng thử thanh toán VND hoặc liên hệ hỗ trợ.';
       } else if (
         error.message &&
         error.message.includes('gas required exceeds allowance')

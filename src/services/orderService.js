@@ -129,10 +129,10 @@ const updateOrderMintStatus = async (orderId, mintResult) => {
       typeof mintResult === 'string'
         ? mintResult
         : mintResult && mintResult.txHash
-        ? mintResult.txHash
-        : mintResult && mintResult.hash
-        ? mintResult.hash
-        : null;
+          ? mintResult.txHash
+          : mintResult && mintResult.hash
+            ? mintResult.hash
+            : null;
 
     const payload = { orderId, txHash };
 

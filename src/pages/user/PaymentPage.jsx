@@ -33,20 +33,12 @@ const normalizePlan = (plan) => {
     plan.totalAmountVND ??
     plan.totalVnd ??
     null;
-  const unitPrice =
-    plan.unitPrice ??
-    plan.ticketPrice ??
-    plan.price ??
-    (quantity && totalPrice != null
-      ? Number(totalPrice) / Number(quantity)
-      : null);
 
   return {
     ...plan,
     quantity,
     totalPrice,
     totalPriceVnd,
-    unitPrice,
   };
 };
 
@@ -249,7 +241,11 @@ export default function PaymentPage() {
     const handlePaid = async () => {
       try {
         if (paymentFlowMethod === 'vnd' && paymentPlans.vnd?.workerPayload) {
-          await orderService.finalizeOrder({
+          console.log(
+            '[FINALIZE] Chuẩn bị gọi API finalizeOrder với paymentPlans.vnd:',
+            paymentPlans.vnd
+          );
+          const finalizeData = {
             orderId,
             workerPayload: paymentPlans.vnd.workerPayload,
             paymentPlan: paymentPlans.vnd,
@@ -259,7 +255,14 @@ export default function PaymentPage() {
               paymentPlans.vnd.recipient ||
               null,
             recipient: paymentPlans.vnd.recipient || null,
-          });
+          };
+
+          console.log(
+            '[PaymentPage] Gọi api finalizeOrder với data:',
+            finalizeData
+          );
+
+          await orderService.finalizeOrder(finalizeData);
         }
 
         dispatch(clearCart());
@@ -299,11 +302,6 @@ export default function PaymentPage() {
     paymentPlans.web3?.quantity ?? paymentPlans.vnd?.quantity;
   const activePlan =
     selectedPaymentMethod === 'web3' ? paymentPlans.web3 : paymentPlans.vnd;
-  const displayUnitPrice =
-    activePlan?.unitPrice ??
-    (activePlan?.quantity && activePlan?.totalPrice != null
-      ? Number(activePlan.totalPrice) / Number(activePlan.quantity)
-      : null);
   const displayTotalPriceVnd =
     activePlan?.totalPriceVnd ??
     (activePlan?.totalPrice != null && exchangeRateVndPerUsdt
