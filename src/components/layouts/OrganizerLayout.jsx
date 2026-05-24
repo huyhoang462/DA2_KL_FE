@@ -21,6 +21,7 @@ import NotificationDropdown from '../features/notification/NotificationDropdown'
 import { getNotificationTargetPath } from '../../utils/notification';
 import { toast } from 'react-toastify';
 import { useAppLogout } from '../../hooks/useAppLogout';
+import ConfirmModal from '../ui/ConfirmModal';
 
 const organizerNavItems = [
   { name: 'Sự kiện của tôi', path: '/organizer/my-events', icon: LayoutGrid },
@@ -46,6 +47,8 @@ const OrganizerLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const appLogout = useAppLogout();
   const user = useSelector((state) => state.auth.user);
@@ -70,12 +73,30 @@ const OrganizerLayout = () => {
     autoLoadList: false,
   });
 
-  const handleLogout = async () => {
-    await appLogout({
-      onAfterClearAuth: () => {
-        navigate('/login');
-      },
-    });
+  const handleLogoutRequest = () => {
+    setProfileDropdownOpen(false);
+    setLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutCancel = () => {
+    if (isLoggingOut) return;
+    setLogoutConfirmOpen(false);
+  };
+
+  const handleLogoutConfirm = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      await appLogout({
+        onAfterClearAuth: () => {
+          navigate('/login');
+        },
+      });
+    } finally {
+      setIsLoggingOut(false);
+      setLogoutConfirmOpen(false);
+    }
   };
 
   const SidebarItem = ({ item }) => (
@@ -231,7 +252,7 @@ const OrganizerLayout = () => {
                 <div className="bg-background-secondary border-border-default absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border shadow-lg">
                   <div className="p-2">
                     <button
-                      onClick={handleLogout}
+                      onClick={handleLogoutRequest}
                       className="text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm"
                     >
                       <LogOut className="h-4 w-4" />
@@ -249,6 +270,18 @@ const OrganizerLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      <ConfirmModal
+        isOpen={logoutConfirmOpen}
+        title="Xác nhận đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản organizer không?"
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        confirmVariant="destructive"
+        isLoading={isLoggingOut}
+      />
 
       {/* Mobile overlay */}
       {sidebarOpen && (

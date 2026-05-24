@@ -11,6 +11,68 @@ import {
 } from '../constants/web3';
 // Replace with actual Contract Address & ABI for your project
 
+const getMintPrecheckErrorMessage = (error, voucherIndex = null) => {
+  const prefix = voucherIndex === null ? '' : `Voucher[${voucherIndex}]: `;
+  const reason =
+    error?.reason ||
+    error?.shortMessage ||
+    error?.error?.message ||
+    error?.info?.error?.message ||
+    error?.message ||
+    '';
+
+  if (reason.includes('One of the events is not active')) {
+    return `${prefix}Vé chưa được kích hoạt hoặc backend đang lệch với trạng thái on-chain.`;
+  }
+
+  if (reason.includes('missing revert data')) {
+    return `${prefix}Smart Contract từ chối giao dịch. Có thể voucher hết hạn, chữ ký không hợp lệ, nonce đã dùng hoặc eventId/price sai.`;
+  }
+
+  if (reason.includes('CALL_EXCEPTION')) {
+    return `${prefix}Lỗi gọi Smart Contract. Dữ liệu voucher có thể không hợp lệ.`;
+  }
+
+  return `${prefix}${reason || 'Dữ liệu mint không hợp lệ.'}`;
+};
+
+const validateMintVoucher = (voucher, signature, index) => {
+  if (!Array.isArray(voucher) || voucher.length !== 8) {
+    throw new Error(`Voucher[${index}] có định dạng không hợp lệ.`);
+  }
+
+  if (!signature || typeof signature !== 'string') {
+    throw new Error(`Voucher[${index}] thiếu chữ ký.`);
+  }
+
+  const expiryTime = Number(voucher[6]);
+  const nonce = voucher[7];
+
+  if (voucher[0] === null || voucher[0] === undefined) {
+    throw new Error(`Voucher[${index}] thiếu eventId.`);
+  }
+
+  if (!voucher[1] || Number(voucher[1]) <= 0) {
+    throw new Error(`Voucher[${index}] quantity không hợp lệ.`);
+  }
+
+  if (!voucher[2] || BigInt(voucher[2]) <= 0n) {
+    throw new Error(`Voucher[${index}] price không hợp lệ.`);
+  }
+
+  if (!expiryTime || Number.isNaN(expiryTime)) {
+    throw new Error(`Voucher[${index}] expiryTime không hợp lệ.`);
+  }
+
+  if (expiryTime <= Math.floor(Date.now() / 1000)) {
+    throw new Error(`Voucher[${index}] đã hết hạn.`);
+  }
+
+  if (nonce === null || nonce === undefined || nonce === '') {
+    throw new Error(`Voucher[${index}] thiếu nonce.`);
+  }
+};
+
 export const useMintTicket = () => {
   const [isMinting, setIsMinting] = useState(false);
   const { signer, connectWallet } = useWeb3();
@@ -20,6 +82,7 @@ export const useMintTicket = () => {
     console.log('Bắt đầu mint vé cho sự kiện:', event);
     try {
       setIsMinting(true);
+      const isDevMode = import.meta.env?.DEV ?? false;
 
       // Bước 1: Kiểm tra môi trường ví (Wallet Environment Check)
       if (!window.ethereum) {
@@ -139,6 +202,67 @@ export const useMintTicket = () => {
       console.log('signatures:', signatures);
       console.log('txOptions:', txOptions);
       console.log('--------------------------');
+
+      const seenNonces = new Set();
+      formattedVouchers.forEach((voucher, index) => {
+        validateMintVoucher(voucher, signatures[index], index);
+
+        const nonceKey = String(voucher[7]);
+        if (seenNonces.has(nonceKey)) {
+          throw new Error(`Nonce bị trùng ở Voucher[${index}].`);
+        }
+        seenNonces.add(nonceKey);
+      });
+
+      try {
+        await contract.batchMintEventTickets.staticCall(
+          formattedVouchers,
+          signatures
+        );
+        console.log('[WEB3 PAYMENT] Batch staticCall precheck: OK');
+      } catch (precheckError) {
+        console.error(
+          '[WEB3 PAYMENT] Batch staticCall precheck failed',
+          precheckError
+        );
+
+        if (isDevMode) {
+          console.log('--- DEBUG: PER-VOUCHER CHECK ---');
+          for (let index = 0; index < formattedVouchers.length; index++) {
+            const voucher = formattedVouchers[index];
+            const signature = signatures[index];
+
+            console.log(`Voucher[${index}]`, {
+              eventId: voucher[0]?.toString?.() ?? voucher[0],
+              quantity: voucher[1],
+              price: voucher[2]?.toString?.() ?? voucher[2],
+              commissionRateBps: voucher[3],
+              relayerGasPerTicket: voucher[4],
+              checkinGasPerTicket: voucher[5],
+              expiryTime: voucher[6],
+              nonce: voucher[7],
+              signaturePreview:
+                typeof signature === 'string'
+                  ? `${signature.slice(0, 18)}...${signature.slice(-10)}`
+                  : signature,
+            });
+
+            try {
+              await contract.batchMintEventTickets.staticCall(
+                [voucher],
+                [signature]
+              );
+              console.log(`Voucher[${index}] staticCall: OK`);
+            } catch (staticError) {
+              console.error(`Voucher[${index}] staticCall failed`, staticError);
+              throw new Error(getMintPrecheckErrorMessage(staticError, index));
+            }
+          }
+          console.log('--- DEBUG: PER-VOUCHER CHECK DONE ---');
+        }
+
+        throw new Error(getMintPrecheckErrorMessage(precheckError));
+      }
 
       const tx = await contract.batchMintEventTickets(
         formattedVouchers,
