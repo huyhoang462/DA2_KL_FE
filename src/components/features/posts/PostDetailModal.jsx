@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   CalendarDays,
   Heart,
@@ -172,6 +173,37 @@ const PostDetailModal = ({
   const comments = commentState.items || [];
   const commentCount = countComments(comments);
 
+  // State lưu danh sách các ticketId đang được chọn mua
+  const [selectedTicketIds, setSelectedTicketIds] = useState([]);
+
+  // Hàm xử lý khi bấm tick chọn/bỏ chọn một vé
+  const handleSelectTicket = (ticketId) => {
+    setSelectedTicketIds((prevIds) => {
+      if (prevIds.includes(ticketId)) {
+        // Nếu đã có trong danh sách thì xóa đi (uncheck)
+        return prevIds.filter((id) => id !== ticketId);
+      } else {
+        // Nếu chưa có thì thêm vào danh sách (check)
+        return [...prevIds, ticketId];
+      }
+    });
+  };
+
+  // Hàm xử lý việc Click nút mua vé
+  const handleBuyTickets = () => {
+    if (selectedTicketIds.length === 0) return;
+
+    console.log('Danh sách Ticket IDs đặt mua:', selectedTicketIds);
+    // Thực hiện gọi API mua vé tại đây với payload là selectedTicketIds
+    // Ví dụ: await buyTicketsAPI({ ticketIds: selectedTicketIds });
+  };
+
+  // Tính toán tổng số tiền của các vé đang được chọn mua (Hiển thị trực quan trên nút Mua)
+  const totalAmount =
+    post?.relatedTickets
+      ?.filter((ticket) => selectedTicketIds.includes(ticket.ticketId))
+      ?.reduce((sum, ticket) => sum + ticket.price, 0) || 0;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -228,49 +260,129 @@ const PostDetailModal = ({
           </div>
         )}
 
-        {post.relatedTicket && (
-          <div className="bg-foreground border-border-default rounded-xl border p-4">
-            <p className="text-text-primary text-sm font-semibold">
-              {post.relatedTicket.eventName}
-            </p>
-            <p className="text-text-secondary mt-1 text-xs">
-              {post.relatedTicket.showName}
-            </p>
-            {post.relatedTicket.startTime && (
-              <div className="text-text-secondary mt-2 inline-flex items-center gap-1 text-xs">
-                <CalendarDays className="h-3.5 w-3.5" />
-                {formatDateTime(post.relatedTicket.startTime)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {post.relatedEvent && (
-          <div className="bg-foreground border-border-default rounded-xl border p-4">
-            <div className="flex items-start gap-3">
-              <img
-                src={post.relatedEvent.bannerImageUrl}
-                alt={post.relatedEvent.name}
-                className="h-16 w-16 rounded-lg object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-text-primary truncate text-sm font-semibold">
-                  {post.relatedEvent.name}
-                </p>
-                <div className="text-text-secondary mt-1 flex flex-wrap items-center gap-3 text-xs">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    {formatDateTime(post.relatedEvent.startDate)}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Tag className="h-3.5 w-3.5" />
-                    {post.relatedEvent.locationText}
-                  </span>
+        {post?.postType === 'marketplace_listing' &&
+          post?.relatedTickets?.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {post.relatedEvent && (
+                <div className="bg-foreground border-border-default rounded-xl border p-4">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={post.relatedEvent.bannerImageUrl}
+                      alt={post.relatedEvent.name}
+                      className="h-16 w-16 rounded-lg object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-text-primary truncate text-sm font-semibold">
+                        {post.relatedEvent.name}
+                      </p>
+                      <div className="text-text-secondary mt-1 flex flex-wrap items-center gap-3 text-xs">
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {formatDateTime(post.relatedEvent.startDate)}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Tag className="h-3.5 w-3.5" />
+                          {post.relatedEvent.locationText}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              )}
+
+              <div className="bg-foreground border-border-default rounded-xl border p-4">
+                <h4 className="text-text-primary mb-3 text-sm font-semibold">
+                  Danh sách vé đang bán ({post.relatedTickets.length})
+                </h4>
+
+                <div className="flex flex-col gap-2.5">
+                  {post.relatedTickets.map((ticket) => {
+                    const isSelling = ticket.status === 'selling';
+                    const isChecked = selectedTicketIds.includes(
+                      ticket.ticketId
+                    );
+
+                    return (
+                      <div
+                        key={ticket.ticketId}
+                        onClick={() =>
+                          isSelling && handleSelectTicket(ticket.ticketId)
+                        }
+                        className={`flex items-center justify-between rounded-lg border p-3 transition-all ${
+                          isSelling
+                            ? 'border-border-default hover:border-primary cursor-pointer bg-gray-50'
+                            : 'cursor-not-allowed border-gray-200 bg-gray-100 opacity-60'
+                        } ${isChecked ? 'border-primary' : 'border-dashed'}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Thẻ Checkbox - Chỉ hiện khi vé ở trạng thái 'selling' */}
+                          <div className="mt-0.5 flex h-5 items-center">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              disabled={!isSelling}
+                              onChange={() => {}} // Đã xử lý qua onClick của thẻ cha bên trên
+                              className="h-4 w-4 cursor-pointer rounded border-gray-300 text-orange-600 focus:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-30"
+                            />
+                          </div>
+
+                          <div>
+                            <p className="text-text-primary text-sm font-semibold">
+                              {ticket.ticketTypeName}
+                              {' - '}
+                              {ticket.showName}
+                              {' - '}
+                              <span className="text-sm font-bold text-orange-600">
+                                {ticket.originalPrice} USDT
+                              </span>
+                            </p>
+                            {isSelling ? (
+                              <span className="mt-1 inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                                Đang bán
+                              </span>
+                            ) : (
+                              <span className="mt-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+                                Đã bán/Tạm khóa
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-text-secondary text-sm font-bold">
+                            Giá bán lại:{' '}
+                            <span className="text-orange-600">
+                              {ticket.price} USDT
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Khối Nút Mua hàng - Chỉ hiển thị khi có ít nhất 1 vé được chọn */}
+                {selectedTicketIds.length > 0 && (
+                  <div className="mt-4 flex items-center justify-between gap-4 border-t border-gray-100 pt-4">
+                    <div className="text-text-secondary text-sm">
+                      Đã chọn:{' '}
+                      <span className="text-text-primary font-semibold">
+                        {selectedTicketIds.length} vé
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleBuyTickets}
+                      className="bg-primary hover:bg-primary-hover flex items-center gap-1 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
+                    >
+                      Mua ngay •{' '}
+                      <span className="font-bold">{totalAmount} USDT</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         <div className="border-border-default text-text-secondary flex items-center justify-between border-t pt-3 text-sm">
           <button

@@ -7,8 +7,8 @@
   /* 1. MÀU THƯƠNG HIỆU (BRAND/PRIMARY)                  */
   /* Giữ nguyên theo yêu cầu. Đây là nhận diện cốt lõi. */
   /* -------------------------------------------------- */
-  --color-primary: #ffc107; /* Màu vàng kim đặc trưng */
-  --color-primary-hover: #f9db1c; /* Đậm hơn cho trạng thái hover */
+  --color-primary: #f54900; /* Màu vàng kim ffc107 đặc trưng d95b00  f54900*/
+  --color-primary-hover: #d95b00; /* Đậm hơn cho trạng thái hover */
   --color-primary-foreground: #212529; /* Chữ đen đậm trên nền vàng, đảm bảo độ tương phản > 4.5:1 (chuẩn WCAG AA) */
 
   /* -------------------------------------------------- */

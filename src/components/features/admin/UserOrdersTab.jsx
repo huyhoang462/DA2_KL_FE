@@ -271,7 +271,7 @@ const UserOrdersTab = ({ userId }) => {
                       </div>
                     </td>
                     <td className="text-text-primary px-4 py-4 text-right font-semibold">
-                      {order.totalAmount?.toLocaleString('vi-VN')} ₫
+                      {order.totalAmount?.toLocaleString('vi-VN')} USDT
                     </td>
                     <td className="text-text-primary px-4 py-4 text-sm uppercase">
                       {order?.transaction?.paymentMethod}

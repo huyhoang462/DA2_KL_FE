@@ -80,11 +80,11 @@ const RevenueReportTab = () => {
 
   const formatCurrency = (value) => {
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M ₫`;
+      return `${(value / 1000000).toFixed(1)}M USDT`;
     } else if (value >= 100000) {
-      return `${(value / 1000).toFixed(0)}k ₫`;
+      return `${(value / 1000).toFixed(0)}k USDT`;
     }
-    return `${value.toLocaleString('vi-VN')} ₫`;
+    return `${value.toLocaleString('vi-VN')} USDT`;
   };
 
   const COLORS = [
@@ -179,7 +179,8 @@ const RevenueReportTab = () => {
                     Tổng doanh thu
                   </p>
                   <p className="text-text-primary mt-2 text-2xl font-bold">
-                    {reportData.summary.totalRevenue.toLocaleString('vi-VN')} ₫
+                    {reportData.summary.totalRevenue.toLocaleString('vi-VN')}{' '}
+                    USDT
                   </p>
                 </div>
                 <div className="bg-primary/10 text-primary rounded-full p-3">
@@ -235,7 +236,7 @@ const RevenueReportTab = () => {
                     {reportData.summary.averageTransactionValue.toLocaleString(
                       'vi-VN'
                     )}{' '}
-                    ₫
+                    USDT
                   </p>
                 </div>
                 <div className="bg-warning/10 text-warning rounded-full p-3">
@@ -426,7 +427,7 @@ const RevenueReportTab = () => {
                             {org.totalTransactions}
                           </td>
                           <td className="text-text-primary px-6 py-4 text-right text-sm font-semibold">
-                            {org.totalRevenue.toLocaleString('vi-VN')} ₫
+                            {org.totalRevenue.toLocaleString('vi-VN')} USDT
                           </td>
                         </tr>
                       ))

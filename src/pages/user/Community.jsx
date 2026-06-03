@@ -6,13 +6,13 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import PostTicketModal from '../../components/features/posts/PostTicketModal';
 import PostThread from '../../components/features/posts/PostThread';
+import { buildPendingTicketMetaMap } from '../../components/features/posts/PendingTicketsTreeSelect';
 import {
   POST_CONTENT_MAX_LENGTH,
   POST_CONTENT_MIN_LENGTH,
   extractArray,
   getPostCategory,
   normalizePost,
-  normalizeTicket,
 } from '../../components/features/posts/postUtils';
 import {
   createPost,
@@ -43,15 +43,20 @@ const Community = () => {
   const user = useSelector((state) => state.auth.user);
   const userId = user?.id;
 
+  const MAX_RESALE_PRICE_MULTIPLIER = 1.2;
+
   const [activeTab, setActiveTab] = useState('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerForm, setComposerForm] = useState({
     content: '',
-    relatedTicketId: '',
+    walletAddress: '',
     relatedEventId: '',
-    salePrice: '',
+    selectedTicketIds: [],
+    salePrices: {},
   });
   const [composerError, setComposerError] = useState('');
+
+  const isValidEvmWalletAddress = (value) => /^0x[a-fA-F0-9]{40}$/.test(value);
 
   const {
     data: feedResponse,
@@ -118,11 +123,15 @@ const Community = () => {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [feedResponse]);
 
-  const myTickets = useMemo(() => {
-    return extractArray(myTicketsResponse)
-      .map(normalizeTicket)
-      .filter((ticket) => ticket.id);
-  }, [myTicketsResponse]);
+  const pendingTicketEvents = useMemo(
+    () => extractArray(myTicketsResponse),
+    [myTicketsResponse]
+  );
+
+  const pendingTicketMetaMap = useMemo(
+    () => buildPendingTicketMetaMap(pendingTicketEvents),
+    [pendingTicketEvents]
+  );
 
   const posts = useMemo(() => {
     if (activeTab === 'all') return feedPosts;
@@ -134,9 +143,10 @@ const Community = () => {
     setComposerError('');
     setComposerForm({
       content: '',
-      relatedTicketId: '',
+      walletAddress: '',
       relatedEventId: '',
-      salePrice: '',
+      selectedTicketIds: [],
+      salePrices: {},
     });
   };
 
@@ -151,9 +161,21 @@ const Community = () => {
   };
 
   const handleCreatePost = () => {
+    console.log('Submitting post with form data:', composerForm);
     setComposerError('');
 
     const trimmedContent = composerForm.content.trim();
+    const trimmedWalletAddress = composerForm.walletAddress.trim();
+
+    if (!trimmedWalletAddress) {
+      setComposerError('Vui lòng nhập địa chỉ ví MetaMask để nhận tiền.');
+      return;
+    }
+
+    if (!isValidEvmWalletAddress(trimmedWalletAddress)) {
+      setComposerError('Địa chỉ ví MetaMask không hợp lệ.');
+      return;
+    }
 
     if (trimmedContent.length < POST_CONTENT_MIN_LENGTH) {
       setComposerError(
@@ -162,35 +184,79 @@ const Community = () => {
       return;
     }
 
-    if (!composerForm.relatedTicketId) {
+    if (!Array.isArray(composerForm.selectedTicketIds)) {
+      setComposerError('Danh sách vé đã chọn không hợp lệ.');
+      return;
+    }
+
+    if (composerForm.selectedTicketIds.length === 0) {
       setComposerError('Bài viết community phải gắn với ít nhất 1 vé của bạn.');
       return;
     }
 
-    const salePrice = Number(composerForm.salePrice);
+    const selectedMetas = composerForm.selectedTicketIds
+      .map((ticketId) => pendingTicketMetaMap.get(String(ticketId)))
+      .filter(Boolean);
 
-    if (!Number.isFinite(salePrice) || salePrice <= 0) {
-      setComposerError('Vui lòng nhập giá muốn bán hợp lệ.');
+    if (selectedMetas.length !== composerForm.selectedTicketIds.length) {
+      setComposerError('Có vé đã chọn không còn tồn tại. Vui lòng chọn lại.');
       return;
     }
 
-    const selectedTicket = myTickets.find(
-      (ticket) => ticket.id === composerForm.relatedTicketId
+    const eventId = String(selectedMetas[0]?.eventId || '');
+    if (!eventId) {
+      setComposerError('Không xác định được sự kiện của vé đã chọn.');
+      return;
+    }
+
+    const hasDifferentEvent = selectedMetas.some(
+      (meta) => String(meta.eventId) !== eventId
     );
 
-    if (!selectedTicket) {
-      setComposerError('Không tìm thấy vé bạn đã chọn.');
+    if (hasDifferentEvent) {
+      setComposerError('Bạn chỉ có thể chọn vé trong cùng 1 sự kiện.');
       return;
     }
 
-    createPostMutation.mutate({
+    const tickets = [];
+
+    for (const meta of selectedMetas) {
+      const originalPrice = Number(meta.originalPrice || 0);
+      const rawSalePrice = composerForm.salePrices?.[meta.ticketId];
+      const salePrice = Number(rawSalePrice);
+
+      if (!Number.isFinite(salePrice) || salePrice <= 0) {
+        setComposerError(
+          `Vui lòng nhập giá muốn bán hợp lệ cho vé #${String(meta.ticketId).slice(-6)}.`
+        );
+        return;
+      }
+
+      const maxAllowed = originalPrice * MAX_RESALE_PRICE_MULTIPLIER;
+      if (originalPrice > 0 && salePrice > maxAllowed) {
+        setComposerError(
+          `Giá bán của vé #${String(meta.ticketId).slice(-6)} không được lớn hơn 120% giá gốc (${maxAllowed} USDT).`
+        );
+        return;
+      }
+
+      tickets.push({
+        ticketId: meta.ticketId,
+        price: salePrice,
+      });
+    }
+    const datanewPost = {
       content: trimmedContent,
       images: [],
-      relatedTicket: composerForm.relatedTicketId,
-      relatedEvent: composerForm.relatedEventId,
-      price: salePrice,
+      walletAddress: trimmedWalletAddress,
+      relatedEvent: eventId,
+      //  tickets,
+      relatedTickets: tickets.map((item) => {
+        return { ticketId: item.ticketId, price: item.price };
+      }),
       postType: 'marketplace_listing',
-    });
+    };
+    createPostMutation.mutate(datanewPost);
   };
 
   if (isFeedLoading) {
@@ -295,6 +361,7 @@ const Community = () => {
         currentUser={user}
         roleLabel="customer"
         content={composerForm.content}
+        walletAddress={composerForm.walletAddress}
         onContentChange={(value) => {
           setComposerForm((prev) => ({
             ...prev,
@@ -302,33 +369,72 @@ const Community = () => {
           }));
           setComposerError('');
         }}
+        onWalletAddressChange={(value) => {
+          setComposerForm((prev) => ({
+            ...prev,
+            walletAddress: value,
+          }));
+          setComposerError('');
+        }}
         contentLabel="Nội dung bài viết"
-        contentPlaceholder="Chia sẻ về chiếc vé bạn muốn pass lại..."
+        contentPlaceholder="Chia sẻ về vé bạn muốn pass lại..."
         contentLengthText={`${composerForm.content.trim().length}/${POST_CONTENT_MAX_LENGTH} ký tự`}
         ticketLabel="Vé muốn bán"
-        ticketValue={composerForm.relatedTicketId}
-        onTicketChange={({ ticketId, eventId }) => {
-          setComposerForm((prev) => ({
-            ...prev,
-            relatedTicketId: ticketId,
-            relatedEventId: eventId,
-          }));
+        ticketEvents={pendingTicketEvents}
+        selectedTicketIds={composerForm.selectedTicketIds}
+        onSelectedTicketIdsChange={(nextIds) => {
+          setComposerForm((prev) => {
+            const nextSelected = (Array.isArray(nextIds) ? nextIds : []).map(
+              (id) => String(id)
+            );
+            const nextSalePrices = { ...(prev.salePrices || {}) };
 
+            // Remove prices for unselected tickets.
+            Object.keys(nextSalePrices).forEach((ticketId) => {
+              if (!nextSelected.includes(ticketId)) {
+                delete nextSalePrices[ticketId];
+              }
+            });
+
+            // Add default price for newly selected tickets.
+            nextSelected.forEach((ticketId) => {
+              const key = String(ticketId);
+              if (nextSalePrices[key] !== undefined) return;
+              const meta = pendingTicketMetaMap.get(key);
+              nextSalePrices[key] = meta ? String(meta.originalPrice ?? 0) : '';
+            });
+
+            const firstMeta = nextSelected.length
+              ? pendingTicketMetaMap.get(String(nextSelected[0]))
+              : null;
+
+            return {
+              ...prev,
+              selectedTicketIds: nextSelected,
+              relatedEventId: firstMeta?.eventId
+                ? String(firstMeta.eventId)
+                : '',
+              salePrices: nextSalePrices,
+            };
+          });
           setComposerError('');
         }}
-        salePrice={composerForm.salePrice}
-        onSalePriceChange={(value) => {
+        salePrices={composerForm.salePrices}
+        onSalePriceChange={(ticketId, value) => {
           setComposerForm((prev) => ({
             ...prev,
-            salePrice: value,
+            salePrices: {
+              ...(prev.salePrices || {}),
+              [String(ticketId)]: value,
+            },
           }));
           setComposerError('');
         }}
-        ticketOptions={myTickets}
         ticketLoading={isTicketsLoading || isTicketsFetching}
         ticketLoadingLabel="Đang tải vé..."
         ticketEmptyMessage="Bạn chưa có vé nào để tạo bài post pass vé."
         ticketError={ticketsError?.message || ''}
+        maxResaleMultiplier={MAX_RESALE_PRICE_MULTIPLIER}
         error={composerError}
         onClose={closeComposer}
         onSubmit={handleCreatePost}

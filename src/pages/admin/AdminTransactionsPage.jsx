@@ -420,7 +420,7 @@ const AdminTransactionsPage = () => {
                           </div>
                         </td>
                         <td className="text-text-primary px-4 py-4 text-right text-sm font-semibold">
-                          {transaction.amount?.toLocaleString('vi-VN')} ₫
+                          {transaction.amount?.toLocaleString('vi-VN')} USDT
                         </td>
                         <td className="text-text-primary px-4 py-4 text-sm uppercase">
                           {transaction.paymentMethod}

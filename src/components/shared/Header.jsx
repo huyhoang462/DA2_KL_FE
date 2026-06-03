@@ -296,9 +296,10 @@ const Header = () => {
       <div className="h-hheader bg-primary container mx-auto flex items-center justify-between">
         <Link
           to="/"
-          className="text-primary-foreground hover:text-primary-hover flex items-center gap-2 text-xl font-bold transition"
+          className="text-background-primary text-shadow-text-primary flex items-center gap-2 text-3xl font-semibold transition text-shadow-md"
         >
-          <img src="/Logo.png" className="h-12" />
+          {/* <img src="/Logo.png" className="h-12" /> */}
+          SHINE TICKET
         </Link>
 
         <div className="relative hidden md:block">

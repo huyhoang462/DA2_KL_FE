@@ -102,15 +102,13 @@ export const normalizePost = (post) => {
   const author = post?.author || {};
   const authorId = author.id || author._id || 'unknown-author';
   const relatedEvent = post?.relatedEvent || null;
-  const relatedTicket = post?.relatedTicket || null;
-  const ticketType = relatedTicket?.ticketType || null;
+  const relatedTickets = post?.relatedTickets || null;
 
   return {
     id: post?.id || post?._id,
     content: post?.content || '',
     images: Array.isArray(post?.images) ? post.images : [],
     createdAt: post?.createdAt,
-    price: Number(post?.price ?? 0),
     author: {
       id: authorId,
       name: author.fullName || author.name || 'Người dùng',
@@ -134,21 +132,15 @@ export const normalizePost = (post) => {
           locationText: getEventLocationText(relatedEvent),
         }
       : null,
-    relatedTicket: relatedTicket
-      ? {
-          id: relatedTicket.id || relatedTicket._id || relatedTicket,
-          eventName:
-            relatedTicket.eventName ||
-            relatedTicket.event?.name ||
-            'Vé sự kiện',
-          showName:
-            relatedTicket.showName || relatedTicket.show?.name || 'Suất diễn',
-          startTime: relatedTicket.startTime || relatedTicket.show?.startTime,
-          status: relatedTicket.status,
-          ticketTypeId: ticketType?.id || ticketType?._id,
-          ticketTypeName: ticketType?.name,
-          originalPrice: Number(ticketType?.price ?? 0),
-        }
+    relatedTickets: relatedTickets
+      ? relatedTickets.map((ticket) => ({
+          ticketId: ticket.ticket._id,
+          ticketTypeName: ticket.ticket.ticketType.name || 'Loại vé',
+          showName: ticket.ticket.ticketType.show.name || 'Suất diễn',
+          price: Number(ticket.price || 0),
+          originalPrice: Number(ticket.ticket.ticketType.price || 0),
+          status: ticket.ticket.status || 'unknown',
+        }))
       : null,
   };
 };

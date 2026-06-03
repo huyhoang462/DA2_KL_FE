@@ -90,7 +90,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
             <div>
               <p className="text-text-secondary mb-1 text-sm">Số tiền</p>
               <p className="text-text-primary text-lg font-semibold">
-                {transaction.amount?.toLocaleString('vi-VN')} ₫
+                {transaction.amount?.toLocaleString('vi-VN')} USDT
               </p>
             </div>
             <div>
@@ -133,7 +133,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
                     Số tiền hoàn
                   </p>
                   <p className="text-text-primary font-semibold">
-                    {transaction.refundAmount?.toLocaleString('vi-VN')} ₫
+                    {transaction.refundAmount?.toLocaleString('vi-VN')} USDT
                   </p>
                 </div>
                 <div>
@@ -218,13 +218,13 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
                         {item.ticketType?.name}
                       </td>
                       <td className="text-text-primary px-4 py-3 text-right text-sm">
-                        {item.priceAtPurchase?.toLocaleString('vi-VN')} ₫
+                        {item.priceAtPurchase?.toLocaleString('vi-VN')} USDT
                       </td>
                       <td className="text-text-primary px-4 py-3 text-right text-sm">
                         {item.quantity}
                       </td>
                       <td className="text-text-primary px-4 py-3 text-right text-sm font-semibold">
-                        {item.subtotal?.toLocaleString('vi-VN')} ₫
+                        {item.subtotal?.toLocaleString('vi-VN')} USDT
                       </td>
                     </tr>
                   ))}

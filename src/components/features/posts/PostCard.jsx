@@ -129,77 +129,39 @@ const PostCard = ({
         </button>
       )}
 
-      {post.relatedTicket && (
-        <div className="px-4 pb-4 md:px-6">
-          <Link
-            to={`/event-detail/${post.relatedEvent.id}`}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="bg-foreground border-border-default rounded-xl border p-4">
+      {post?.postType === 'marketplace_listing' &&
+        post?.relatedTickets?.length > 0 && (
+          <div className="px-4 pb-4 md:px-6" onClick={() => onOpen(post.id)}>
+            <div className="bg-foreground border-border-default cursor-pointer rounded-xl border p-4 transition-colors hover:bg-gray-50/50">
               <div className="flex items-start gap-3">
                 <img
-                  src={
-                    post.relatedEvent?.bannerImageUrl ||
-                    'https://picsum.photos/seed/default-ticket/120/120'
-                  }
-                  alt={post.relatedEvent?.name || post.relatedTicket.eventName}
-                  className="h-20 w-20 rounded-lg object-cover"
+                  src={post.relatedEvent.bannerImageUrl}
+                  alt={post.relatedEvent.name}
+                  className="border-border-default h-16 w-16 rounded-lg border object-cover"
                 />
-
                 <div className="min-w-0 flex-1">
                   <p className="text-text-primary truncate text-sm font-semibold">
-                    {post.relatedEvent?.name || post.relatedTicket.eventName}
+                    {post.relatedEvent.name}
                   </p>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {post.relatedTicket.ticketTypeName ? (
-                      <span className="bg-background-secondary border-border-default text-text-secondary inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold">
-                        {post.relatedTicket.ticketTypeName}
+                  {/* Phần tóm tắt vé bán */}
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                      🎟️ Bán {post.relatedTickets.length} vé
+                    </span>
+                    <span className="text-text-secondary text-xs">
+                      Giá từ{' '}
+                      <span className="text-sm font-bold text-orange-600">
+                        {Math.min(...post.relatedTickets.map((t) => t.price))}{' '}
+                        USDT
                       </span>
-                    ) : null}
-                    {post.relatedTicket.status ? (
-                      <span className="bg-background-secondary border-border-default text-text-secondary inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold">
-                        {post.relatedTicket.status}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="text-text-secondary mt-2 flex flex-wrap items-center gap-3 text-xs">
-                    {post.relatedEvent?.startDate ? (
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {formatDateTime(post.relatedEvent.startDate)}
-                      </span>
-                    ) : null}
-                    {post.relatedEvent?.locationText ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Tag className="h-3.5 w-3.5" />
-                        {post.relatedEvent.locationText}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end text-right">
-                  <div className="text-text-secondary text-[11px] font-semibold">
-                    Giá gốc
-                  </div>
-                  <div className="text-text-secondary text-sm font-semibold line-through">
-                    {Number(post.relatedTicket.originalPrice || 0)} USDT
-                  </div>
-
-                  <div className="text-text-secondary mt-1 text-[11px] font-semibold">
-                    Giá bán lại
-                  </div>
-                  <div className="text-primary text-lg font-bold">
-                    {Number(post.price || 0)} USDT
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-          </Link>
-        </div>
-      )}
+          </div>
+        )}
 
       {post.postType === 'event_promotion' && post.relatedEvent && (
         <div className="px-4 py-4 md:px-6">

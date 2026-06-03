@@ -243,7 +243,7 @@ const UserEventsTab = ({ userId }) => {
                       {getStatusBadge(event.status)}
                     </td>
                     <td className="text-text-primary px-4 py-4 text-right font-semibold">
-                      {((event.revenue || 0) / 1000000).toFixed(1)}M ₫
+                      {((event.revenue || 0) / 1000000).toFixed(1)}M USDT
                     </td>
                     <td className="text-text-primary px-4 py-4 text-right font-semibold">
                       {event.ticketsSold || 0}
