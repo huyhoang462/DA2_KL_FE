@@ -388,7 +388,7 @@ const UserReportTab = () => {
                           {buyer.totalOrders.toLocaleString('vi-VN')}
                         </td>
                         <td className="text-text-primary px-6 py-4 text-right text-sm font-semibold">
-                          {buyer.totalSpent.toLocaleString('vi-VN')} ₫
+                          {buyer.totalSpent.toLocaleString('vi-VN')} USDT
                         </td>
                       </tr>
                     ))

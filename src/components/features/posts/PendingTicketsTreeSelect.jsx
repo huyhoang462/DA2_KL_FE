@@ -419,9 +419,13 @@ const PendingTicketsTreeSelect = ({
                                             typeof maxResaleMultiplier ===
                                             'number'
                                               ? `Giới hạn: ≤ ${
-                                                  Number(
-                                                    meta.originalPrice || 0
-                                                  ) * maxResaleMultiplier
+                                                  Math.round(
+                                                    Number(
+                                                      meta.originalPrice || 0
+                                                    ) *
+                                                      maxResaleMultiplier *
+                                                      100
+                                                  ) / 100
                                                 } USDT`
                                               : '';
                                           const currentSalePrice =

@@ -13,8 +13,12 @@ const PostTicketModal = ({
   currentUser,
   roleLabel = 'customer',
   content,
+  walletAddress,
   onContentChange,
+  onWalletAddressChange,
   contentLabel = 'Nội dung bài viết',
+  walletLabel = 'Ví MetaMask nhận tiền',
+  walletPlaceholder = '0x... (42 ký tự)',
   contentPlaceholder = '',
   contentLengthText = '',
   ticketLabel = 'Vé muốn bán',
@@ -59,7 +63,8 @@ const PostTicketModal = ({
     >
       <div className="relative flex h-[85vh] flex-col">
         {/* User Info */}
-        <div className="mb-4 flex shrink-0 items-center gap-3">
+
+        <div className="mb-4 flex items-center gap-3">
           <img
             src={
               currentUser?.avatar ||
@@ -72,12 +77,15 @@ const PostTicketModal = ({
             <p className="text-text-primary text-sm font-semibold">
               {currentUser?.name || currentUser?.fullName || 'Bạn'}
             </p>
+            <p className="text-text-secondary text-xs capitalize">
+              {roleLabel}
+            </p>
           </div>
         </div>
 
         {/* Content Area */}
         <div className="flex min-h-0 flex-col overflow-hidden pb-16">
-          <div className="space-y-4 overflow-y-auto pr-1">
+          <div className="space-y-2 overflow-y-auto pr-1">
             {/* TextArea Nội dung (Đã cho full width và giảm rows) */}
             <div>
               <TextArea
@@ -88,8 +96,19 @@ const PostTicketModal = ({
                 placeholder={contentPlaceholder}
                 className="w-full"
               />
+              {contentLengthText ? (
+                <p className="text-text-secondary mt-1 text-right text-xs">
+                  {contentLengthText}
+                </p>
+              ) : null}
             </div>
 
+            <Input
+              label={walletLabel}
+              value={walletAddress}
+              onChange={(event) => onWalletAddressChange?.(event.target.value)}
+              placeholder={walletPlaceholder}
+            />
             {/* Tree Select Chọn vé + Nhập giá */}
             <PendingTicketsTreeSelect
               label={`${ticketLabel} (${selectedMetas.length})`}

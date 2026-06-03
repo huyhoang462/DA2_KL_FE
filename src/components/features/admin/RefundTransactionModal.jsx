@@ -51,7 +51,7 @@ const RefundTransactionModal = ({
             <div className="flex justify-between">
               <span className="text-text-secondary text-sm">Số tiền:</span>
               <span className="text-text-primary font-semibold">
-                {transaction.amount?.toLocaleString('vi-VN')} ₫
+                {transaction.amount?.toLocaleString('vi-VN')} USDT
               </span>
             </div>
             <div className="mt-2 flex justify-between">

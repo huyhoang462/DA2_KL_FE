@@ -220,7 +220,7 @@ const CategoryReportTab = () => {
                           {category.totalTicketsSold.toLocaleString('vi-VN')}
                         </td>
                         <td className="text-text-primary px-6 py-4 text-right text-sm font-semibold">
-                          {category.totalRevenue.toLocaleString('vi-VN')} ₫
+                          {category.totalRevenue.toLocaleString('vi-VN')} USDT
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">

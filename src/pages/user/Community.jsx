@@ -49,11 +49,14 @@ const Community = () => {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerForm, setComposerForm] = useState({
     content: '',
+    walletAddress: '',
     relatedEventId: '',
     selectedTicketIds: [],
     salePrices: {},
   });
   const [composerError, setComposerError] = useState('');
+
+  const isValidEvmWalletAddress = (value) => /^0x[a-fA-F0-9]{40}$/.test(value);
 
   const {
     data: feedResponse,
@@ -140,6 +143,7 @@ const Community = () => {
     setComposerError('');
     setComposerForm({
       content: '',
+      walletAddress: '',
       relatedEventId: '',
       selectedTicketIds: [],
       salePrices: {},
@@ -161,6 +165,17 @@ const Community = () => {
     setComposerError('');
 
     const trimmedContent = composerForm.content.trim();
+    const trimmedWalletAddress = composerForm.walletAddress.trim();
+
+    if (!trimmedWalletAddress) {
+      setComposerError('Vui lòng nhập địa chỉ ví MetaMask để nhận tiền.');
+      return;
+    }
+
+    if (!isValidEvmWalletAddress(trimmedWalletAddress)) {
+      setComposerError('Địa chỉ ví MetaMask không hợp lệ.');
+      return;
+    }
 
     if (trimmedContent.length < POST_CONTENT_MIN_LENGTH) {
       setComposerError(
@@ -233,6 +248,7 @@ const Community = () => {
     const datanewPost = {
       content: trimmedContent,
       images: [],
+      walletAddress: trimmedWalletAddress,
       relatedEvent: eventId,
       //  tickets,
       relatedTickets: tickets.map((item) => {
@@ -345,10 +361,18 @@ const Community = () => {
         currentUser={user}
         roleLabel="customer"
         content={composerForm.content}
+        walletAddress={composerForm.walletAddress}
         onContentChange={(value) => {
           setComposerForm((prev) => ({
             ...prev,
             content: value.slice(0, POST_CONTENT_MAX_LENGTH),
+          }));
+          setComposerError('');
+        }}
+        onWalletAddressChange={(value) => {
+          setComposerForm((prev) => ({
+            ...prev,
+            walletAddress: value,
           }));
           setComposerError('');
         }}
