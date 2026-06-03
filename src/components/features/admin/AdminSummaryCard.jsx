@@ -7,6 +7,7 @@ const AdminSummaryCard = ({
   color = 'primary',
   onClick,
   disabled = false,
+  active = false,
 }) => {
   const colorClasses = {
     primary: 'bg-primary/10 text-primary',
@@ -17,12 +18,23 @@ const AdminSummaryCard = ({
     'text-secondary': 'bg-text-secondary/10 text-text-secondary',
   };
 
+  const handleClick = () => {
+    if (!disabled && onClick) {
+      onClick();
+    }
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={`bg-background-secondary border-border-default rounded-lg border p-5 transition-shadow hover:shadow-sm ${
-        onClick ? 'hover:bg-background-primary/50 cursor-pointer' : ''
-      } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        onClick && !disabled
+          ? 'hover:bg-background-primary/50 cursor-pointer'
+          : ''
+      } ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${
+        active ? 'bg-background-secondary' : ''
+      }`}
+      aria-disabled={disabled}
     >
       <div className="flex items-start justify-between gap-3">
         <div>

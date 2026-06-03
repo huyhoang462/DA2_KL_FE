@@ -51,10 +51,16 @@ const EventStatusBadge = ({ status }) => {
       borderColor: 'border-red-500/30',
     },
     completed: {
-      text: 'Hoàn thành',
+      text: 'Chờ tất toán',
       bgColor: 'bg-purple-500/10',
       textColor: 'text-purple-500',
       borderColor: 'border-purple-500/30',
+    },
+    settled: {
+      text: 'Đã tất toán',
+      bgColor: 'bg-emerald-500/10',
+      textColor: 'text-emerald-500',
+      borderColor: 'border-emerald-500/30',
     },
   };
 

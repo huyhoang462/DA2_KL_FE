@@ -122,6 +122,12 @@ const AdminEventDetailPage = () => {
   const statusInfo = getStatusInfo(overviewData.eventInfo.status);
   const eventInfo = overviewData.eventInfo;
 
+  // hàm khi ấn nút tất toán
+  const handleSettleEvent = () => {
+    // Implementation for settling the event
+    console.log('Tất toán sự kiện:', eventId);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Back Button */}
@@ -148,17 +154,21 @@ const AdminEventDetailPage = () => {
         <div className="border-border-default bg-background-secondary rounded-lg border p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="mb-3 flex items-center gap-3">
-                <h2 className="text-text-primary text-2xl font-bold">
-                  {eventInfo.eventName}
-                </h2>
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${statusInfo.color}`}
-                >
-                  {statusInfo.label}
-                </span>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="mb-3 flex items-center gap-3">
+                  <h2 className="text-text-primary text-2xl font-bold">
+                    {eventInfo.eventName}
+                  </h2>
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${statusInfo.color}`}
+                  >
+                    {statusInfo.label}
+                  </span>
+                </div>
+                <Button variant="success" onClick={handleSettleEvent}>
+                  Tất toán
+                </Button>
               </div>
-
               <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                 {eventInfo.organizerName && (
                   <div className="text-text-secondary flex items-center gap-2">
@@ -185,9 +195,9 @@ const AdminEventDetailPage = () => {
                 )}
 
                 {eventInfo.startDate && (
-                  <div className="text-text-secondary flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>
+                  <div className="text-text-secondary flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="inline h-4 w-4" />
                       Ngày:{' '}
                       <span className="text-text-primary font-medium">
                         {new Date(eventInfo.startDate).toLocaleDateString(
@@ -199,19 +209,7 @@ const AdminEventDetailPage = () => {
                           }
                         )}
                       </span>
-                    </span>
-                  </div>
-                )}
-
-                {eventInfo.location && (
-                  <div className="text-text-secondary flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>
-                      Địa điểm:{' '}
-                      <span className="text-text-primary font-medium">
-                        {eventInfo.location}
-                      </span>
-                    </span>
+                    </div>
                   </div>
                 )}
               </div>

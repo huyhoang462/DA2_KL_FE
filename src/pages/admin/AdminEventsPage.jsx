@@ -1,10 +1,18 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Calendar,
+  Clock3,
+  CheckCircle2,
+} from 'lucide-react';
+import AdminSummaryCard from '../../components/features/admin/AdminSummaryCard';
 import Button from '../../components/ui/Button';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
-import EventTableSkeleton from '../../components/ui/EventTableSkeleton';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import EventReviewModal from '../../components/features/admin/EventReviewModal';
 import EventRow from '../../components/features/admin/EventRow';
@@ -13,6 +21,89 @@ import {
   toggleEventFeatured,
   deleteEvent,
 } from '../../services/adminService';
+
+const AdminEventsPageSkeleton = () => (
+  <div className="space-y-6">
+    <div className="bg-background-secondary border-border-default overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-background-primary border-border-default border-b">
+            <tr>
+              <th className="px-6 py-3 text-left">
+                <div className="bg-background-secondary h-4 w-24 animate-pulse rounded" />
+              </th>
+              <th className="px-6 py-3 text-left">
+                <div className="bg-background-secondary h-4 w-20 animate-pulse rounded" />
+              </th>
+              <th className="px-6 py-3 text-left">
+                <div className="bg-background-secondary h-4 w-24 animate-pulse rounded" />
+              </th>
+              <th className="px-6 py-3 text-left">
+                <div className="bg-background-secondary h-4 w-20 animate-pulse rounded" />
+              </th>
+              <th className="px-6 py-3 text-left">
+                <div className="bg-background-secondary h-4 w-20 animate-pulse rounded" />
+              </th>
+              <th className="px-6 py-3 text-right">
+                <div className="bg-background-secondary ml-auto h-4 w-24 animate-pulse rounded" />
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-border-default divide-y">
+            {[...Array(10)].map((_, index) => (
+              <tr key={index} className="animate-pulse">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-background-primary h-16 w-24 rounded" />
+                    <div className="flex-1 space-y-2">
+                      <div className="bg-background-primary h-4 w-48 rounded" />
+                      <div className="bg-background-primary h-3 w-32 rounded" />
+                      <div className="bg-background-primary h-3 w-40 rounded" />
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="bg-background-primary h-6 w-20 rounded-full" />
+                </td>
+                <td className="px-6 py-4">
+                  <div className="space-y-2">
+                    <div className="bg-background-primary h-4 w-16 rounded" />
+                    <div className="bg-background-primary h-3 w-24 rounded" />
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="space-y-2">
+                    <div className="bg-background-primary h-4 w-20 rounded" />
+                    <div className="bg-background-primary h-3 w-16 rounded" />
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="bg-background-primary h-4 w-24 rounded" />
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <div className="bg-background-primary h-8 w-8 rounded" />
+                    <div className="bg-background-primary h-8 w-8 rounded" />
+                    <div className="bg-background-primary h-8 w-8 rounded" />
+                    <div className="bg-background-primary h-8 w-8 rounded" />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div className="bg-background-secondary h-4 w-48 animate-pulse rounded" />
+      <div className="flex items-center gap-2">
+        <div className="bg-background-secondary h-9 w-20 animate-pulse rounded" />
+        <div className="bg-background-secondary h-9 w-20 animate-pulse rounded" />
+      </div>
+    </div>
+  </div>
+);
 
 const AdminEventsPage = () => {
   const queryClient = useQueryClient();
@@ -59,7 +150,7 @@ const AdminEventsPage = () => {
   }, [searchParams]);
 
   // Fetch events
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['adminEvents', currentPage, filters],
     queryFn: () => getAllEvents({ ...filters, page: currentPage, limit }),
     placeholderData: (prev) => prev,
@@ -67,14 +158,74 @@ const AdminEventsPage = () => {
 
   const events = data?.data?.events || [];
   const pagination = data?.data?.pagination || {};
+  const overview = data?.data?.overview || {};
 
   // Calculate stats from events
   const stats = {
-    total: pagination.totalEvents || 0,
-    pending: events.filter((e) => e.status === 'pending').length,
-    approved: events.filter((e) => e.status === 'approved').length,
-    featured: events.filter((e) => e.featured).length,
+    total: overview.total ?? pagination.totalEvents ?? 0,
+    pending: overview.pending ?? 0,
+    completed: overview.completed ?? 0,
+    featured: overview.featured ?? 0,
   };
+
+  const summaryCards = [
+    {
+      key: 'total',
+      title: 'Tổng sự kiện',
+      value: stats.total,
+      icon: Calendar,
+      color: 'primary',
+      active: !filters.status && filters.isFeatured === null,
+      onClick: () =>
+        setFilters((prev) => ({
+          ...prev,
+          status: '',
+          isFeatured: null,
+        })),
+    },
+    {
+      key: 'pending',
+      title: 'Chờ duyệt',
+      value: stats.pending,
+      icon: Clock3,
+      color: 'warning',
+      active: filters.status === 'pending',
+      onClick: () =>
+        setFilters((prev) => ({
+          ...prev,
+          status: 'pending',
+          isFeatured: null,
+        })),
+    },
+    {
+      key: 'completed',
+      title: 'Chờ tất toán',
+      value: stats.completed,
+      icon: CheckCircle2,
+      color: 'success',
+      active: filters.status === 'completed',
+      onClick: () =>
+        setFilters((prev) => ({
+          ...prev,
+          status: 'completed',
+          isFeatured: null,
+        })),
+    },
+    {
+      key: 'featured',
+      title: 'Nổi bật',
+      value: stats.featured,
+      icon: Star,
+      color: 'info',
+      active: filters.isFeatured === true,
+      onClick: () =>
+        setFilters((prev) => ({
+          ...prev,
+          status: '',
+          isFeatured: true,
+        })),
+    },
+  ];
 
   // Mutations
   const toggleFeaturedMutation = useMutation({
@@ -141,9 +292,9 @@ const AdminEventsPage = () => {
     setDeleteModalState({ isOpen: true, event });
   }, []);
 
-  if (isLoading && !data) {
-    return <EventTableSkeleton />;
-  }
+  const handleSettleEvent = useCallback((event) => {
+    console.log('Tất toán sự kiện:', event);
+  }, []);
 
   if (error) {
     return <ErrorDisplay error={error} />;
@@ -183,12 +334,12 @@ const AdminEventsPage = () => {
           <option value="">Tất cả trạng thái</option>
           <option value="pending">Chờ duyệt</option>
           <option value="approved">Đã duyệt</option>
-          <option value="minting">Đang mint</option>
           <option value="upcoming">Sắp diễn ra</option>
           <option value="ongoing">Đang diễn ra</option>
           <option value="rejected">Từ chối</option>
           <option value="cancelled">Đã hủy</option>
-          <option value="completed">Hoàn thành</option>
+          <option value="completed">Chờ tất toán</option>
+          <option value="settled">Đã tất toán</option>
         </select>
 
         {/* Format Filter */}
@@ -201,105 +352,80 @@ const AdminEventsPage = () => {
           <option value="offline">Offline</option>
           <option value="online">Online</option>
         </select>
-
-        {/* Featured Filter */}
-        {/* <select
-          value={filters.isFeatured === null ? '' : String(filters.isFeatured)}
-          onChange={(e) =>
-            handleFilterChange(
-              'isFeatured',
-              e.target.value === '' ? null : e.target.value === 'true'
-            )
-          }
-          className="bg-background-secondary border-border-default text-text-primary focus:border-primary focus:ring-primary w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-        >
-          <option value="">Tất cả</option>
-          <option value="true">Featured</option>
-          <option value="false">Không featured</option>
-        </select> */}
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="bg-background-secondary border-border-default rounded-lg border p-4">
-          <p className="text-text-secondary text-sm font-medium">
-            Tổng sự kiện
-          </p>
-          <p className="text-text-primary mt-1 text-2xl font-bold">
-            {stats.total}
-          </p>
-        </div>
-        <div className="bg-background-secondary border-border-default rounded-lg border p-4">
-          <p className="text-text-secondary text-sm font-medium">Chờ duyệt</p>
-          <p className="text-warning mt-1 text-2xl font-bold">
-            {stats.pending}
-          </p>
-        </div>
-        <div className="bg-background-secondary border-border-default rounded-lg border p-4">
-          <p className="text-text-secondary text-sm font-medium">Đã duyệt</p>
-          <p className="text-success mt-1 text-2xl font-bold">
-            {stats.approved}
-          </p>
-        </div>
-        <div className="bg-background-secondary border-border-default rounded-lg border p-4">
-          <p className="text-text-secondary text-sm font-medium">Featured</p>
-          <p className="text-primary mt-1 text-2xl font-bold">
-            {stats.featured}
-          </p>
-        </div>
+        {summaryCards.map((card) => (
+          <AdminSummaryCard
+            key={card.key}
+            title={card.title}
+            value={Number(card.value || 0).toLocaleString('vi-VN')}
+            icon={card.icon}
+            color={card.color}
+            onClick={card.onClick}
+            disabled={isFetching}
+            active={card.active}
+          />
+        ))}
       </div>
 
       {/* Events Table */}
-      <div className="bg-background-secondary border-border-default overflow-hidden rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-background-primary border-border-default border-b">
-              <tr>
-                <th className="text-text-secondary py-3 pr-4 pl-5 text-left text-xs font-medium tracking-wider uppercase">
-                  Sự kiện
-                </th>
-                <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                  Trạng thái
-                </th>
-                <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                  Organizer
-                </th>
-                <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                  Vé bán
-                </th>
-                <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                  Ngày tạo
-                </th>
-                <th className="text-text-secondary py-3 pr-5 pl-4 text-right text-xs font-medium tracking-wider uppercase">
-                  Hành động
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-border-default divide-y">
-              {events.length === 0 ? (
+      {isLoading || isFetching ? (
+        <AdminEventsPageSkeleton />
+      ) : (
+        <div className="bg-background-secondary border-border-default overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-background-primary border-border-default border-b">
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="text-text-secondary px-4 py-8 text-center"
-                  >
-                    Không tìm thấy sự kiện nào
-                  </td>
+                  <th className="text-text-secondary py-3 pr-4 pl-5 text-left text-xs font-medium tracking-wider uppercase">
+                    Sự kiện
+                  </th>
+                  <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    Trạng thái
+                  </th>
+                  <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    Organizer
+                  </th>
+                  <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    Vé bán
+                  </th>
+                  <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    Ngày tạo
+                  </th>
+                  <th className="text-text-secondary py-3 pr-5 pl-4 text-right text-xs font-medium tracking-wider uppercase">
+                    Hành động
+                  </th>
                 </tr>
-              ) : (
-                events.map((event) => (
-                  <EventRow
-                    key={event.id}
-                    event={event}
-                    onViewDetails={handleViewDetails}
-                    onToggleFeatured={handleToggleFeatured}
-                    onDelete={handleDeleteEvent}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-border-default divide-y">
+                {events.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="text-text-secondary px-4 py-8 text-center"
+                    >
+                      Không tìm thấy sự kiện nào
+                    </td>
+                  </tr>
+                ) : (
+                  events.map((event) => (
+                    <EventRow
+                      key={event.id}
+                      event={event}
+                      onViewDetails={handleViewDetails}
+                      onToggleFeatured={handleToggleFeatured}
+                      onDelete={handleDeleteEvent}
+                      onSettle={handleSettleEvent}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (

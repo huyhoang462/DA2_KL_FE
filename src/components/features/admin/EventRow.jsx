@@ -1,17 +1,11 @@
 import React from 'react';
-import { Eye, Trash2, Star, Calendar, TicketIcon, Ban } from 'lucide-react';
+import { Eye, Star, Calendar, TicketIcon, Ban, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../ui/Button';
 import EventStatusBadge from './EventStatusBadge';
 
 const EventRow = React.memo(
-  ({
-    event,
-    onViewDetails,
-    onToggleFeatured,
-    onDelete,
-    isTogglingFeatured,
-  }) => {
+  ({ event, onViewDetails, onToggleFeatured, onDelete, onSettle }) => {
     const navigate = useNavigate();
 
     const handleRowClick = (e) => {
@@ -137,6 +131,17 @@ const EventRow = React.memo(
                 title={event.featured ? 'Bỏ featured' : 'Đánh dấu featured'}
               >
                 <Star className="h-4 w-4" />
+              </Button>
+            )}
+
+            {event.status === 'completed' && onSettle && (
+              <Button
+                size="sm"
+                variant="success"
+                onClick={() => navigate(`/admin/events/${event.id}`)}
+                title="Tất toán"
+              >
+                <DollarSign className="h-4 w-4" />
               </Button>
             )}
 
