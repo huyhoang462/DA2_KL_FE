@@ -161,7 +161,6 @@ const Community = () => {
   };
 
   const handleCreatePost = () => {
-    console.log('Submitting post with form data:', composerForm);
     setComposerError('');
 
     const trimmedContent = composerForm.content.trim();
@@ -256,7 +255,8 @@ const Community = () => {
       }),
       postType: 'marketplace_listing',
     };
-    createPostMutation.mutate(datanewPost);
+    console.log('Data to submit for new post:', datanewPost);
+    // createPostMutation.mutate(datanewPost);
   };
 
   if (isFeedLoading) {
