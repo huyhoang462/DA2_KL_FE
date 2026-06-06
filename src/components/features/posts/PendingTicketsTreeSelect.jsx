@@ -129,6 +129,7 @@ export const buildPendingTicketMetaMap = (events = []) => {
             originalPrice: Number(ticketType?.price ?? 0),
             status: ticket?.status,
             mintStatus: ticket?.mintStatus,
+            tokenId: ticket?.tokenId,
           });
         });
       });

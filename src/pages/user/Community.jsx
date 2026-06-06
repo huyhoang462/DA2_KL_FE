@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { ethers } from 'ethers';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import PostTicketModal from '../../components/features/posts/PostTicketModal';
@@ -18,8 +19,16 @@ import {
   createPost,
   getAllPosts,
   deletePost,
+  requestGasFund,
+  waitForGasFunding,
 } from '../../services/postService';
 import { getMyPendingTickets } from '../../services/ticketService';
+import {
+  CONTRACT_ADDRESS,
+  MARKETPLACE_ADDRESS,
+  CONTRACT_ABI,
+  MARKETPLACE_ABI,
+} from '../../constants/web3';
 
 const PostSkeleton = () => (
   <div className="bg-background-secondary border-border-default animate-pulse rounded-2xl border p-5">
@@ -47,6 +56,7 @@ const Community = () => {
 
   const [activeTab, setActiveTab] = useState('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [composerForm, setComposerForm] = useState({
     content: '',
     walletAddress: '',
@@ -117,12 +127,6 @@ const Community = () => {
     },
   });
 
-  const feedPosts = useMemo(() => {
-    return extractArray(feedResponse)
-      .map(normalizePost)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [feedResponse]);
-
   const pendingTicketEvents = useMemo(
     () => extractArray(myTicketsResponse),
     [myTicketsResponse]
@@ -132,11 +136,6 @@ const Community = () => {
     () => buildPendingTicketMetaMap(pendingTicketEvents),
     [pendingTicketEvents]
   );
-
-  const posts = useMemo(() => {
-    if (activeTab === 'all') return feedPosts;
-    return feedPosts.filter((post) => getPostCategory(post) === activeTab);
-  }, [activeTab, feedPosts]);
 
   const closeComposer = () => {
     setIsComposerOpen(false);
@@ -160,7 +159,7 @@ const Community = () => {
     setIsComposerOpen(true);
   };
 
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     console.log('Submitting post with form data:', composerForm);
     setComposerError('');
 
@@ -219,10 +218,12 @@ const Community = () => {
     }
 
     const tickets = [];
+    const ticketIdsWeb3 = [];
+    const pricesWeb3 = [];
 
     for (const meta of selectedMetas) {
       const originalPrice = Number(meta.originalPrice || 0);
-      const rawSalePrice = composerForm.salePrices?.[meta.ticketId];
+      const rawSalePrice = composerForm.salePrices?.[String(meta.ticketId)];
       const salePrice = Number(rawSalePrice);
 
       if (!Number.isFinite(salePrice) || salePrice <= 0) {
@@ -244,20 +245,220 @@ const Community = () => {
         ticketId: meta.ticketId,
         price: salePrice,
       });
+
+      // Giai đoạn 2: Định dạng Decimals
+      if (meta.tokenId == null) {
+        setComposerError(
+          `Vé #${String(meta.ticketId).slice(-6)} chưa được cấp tokenId (chưa mint thành công).`
+        );
+        return;
+      }
+      const tokenIdBigInt = BigInt(meta.tokenId);
+      console.log(
+        `[TICKET CONVERSION] DB ticketId: ${meta.ticketId}, On-chain tokenId: ${tokenIdBigInt}`
+      );
+      ticketIdsWeb3.push(tokenIdBigInt);
+      pricesWeb3.push(ethers.parseUnits(salePrice.toString(), 6));
     }
-    const datanewPost = {
-      content: trimmedContent,
-      images: [],
-      walletAddress: trimmedWalletAddress,
-      relatedEvent: eventId,
-      //  tickets,
-      relatedTickets: tickets.map((item) => {
-        return { ticketId: item.ticketId, price: item.price };
-      }),
-      postType: 'marketplace_listing',
-    };
-    createPostMutation.mutate(datanewPost);
+
+    setIsProcessing(true);
+
+    try {
+      // Kiểm tra window.ethereum
+      if (!window.ethereum) {
+        throw new Error(
+          'Không tìm thấy ví Web3. Vui lòng cài đặt MetaMask hoặc kết nối ví Privy.'
+        );
+      }
+
+      // Tạo provider từ window.ethereum
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const signerAddress = await signer.getAddress();
+
+      // Bước 3 & 4: Gửi yêu cầu xin Gas và chờ đợi đồng bộ
+      console.log('[POST] Requesting gas funding for:', signerAddress);
+
+      try {
+        await requestGasFund(signerAddress);
+        console.log(
+          '[POST] Gas funding request sent, waiting for confirmation...'
+        );
+        await waitForGasFunding(signerAddress);
+        console.log('[POST] Gas funding confirmed!');
+      } catch (gasError) {
+        if (gasError?.message?.includes('pending gas fund request')) {
+          console.warn(
+            '[POST] Pending gas fund request detected. User needs to wait 1-2 minutes.'
+          );
+          toast.warning(
+            'Bạn đã có một yêu cầu nạp gas đang chờ. Vui lòng chờ khoảng 1-2 phút để hoàn thành.'
+          );
+          setIsProcessing(false);
+          return;
+        }
+        throw gasError;
+      }
+
+      // Bước 5: Thực thi Web3 (sau khi BE trả về 200 OK)
+      // Khởi tạo Contract
+      const ticketContract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        CONTRACT_ABI,
+        signer
+      );
+      const marketplaceContract = new ethers.Contract(
+        MARKETPLACE_ADDRESS,
+        MARKETPLACE_ABI,
+        signer
+      );
+
+      // Ký Ủy quyền (Nếu cần)
+      const isApproved = await ticketContract.isApprovedForAll(
+        signerAddress,
+        MARKETPLACE_ADDRESS
+      );
+
+      // Dùng EIP-1559 params cho Polygon Amoy (yêu cầu high priority fee)
+      // Minimum priority fee: 25 GWEI, dùng 30 GWEI để chắc chắn
+      const overrides = {
+        maxPriorityFeePerGas: ethers.parseUnits('30', 'gwei'), // 30 GWEI
+        maxFeePerGas: ethers.parseUnits('150', 'gwei'), // 150 GWEI (base + priority)
+      };
+
+      if (!isApproved) {
+        console.log('[POST] Requesting approval for Marketplace...');
+        const approveTx = await ticketContract.setApprovalForAll(
+          MARKETPLACE_ADDRESS,
+          true,
+          overrides
+        );
+        console.log('[POST] Approval transaction sent:', approveTx.hash);
+        await approveTx.wait();
+        console.log('[POST] ✅ Approval confirmed!');
+      }
+
+      // Kiểm tra vé tồn tại và thuộc về signerAddress
+      console.log('[TICKET OWNERSHIP CHECK] Checking tickets...');
+      for (let i = 0; i < ticketIdsWeb3.length; i++) {
+        const ticketId = ticketIdsWeb3[i];
+        try {
+          const owner = await ticketContract.ownerOf(ticketId);
+          console.log(
+            `[TICKET #${i}] Owner: ${owner}, Expected: ${signerAddress}`
+          );
+          if (owner.toLowerCase() !== signerAddress.toLowerCase()) {
+            throw new Error(
+              `Vé #${i} không thuộc về bạn. Chủ sở hữu: ${owner}`
+            );
+          }
+        } catch (ownerError) {
+          console.error(`[TICKET #${i}] Ownership check failed:`, ownerError);
+          throw new Error(
+            `Lỗi kiểm tra vé #${i}: ${ownerError?.reason || ownerError?.message}`
+          );
+        }
+      }
+
+      console.log(
+        '[POST] Sending batch list tickets transaction to blockchain...'
+      );
+
+      // Debug log trước khi gọi contract
+      console.log('[BATCH LIST TICKETS] Parameters:', {
+        ticketIds: ticketIdsWeb3.map((id) => id.toString()),
+        prices: pricesWeb3.map((p) => ethers.formatUnits(p, 6)),
+        fundReceiver: trimmedWalletAddress,
+        signerAddress,
+      });
+
+      // Thử estimateGas để catch lỗi sớm hơn
+      try {
+        const estimatedGas =
+          await marketplaceContract.batchListTickets.estimateGas(
+            ticketIdsWeb3,
+            pricesWeb3,
+            trimmedWalletAddress,
+            overrides
+          );
+        console.log(
+          '[BATCH LIST TICKETS] Estimated Gas:',
+          estimatedGas.toString()
+        );
+      } catch (estimateError) {
+        console.error(
+          '[BATCH LIST TICKETS] estimateGas failed:',
+          estimateError
+        );
+        const errorMsg =
+          estimateError?.reason ||
+          estimateError?.message ||
+          String(estimateError);
+        throw new Error(`Smart Contract từ chối: ${errorMsg}`);
+      }
+
+      // Đẩy lệnh Đăng bán
+      const listTx = await marketplaceContract.batchListTickets(
+        ticketIdsWeb3,
+        pricesWeb3,
+        trimmedWalletAddress,
+        overrides
+      );
+      await listTx.wait();
+
+      // Bước 6: Khi giao dịch Blockchain thành công, gọi API createPost
+      const datanewPost = {
+        content: trimmedContent,
+        images: [],
+        walletAddress: trimmedWalletAddress,
+        relatedEvent: eventId,
+        relatedTickets: tickets.map((item) => {
+          return { ticketId: item.ticketId, price: item.price };
+        }),
+        postType: 'marketplace_listing',
+      };
+
+      createPostMutation.mutate(datanewPost);
+    } catch (error) {
+      console.error('Lỗi khi gọi Smart Contract:', error);
+
+      let errorMessage = 'Có lỗi xảy ra khi tương tác với blockchain.';
+
+      // Xử lý các loại lỗi khác nhau
+      const errorStr = error?.reason || error?.message || String(error);
+
+      if (
+        errorStr.includes('gas price below minimum') ||
+        errorStr.includes('gas tip')
+      ) {
+        errorMessage = 'Gas price quá thấp. Vui lòng thử lại sau.';
+      } else if (errorStr.includes('pending gas fund')) {
+        errorMessage =
+          'Bạn đã có một yêu cầu nạp gas đang chờ. Vui lòng chờ 1-2 phút.';
+      } else if (errorStr.includes('insufficient funds')) {
+        errorMessage = 'Tài khoản không đủ gas fee. Vui lòng thử lại sau.';
+      } else if (errorStr.includes('user rejected')) {
+        errorMessage = 'Bạn đã hủy giao dịch.';
+      } else {
+        errorMessage = errorStr;
+      }
+
+      setComposerError(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  const feedPosts = useMemo(() => {
+    return extractArray(feedResponse)
+      .map(normalizePost)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [feedResponse]);
+
+  const posts = useMemo(() => {
+    if (activeTab === 'all') return feedPosts;
+    return feedPosts.filter((post) => getPostCategory(post) === activeTab);
+  }, [activeTab, feedPosts]);
 
   if (isFeedLoading) {
     return (
@@ -438,7 +639,7 @@ const Community = () => {
         error={composerError}
         onClose={closeComposer}
         onSubmit={handleCreatePost}
-        isSubmitting={createPostMutation.isPending}
+        isSubmitting={isProcessing || createPostMutation.isPending}
         submitLabel="Đăng bài"
       />
 

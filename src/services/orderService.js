@@ -121,7 +121,7 @@ const getOrderStatus = async (orderId) => {
 };
 
 // (Crypto) API gọi khi mint vé thành công trên Blockchain để BE finalize đơn Web3
-// Backend expects: POST /api/payment/finalize-order-web3 with body { orderId, txHash }
+// Backend expects: POST /api/payment/finalize-order-web3 with body { orderId, txHash, tokenIds }
 const updateOrderMintStatus = async (orderId, mintResult) => {
   try {
     // Extract txHash from possible input shapes (string or object)
@@ -134,7 +134,15 @@ const updateOrderMintStatus = async (orderId, mintResult) => {
             ? mintResult.hash
             : null;
 
-    const payload = { orderId, txHash };
+    // Extract tokenIds (mảng số nguyên các tokenId vừa được đúc từ Blockchain)
+    const tokenIds =
+      mintResult && Array.isArray(mintResult.tokenIds) && mintResult.tokenIds.length > 0
+        ? mintResult.tokenIds
+        : undefined;
+
+    const payload = { orderId, txHash, ...(tokenIds !== undefined && { tokenIds }) };
+
+    console.log('[orderService] Gửi finalize-order-web3 payload:', payload);
 
     const response = await axiosInstance.post(
       `${API_BASE_URL}/payment/finalize-order-web3`,

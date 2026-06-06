@@ -217,6 +217,30 @@ export const useBuyTicketWeb3 = () => {
       setStatusMessage('Giao dịch đang được xử lý trên Blockchain...');
       const receipt = await buyTx.wait();
 
+      // ✅ Bước: Parse event EventTicketsMinted từ receipt để lấy tokenIds
+      // Smart contract dùng ERC721A nên ID vé luôn liên tiếp: [startTokenId, startTokenId + quantity - 1]
+      let tokenIds = [];
+      try {
+        const contractInterface = new ethers.Interface(CONTRACT_ABI);
+        for (const log of receipt.logs) {
+          try {
+            const parsed = contractInterface.parseLog(log);
+            if (parsed && parsed.name === 'EventTicketsMinted') {
+              const startTokenId = Number(parsed.args.startTokenId);
+              const quantity = Number(parsed.args.quantity);
+              for (let i = 0; i < quantity; i++) {
+                tokenIds.push(startTokenId + i);
+              }
+            }
+          } catch (_) {
+            // Log không phải của contract này — bỏ qua
+          }
+        }
+        console.log('[WEB3 PAYMENT] Đã parse được tokenIds từ receipt:', tokenIds);
+      } catch (parseErr) {
+        console.warn('[WEB3 PAYMENT] Không parse được tokenIds từ logs, tiếp tục gửi không có tokenIds:', parseErr);
+      }
+
       setStatusMessage(
         'Thanh toán thành công! Hệ thống đang cập nhật vé vào tài khoản của bạn...'
       );
@@ -232,6 +256,7 @@ export const useBuyTicketWeb3 = () => {
           );
           await orderService.updateOrderMintStatus(orderId, {
             txHash: receipt.hash || buyTx.hash,
+            tokenIds,
           });
           // Đồng bộ thành công
           return receipt.hash || buyTx.hash;
