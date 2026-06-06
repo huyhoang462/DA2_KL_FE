@@ -105,6 +105,9 @@ const Community = () => {
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
     onSuccess: () => {
+      toast.success(
+        'Vé của bạn đã được hủy bán ....  Hệ thống đang gỡ niêm yết , bạn hãy chờ ít phút và kiểm tra lại vé của mình.'
+      );
       queryClient.invalidateQueries({ queryKey: ['community-feed'] });
       queryClient.invalidateQueries({
         queryKey: ['community-my-tickets', userId],
@@ -255,8 +258,7 @@ const Community = () => {
       }),
       postType: 'marketplace_listing',
     };
-    console.log('Data to submit for new post:', datanewPost);
-    // createPostMutation.mutate(datanewPost);
+    createPostMutation.mutate(datanewPost);
   };
 
   if (isFeedLoading) {

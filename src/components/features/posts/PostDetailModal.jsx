@@ -340,9 +340,13 @@ const PostDetailModal = ({
                               <span className="mt-1 inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
                                 Đang bán
                               </span>
+                            ) : post?.author?._id !== ticket?.owner ? (
+                              <span className="mt-1 inline-block rounded bg-red-200 px-1.5 py-0.5 text-[10px] font-medium text-red-500">
+                                Đã bán
+                              </span>
                             ) : (
                               <span className="mt-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
-                                Đã bán/Tạm khóa
+                                Tạm khóa
                               </span>
                             )}
                           </div>

@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Tag } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  CircleDollarSign,
+  Users,
+  Tag,
+} from 'lucide-react';
 import {
   getDashboardOverview,
   getRevenueChart,
 } from '../../services/eventService';
 import Button from '../../components/ui/Button';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import KeyMetricsDisplay from '../../components/features/organizer/KeyMetricsDisplay';
 import RevenueChart from '../../components/features/organizer/RevenueChart';
@@ -21,6 +28,7 @@ const AdminEventDetailPage = () => {
     endDate: null,
     groupBy: 'day',
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch Dashboard Overview
   const {
@@ -122,9 +130,9 @@ const AdminEventDetailPage = () => {
   const statusInfo = getStatusInfo(overviewData.eventInfo.status);
   const eventInfo = overviewData.eventInfo;
 
-  // hàm khi ấn nút tất toán
+  // hàm khi ấn nút xác nhận tất toán sự kiện
   const handleSettleEvent = () => {
-    // Implementation for settling the event
+    setIsModalOpen(false);
     console.log('Tất toán sự kiện:', eventId);
   };
 
@@ -165,7 +173,7 @@ const AdminEventDetailPage = () => {
                     {statusInfo.label}
                   </span>
                 </div>
-                <Button variant="success" onClick={handleSettleEvent}>
+                <Button variant="success" onClick={() => setIsModalOpen(true)}>
                   Tất toán
                 </Button>
               </div>
@@ -245,6 +253,27 @@ const AdminEventDetailPage = () => {
           <TicketBreakdownCard data={overviewData.ticketBreakdown} />
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        title="Ký xác nhận tất toán sự kiện"
+        icon={
+          <div
+            className={`bg-success/10 mx-auto flex h-14 w-14 items-center justify-center rounded-full`}
+          >
+            <CircleDollarSign
+              className="text-success h-8 w-8"
+              aria-hidden="true"
+            />
+          </div>
+        }
+        message="Bạn có chắc chắn muốn tất toán sự kiện này? Xác nhận sẽ cung cấp chữ ký gọi Smart Contract ."
+        confirmText="Xác nhận"
+        confirmVariant="success"
+        cancelText="Hủy"
+        onConfirm={handleSettleEvent}
+      />
     </div>
   );
 };
