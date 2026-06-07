@@ -105,11 +105,10 @@ const AdminDashboardPage = () => {
 
   // Update alert links to include query params
   const processedAlerts = alerts?.map((alert) => {
-    if (
-      alert.link === '/admin/events' &&
-      alert.message?.includes('chờ duyệt')
-    ) {
-      return { ...alert, link: '/admin/events?status=pending' };
+    if (alert.link === '/admin/events') {
+      if (alert.message?.includes('chờ duyệt'))
+        return { ...alert, link: '/admin/events?status=pending' };
+      return { ...alert, link: '/admin/events?status=completed' };
     }
     return alert;
   });

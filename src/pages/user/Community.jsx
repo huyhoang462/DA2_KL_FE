@@ -115,6 +115,9 @@ const Community = () => {
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
     onSuccess: () => {
+      toast.success(
+        'Vé của bạn đã được hủy bán ....  Hệ thống đang gỡ niêm yết , bạn hãy chờ ít phút và kiểm tra lại vé của mình.'
+      );
       queryClient.invalidateQueries({ queryKey: ['community-feed'] });
       queryClient.invalidateQueries({
         queryKey: ['community-my-tickets', userId],

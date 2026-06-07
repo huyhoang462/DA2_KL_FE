@@ -1,7 +1,7 @@
 // src/pages/user/my-tickets/MyTicketsPage.jsx
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
   Calendar,
@@ -10,13 +10,22 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
+import {
+  POST_CONTENT_MAX_LENGTH,
+  POST_CONTENT_MIN_LENGTH,
+} from '../../components/features/posts/postUtils';
+import { toast } from 'react-toastify';
 
 import { getMyTickets } from '../../services/ticketService';
 import TicketCard from '../../components/features/ticket/TicketCard';
 import TicketCardSkeleton from '../../components/features/ticket/TicketCardSkeleton';
 import Input from '../../components/ui/Input';
+import Button from '../../components/ui/Button';
+import Modal from '../../components/ui/Modal';
+import TextArea from '../../components/ui/TextArea';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
-
+import { useSelector } from 'react-redux';
+import { createPost } from '../../services/postService';
 const TABS = [
   {
     key: 'upcoming',
@@ -49,6 +58,7 @@ const TABS = [
     emptyMessage: 'Bạn không có vé nào bị hủy',
   },
 ];
+const isValidEvmWalletAddress = (value) => /^0x[a-fA-F0-9]{40}$/.test(value);
 
 const STATUS_TAB_MAP = {
   pending: 'upcoming',
@@ -60,10 +70,25 @@ const STATUS_TAB_MAP = {
 };
 
 export default function MyTicketsPage() {
+  const queryClient = useQueryClient();
+
   const [activeTab, setActiveTab] = useState('upcoming');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [composerError, setComposerError] = useState('');
+
+  const [composerForm, setComposerForm] = useState({
+    content: '',
+    walletAddress: '',
+    relatedEventId: '',
+    salePrice: 0,
+  });
   const ITEMS_PER_PAGE = 10;
+
+  const user = useSelector((state) => state.auth.user);
+  const userId = user?.id;
 
   // Fetch tickets data
   const {
@@ -114,7 +139,13 @@ export default function MyTicketsPage() {
   // Tính số lượng vé cho mỗi tab
   const tabCounts = useMemo(() => {
     if (!allTickets) return {};
-    const counts = { upcoming: 0, ongoing: 0, past: 0, cancelled: 0 };
+    const counts = {
+      upcoming: 0,
+      selling: 0,
+      ongoing: 0,
+      past: 0,
+      cancelled: 0,
+    };
 
     allTickets.forEach((ticket) => {
       const tabKey = STATUS_TAB_MAP[ticket.status];
@@ -141,6 +172,84 @@ export default function MyTicketsPage() {
 
   const currentTab = TABS.find((tab) => tab.key === activeTab);
 
+  const clickSellTicket = (ticket) => {
+    console.log('[TICKET]: ', ticket);
+    setComposerForm((prev) => ({
+      ...prev,
+      relatedEventId: ticket.eventId,
+    }));
+    setSelectedTicket({ ...ticket });
+    setIsComposerOpen(true);
+  };
+
+  const closeComposer = () => {
+    setIsComposerOpen(false);
+    setComposerError('');
+    setComposerForm({
+      content: '',
+      walletAddress: '',
+      relatedEventId: '',
+      salePrice: 0,
+    });
+    setSelectedTicket(null);
+  };
+
+  const createPostMutation = useMutation({
+    mutationFn: createPost,
+    onSuccess: () => {
+      closeComposer();
+      toast.success('Đăng bài thành công.');
+      queryClient.invalidateQueries({ queryKey: ['community-feed'] });
+      queryClient.invalidateQueries({
+        queryKey: ['community-my-tickets', userId],
+      });
+    },
+    onError: (error) => {
+      setComposerError(
+        error?.message || 'Không thể đăng bài. Vui lòng thử lại sau.'
+      );
+    },
+  });
+  const handleCreatePost = () => {
+    console.log('Submitting post with form data:', composerForm);
+    setComposerError('');
+
+    const trimmedContent = composerForm.content.trim();
+    const trimmedWalletAddress = composerForm.walletAddress.trim();
+    const relatedEventId = composerForm.relatedEventId;
+
+    if (trimmedContent.length < POST_CONTENT_MIN_LENGTH) {
+      setComposerError(
+        `Nội dung phải từ ${POST_CONTENT_MIN_LENGTH} ký tự trở lên.`
+      );
+      return;
+    }
+    if (!trimmedWalletAddress) {
+      setComposerError('Vui lòng nhập địa chỉ ví MetaMask để nhận tiền.');
+      return;
+    }
+
+    if (!isValidEvmWalletAddress(trimmedWalletAddress)) {
+      setComposerError('Địa chỉ ví MetaMask không hợp lệ.');
+      return;
+    }
+
+    const datanewPost = {
+      content: trimmedContent,
+      images: [],
+      walletAddress: trimmedWalletAddress,
+      relatedEvent: relatedEventId,
+      relatedTickets: [
+        {
+          ticketId: selectedTicket?.id,
+          price: Number(composerForm.salePrice),
+        },
+      ],
+      postType: 'marketplace_listing',
+    };
+    createPostMutation.mutate(datanewPost);
+  };
+
   return (
     <div className="space-y-6">
       {/* Search Bar & Filter */}
@@ -166,7 +275,7 @@ export default function MyTicketsPage() {
               const count = tabCounts[tab.key] || 0;
               return (
                 <option key={tab.key} value={tab.key}>
-                  {tab.label} {count > 0 ? `(${count})` : ''}
+                  {tab.label} {count > 0 ? `(${count})` : '(0)'}
                 </option>
               );
             })}
@@ -216,7 +325,11 @@ export default function MyTicketsPage() {
           </p>
           <div className="space-y-3">
             {paginatedTickets.map((ticket) => (
-              <TicketCard key={ticket._id || ticket.id} ticket={ticket} />
+              <TicketCard
+                key={ticket._id || ticket.id}
+                ticket={ticket}
+                onClickSell={clickSellTicket}
+              />
             ))}
           </div>
 
@@ -299,6 +412,200 @@ export default function MyTicketsPage() {
           </p>
         </div>
       )}
+
+      <Modal
+        isOpen={isComposerOpen}
+        title={'Đăng bán vé'}
+        onClose={() => setIsComposerOpen(false)}
+        xButton
+        maxWidth="max-w-3xl"
+      >
+        <div className="relative flex h-[85vh] flex-col">
+          <div className="mb-4 flex items-center gap-3">
+            <img
+              src={'https://picsum.photos/seed/post-composer/100/100'}
+              className="h-9 w-9 rounded-full object-cover"
+              alt={user?.name || 'Avatar'}
+            />
+            <div>
+              <p className="text-text-primary text-sm font-semibold">
+                {user?.name || user?.fullName || 'Bạn'}
+              </p>
+              <p className="text-text-secondary text-xs capitalize">
+                {'Customer'}
+              </p>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex min-h-0 flex-col overflow-hidden pb-16">
+            <div className="space-y-2 overflow-y-auto pr-1">
+              {/* TextArea Nội dung (Đã cho full width và giảm rows) */}
+              <div>
+                <TextArea
+                  label={'Nội dung'}
+                  rows={3} // Giảm từ 4 xuống 3
+                  value={composerForm.content}
+                  onChange={(event) => {
+                    setComposerForm((prev) => ({
+                      ...prev,
+                      content: event.target.value,
+                    }));
+                    setComposerError('');
+                  }}
+                  placeholder={'Chia sẻ về vé bạn muốn bán...'}
+                  className="w-full"
+                />
+                {/* {contentLengthText ? (
+                  <p className="text-text-secondary mt-1 text-right text-xs">
+                    {contentLengthText}
+                  </p>
+                ) : null} */}
+              </div>
+
+              <Input
+                label={'Địa chỉ ví'}
+                value={composerForm.walletAddress}
+                onChange={(event) => {
+                  setComposerForm((prev) => ({
+                    ...prev,
+                    walletAddress: event.target.value,
+                  }));
+                  setComposerError('');
+                }}
+                placeholder={'0x...'}
+              />
+
+              <div className="space-y-1.5">
+                <label className="text-text-secondary block text-sm font-medium">
+                  {`Vé muốn bán`}
+                </label>
+
+                <div
+                  className={`border-border-default } rounded-xl border p-3`}
+                >
+                  <div className="mb-3 flex items-start gap-3">
+                    {selectedTicket?.bannerImageUrl ? (
+                      <img
+                        src={selectedTicket?.bannerImageUrl}
+                        alt={selectedTicket?.eventName || 'Sự kiện'}
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                    ) : null}
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-text-primary line-clamp-1 text-sm font-semibold">
+                        {selectedTicket?.eventName || 'Sự kiện'}
+                      </p>
+                      {selectedTicket?.location ? (
+                        <p className="text-text-secondary mt-0.5 line-clamp-1 text-xs">
+                          {selectedTicket?.location}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div
+                    key={selectedTicket?.ticketId}
+                    className={`bg-gray-50' border-primary flex items-center justify-between rounded-lg border p-3 transition-all`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-5 items-center"></div>
+                      <div>
+                        <p className="text-text-primary text-sm font-semibold">
+                          {/* <span className="mr-1">
+                                          {String(selectedTicket?.ticketId).slice(-6)}
+                                        </span>
+                                        {' - '} */}
+                          {'Vé '}
+                          {selectedTicket?.ticketTypeName}
+                          {' - '}
+                          {selectedTicket?.showName}
+                          {' - '}
+                          <span className="text-sm font-bold text-orange-600">
+                            {Number(selectedTicket?.price || 0)} USDT
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className="flex items-center gap-1 text-right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <p className="text-text-secondary text-sm font-bold">
+                        {'Giá bán lại: '}
+                      </p>
+
+                      <div className="mt-1 flex items-center justify-end gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={composerForm.salePrice}
+                          onChange={(event) => {
+                            setComposerForm((prev) => ({
+                              ...prev,
+                              salePrice: event.target.value,
+                            }));
+                            setComposerError('');
+                          }}
+                          onFocus={(e) => {
+                            // Ép kiểu về Number hoặc so sánh chuỗi cẩn thận
+                            if (
+                              String(e.currentTarget.value) === '0' &&
+                              selectedTicket?.price
+                            ) {
+                              // Lưu giá trị vào một biến local trước để đảm bảo tính chính xác
+                              const targetPrice = selectedTicket.price;
+
+                              setComposerForm((prev) => ({
+                                ...prev,
+                                salePrice: targetPrice,
+                              }));
+                            }
+                          }}
+                          placeholder={'0'}
+                          className="text-text-primary focus:border-primary border-border-default w-16 border-b bg-white px-2 py-1 text-sm font-semibold outline-none dark:border-gray-700 dark:bg-transparent"
+                        />
+                        <span className="text-sm font-semibold text-orange-600">
+                          USDT
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-border-default absolute right-0 bottom-0 left-0 mt-4 flex justify-between border-t pt-2">
+            <div>
+              {composerError ? (
+                <p className="text-destructive bg-destructive-background rounded-lg px-3 py-2 text-sm">
+                  {composerError}
+                </p>
+              ) : null}
+            </div>
+            {/* Footer Buttons */}
+            <div className="flex shrink-0 justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setIsComposerOpen(false)}
+                disabled={createPostMutation.isLoading}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleCreatePost}
+                loading={createPostMutation.isLoading}
+              >
+                {'Đăng bán'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

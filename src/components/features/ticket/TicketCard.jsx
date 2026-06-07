@@ -62,13 +62,12 @@ const MINT_STATUS_CONFIG = {
   },
 };
 
-export default function TicketCard({ ticket }) {
+export default function TicketCard({ ticket, onClickSell = () => {} }) {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [loadingQR, setLoadingQR] = useState(false);
   const pollingIntervalRef = useRef(null);
-  console.log('[TicketCard] status =', ticket.status, ticket);
   const { signMessage, user: privyUser, ready, authenticated } = usePrivy();
 
   const statusConfig = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.pending;
@@ -140,6 +139,8 @@ export default function TicketCard({ ticket }) {
       console.error('[TicketCard] Không thể khởi tạo polling check-in:', err);
     }
   };
+
+  const handleCancelSellTicket = () => {};
 
   const handleExportQR = async () => {
     try {
@@ -324,20 +325,43 @@ export default function TicketCard({ ticket }) {
 
             {/* Bottom Section: Action Button */}
             <div className="flex items-center justify-end">
-              <Button
-                onClick={handleExportQR}
-                disabled={
-                  loadingQR ||
-                  ticket.status !== 'pending' ||
-                  ticket.mintStatus !== 'minted'
-                }
-                className="w-full md:w-auto"
-                variant="primary"
-                size="sm"
-              >
-                <QrCode className="mr-2 h-4 w-4" />
-                {loadingQR ? 'Đang tạo QR...' : 'Xuất QR'}
-              </Button>
+              {ticket.status === 'pending' ? (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleExportQR}
+                    disabled={
+                      loadingQR ||
+                      ticket.status !== 'pending' ||
+                      ticket.mintStatus !== 'minted'
+                    }
+                    className="w-full md:w-auto"
+                    variant="primary"
+                    size="sm"
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    {loadingQR ? 'Đang tạo QR...' : 'Xuất QR'}
+                  </Button>
+                  <Button
+                    onClick={() => onClickSell(ticket)}
+                    className="w-full md:w-auto"
+                    variant="primary"
+                    size="sm"
+                  >
+                    Bán vé
+                  </Button>
+                </div>
+              ) : ticket.status === 'selling' ? (
+                <Button
+                  onClick={handleCancelSellTicket}
+                  className="w-full md:w-auto"
+                  variant="destructive"
+                  size="sm"
+                >
+                  Hủy bán vé
+                </Button>
+              ) : (
+                ''
+              )}
             </div>
           </div>
         </div>
