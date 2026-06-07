@@ -19,16 +19,10 @@ import {
   createPost,
   getAllPosts,
   deletePost,
-  requestGasFund,
-  waitForGasFunding,
 } from '../../services/postService';
 import { getMyPendingTickets } from '../../services/ticketService';
-import {
-  CONTRACT_ADDRESS,
-  MARKETPLACE_ADDRESS,
-  CONTRACT_ABI,
-  MARKETPLACE_ABI,
-} from '../../constants/web3';
+import { useListTicketWeb3 } from '../../hooks/useListTicketWeb3';
+import { useCancelListingWeb3 } from '../../hooks/useCancelListingWeb3';
 
 const PostSkeleton = () => (
   <div className="bg-background-secondary border-border-default animate-pulse rounded-2xl border p-5">
@@ -65,6 +59,10 @@ const Community = () => {
     salePrices: {},
   });
   const [composerError, setComposerError] = useState('');
+  const { isWeb3Processing, web3StatusMessage, handleListTicketWeb3 } =
+    useListTicketWeb3();
+  const { isCancelingWeb3, cancelWeb3StatusMessage, handleCancelListingWeb3 } =
+    useCancelListingWeb3();
 
   const isValidEvmWalletAddress = (value) => /^0x[a-fA-F0-9]{40}$/.test(value);
 
@@ -129,6 +127,55 @@ const Community = () => {
       );
     },
   });
+
+  const handleDeletePostWeb3 = async (postId) => {
+    // Lấy post từ feedPosts đã được normalize
+    const post = feedPosts.find((p) => p.id === postId);
+    console.log('[DELETE POST] Found post:', post);
+
+    if (post && post.postType === 'marketplace_listing') {
+      const ticketIdsWeb3 = [];
+
+      if (post.relatedTickets && post.relatedTickets.length > 0) {
+        for (const t of post.relatedTickets) {
+          if (t.tokenId != null) {
+            ticketIdsWeb3.push(BigInt(t.tokenId));
+          } else {
+            console.warn(`[DELETE POST] Ticket missing tokenId:`, t);
+          }
+        }
+      }
+
+      console.log('[DELETE POST] tokenIds to cancel:', ticketIdsWeb3);
+
+      if (ticketIdsWeb3.length > 0) {
+        try {
+          await handleCancelListingWeb3({ ticketIdsWeb3 });
+        } catch (error) {
+          toast.error(
+            error.message || 'Lỗi khi hủy niêm yết vé trên blockchain.'
+          );
+          return; // Dừng, không xóa trên BE nếu Blockchain lỗi
+        }
+      } else {
+        toast.error(
+          'Không tìm thấy tokenId của vé để hủy trên Smart Contract! API backend chưa trả về tokenId?'
+        );
+        return; // Dừng, không cho xóa nếu chưa hủy web3
+      }
+    }
+
+    // Nếu là post bình thường hoặc đã hủy web3 thành công thì mới gọi BE
+    await deletePostMutation.mutateAsync(postId);
+  };
+
+  // xử lý mua lại vé
+  const handleBuyTickets = (selectedTicketIds) => {
+    console.log('Mua lại vé với ticketIds:', selectedTicketIds);
+    toast.info(
+      'Tính năng mua lại vé đang được phát triển. Vui lòng chờ trong giây lát!'
+    );
+  };
 
   const pendingTicketEvents = useMemo(
     () => extractArray(myTicketsResponse),
@@ -267,147 +314,11 @@ const Community = () => {
     setIsProcessing(true);
 
     try {
-      // Kiểm tra window.ethereum
-      if (!window.ethereum) {
-        throw new Error(
-          'Không tìm thấy ví Web3. Vui lòng cài đặt MetaMask hoặc kết nối ví Privy.'
-        );
-      }
-
-      // Tạo provider từ window.ethereum
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const signerAddress = await signer.getAddress();
-
-      // Bước 3 & 4: Gửi yêu cầu xin Gas và chờ đợi đồng bộ
-      console.log('[POST] Requesting gas funding for:', signerAddress);
-
-      try {
-        await requestGasFund(signerAddress);
-        console.log(
-          '[POST] Gas funding request sent, waiting for confirmation...'
-        );
-        await waitForGasFunding(signerAddress);
-        console.log('[POST] Gas funding confirmed!');
-      } catch (gasError) {
-        if (gasError?.message?.includes('pending gas fund request')) {
-          console.warn(
-            '[POST] Pending gas fund request detected. User needs to wait 1-2 minutes.'
-          );
-          toast.warning(
-            'Bạn đã có một yêu cầu nạp gas đang chờ. Vui lòng chờ khoảng 1-2 phút để hoàn thành.'
-          );
-          setIsProcessing(false);
-          return;
-        }
-        throw gasError;
-      }
-
-      // Bước 5: Thực thi Web3 (sau khi BE trả về 200 OK)
-      // Khởi tạo Contract
-      const ticketContract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        signer
-      );
-      const marketplaceContract = new ethers.Contract(
-        MARKETPLACE_ADDRESS,
-        MARKETPLACE_ABI,
-        signer
-      );
-
-      // Ký Ủy quyền (Nếu cần)
-      const isApproved = await ticketContract.isApprovedForAll(
-        signerAddress,
-        MARKETPLACE_ADDRESS
-      );
-
-      // Dùng EIP-1559 params cho Polygon Amoy (yêu cầu high priority fee)
-      // Minimum priority fee: 25 GWEI, dùng 30 GWEI để chắc chắn
-      const overrides = {
-        maxPriorityFeePerGas: ethers.parseUnits('30', 'gwei'), // 30 GWEI
-        maxFeePerGas: ethers.parseUnits('150', 'gwei'), // 150 GWEI (base + priority)
-      };
-
-      if (!isApproved) {
-        console.log('[POST] Requesting approval for Marketplace...');
-        const approveTx = await ticketContract.setApprovalForAll(
-          MARKETPLACE_ADDRESS,
-          true,
-          overrides
-        );
-        console.log('[POST] Approval transaction sent:', approveTx.hash);
-        await approveTx.wait();
-        console.log('[POST] ✅ Approval confirmed!');
-      }
-
-      // Kiểm tra vé tồn tại và thuộc về signerAddress
-      console.log('[TICKET OWNERSHIP CHECK] Checking tickets...');
-      for (let i = 0; i < ticketIdsWeb3.length; i++) {
-        const ticketId = ticketIdsWeb3[i];
-        try {
-          const owner = await ticketContract.ownerOf(ticketId);
-          console.log(
-            `[TICKET #${i}] Owner: ${owner}, Expected: ${signerAddress}`
-          );
-          if (owner.toLowerCase() !== signerAddress.toLowerCase()) {
-            throw new Error(
-              `Vé #${i} không thuộc về bạn. Chủ sở hữu: ${owner}`
-            );
-          }
-        } catch (ownerError) {
-          console.error(`[TICKET #${i}] Ownership check failed:`, ownerError);
-          throw new Error(
-            `Lỗi kiểm tra vé #${i}: ${ownerError?.reason || ownerError?.message}`
-          );
-        }
-      }
-
-      console.log(
-        '[POST] Sending batch list tickets transaction to blockchain...'
-      );
-
-      // Debug log trước khi gọi contract
-      console.log('[BATCH LIST TICKETS] Parameters:', {
-        ticketIds: ticketIdsWeb3.map((id) => id.toString()),
-        prices: pricesWeb3.map((p) => ethers.formatUnits(p, 6)),
-        fundReceiver: trimmedWalletAddress,
-        signerAddress,
-      });
-
-      // Thử estimateGas để catch lỗi sớm hơn
-      try {
-        const estimatedGas =
-          await marketplaceContract.batchListTickets.estimateGas(
-            ticketIdsWeb3,
-            pricesWeb3,
-            trimmedWalletAddress,
-            overrides
-          );
-        console.log(
-          '[BATCH LIST TICKETS] Estimated Gas:',
-          estimatedGas.toString()
-        );
-      } catch (estimateError) {
-        console.error(
-          '[BATCH LIST TICKETS] estimateGas failed:',
-          estimateError
-        );
-        const errorMsg =
-          estimateError?.reason ||
-          estimateError?.message ||
-          String(estimateError);
-        throw new Error(`Smart Contract từ chối: ${errorMsg}`);
-      }
-
-      // Đẩy lệnh Đăng bán
-      const listTx = await marketplaceContract.batchListTickets(
+      await handleListTicketWeb3({
         ticketIdsWeb3,
         pricesWeb3,
-        trimmedWalletAddress,
-        overrides
-      );
-      await listTx.wait();
+        walletAddress: trimmedWalletAddress,
+      });
 
       // Bước 6: Khi giao dịch Blockchain thành công, gọi API createPost
       const datanewPost = {
@@ -423,30 +334,10 @@ const Community = () => {
 
       createPostMutation.mutate(datanewPost);
     } catch (error) {
-      console.error('Lỗi khi gọi Smart Contract:', error);
-
-      let errorMessage = 'Có lỗi xảy ra khi tương tác với blockchain.';
-
-      // Xử lý các loại lỗi khác nhau
-      const errorStr = error?.reason || error?.message || String(error);
-
-      if (
-        errorStr.includes('gas price below minimum') ||
-        errorStr.includes('gas tip')
-      ) {
-        errorMessage = 'Gas price quá thấp. Vui lòng thử lại sau.';
-      } else if (errorStr.includes('pending gas fund')) {
-        errorMessage =
-          'Bạn đã có một yêu cầu nạp gas đang chờ. Vui lòng chờ 1-2 phút.';
-      } else if (errorStr.includes('insufficient funds')) {
-        errorMessage = 'Tài khoản không đủ gas fee. Vui lòng thử lại sau.';
-      } else if (errorStr.includes('user rejected')) {
-        errorMessage = 'Bạn đã hủy giao dịch.';
-      } else {
-        errorMessage = errorStr;
-      }
-
-      setComposerError(errorMessage);
+      console.error('Lỗi khi tương tác Web3:', error);
+      setComposerError(
+        error.message || 'Có lỗi xảy ra khi tương tác với blockchain.'
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -554,8 +445,9 @@ const Community = () => {
           posts={posts}
           allPosts={feedPosts}
           currentUser={user}
-          onDeletePost={(postId) => deletePostMutation.mutateAsync(postId)}
+          onDeletePost={handleDeletePostWeb3}
           feedQueryKey="community-feed"
+          onBuyTickets={handleBuyTickets}
         />
       )}
 
@@ -650,6 +542,20 @@ const Community = () => {
         <div className="fixed right-6 bottom-6 z-50 flex items-center gap-2 rounded-full bg-black/80 px-3 py-2 text-xs text-white">
           <LoadingSpinner size="sm" className="text-white" />
           Đang tải vé của bạn...
+        </div>
+      )}
+
+      {isCancelingWeb3 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-2xl">
+            <LoadingSpinner className="text-primary mb-4 h-12 w-12" />
+            <h3 className="mb-2 text-lg font-bold text-gray-900">
+              Đang gỡ niêm yết vé...
+            </h3>
+            <p className="animate-pulse font-medium text-blue-600">
+              {cancelWeb3StatusMessage}
+            </p>
+          </div>
         </div>
       )}
     </div>

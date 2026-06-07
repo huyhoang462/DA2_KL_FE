@@ -135,6 +135,7 @@ export const normalizePost = (post) => {
     relatedTickets: relatedTickets
       ? relatedTickets.map((ticket) => ({
           ticketId: ticket.ticket._id,
+          tokenId: ticket.ticket.tokenId,
           ticketTypeName: ticket.ticket.ticketType.name || 'Loại vé',
           showName: ticket.ticket.ticketType.show.name || 'Suất diễn',
           price: Number(ticket.price || 0),

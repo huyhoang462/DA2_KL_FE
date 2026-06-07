@@ -33,6 +33,7 @@ const PostThread = ({
   onDeletePost,
   isDeletingPost = false,
   showDeletePostAction = false,
+  onBuyTickets = () => {},
 }) => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -591,6 +592,7 @@ const PostThread = ({
         likeCount={likeCountByPost[selectedPostId] || 0}
         onToggleLike={handleToggleLike}
         onSharePost={handleSharePost}
+        onBuyTickets={onBuyTickets}
       />
 
       <ConfirmModal

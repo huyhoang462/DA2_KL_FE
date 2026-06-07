@@ -16,7 +16,7 @@ import {
 } from '../../components/features/posts/postUtils';
 import { toast } from 'react-toastify';
 
-import { getMyTickets } from '../../services/ticketService';
+import { getMyTickets, cancelTicketListing } from '../../services/ticketService';
 import TicketCard from '../../components/features/ticket/TicketCard';
 import TicketCardSkeleton from '../../components/features/ticket/TicketCardSkeleton';
 import Input from '../../components/ui/Input';
@@ -24,8 +24,12 @@ import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import TextArea from '../../components/ui/TextArea';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useSelector } from 'react-redux';
 import { createPost } from '../../services/postService';
+import { ethers } from 'ethers';
+import { useListTicketWeb3 } from '../../hooks/useListTicketWeb3';
+import { useCancelListingWeb3 } from '../../hooks/useCancelListingWeb3';
 const TABS = [
   {
     key: 'upcoming',
@@ -89,6 +93,9 @@ export default function MyTicketsPage() {
 
   const user = useSelector((state) => state.auth.user);
   const userId = user?.id;
+
+  const { isWeb3Processing, web3StatusMessage, handleListTicketWeb3 } = useListTicketWeb3();
+  const { isCancelingWeb3, cancelWeb3StatusMessage, handleCancelListingWeb3 } = useCancelListingWeb3();
 
   // Fetch tickets data
   const {
@@ -210,7 +217,7 @@ export default function MyTicketsPage() {
       );
     },
   });
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     console.log('Submitting post with form data:', composerForm);
     setComposerError('');
 
@@ -234,22 +241,84 @@ export default function MyTicketsPage() {
       return;
     }
 
-    const datanewPost = {
-      content: trimmedContent,
-      images: [],
-      walletAddress: trimmedWalletAddress,
-      relatedEvent: relatedEventId,
-      relatedTickets: [
-        {
-          ticketId: selectedTicket?.id,
-          price: Number(composerForm.salePrice),
-        },
-      ],
-      postType: 'marketplace_listing',
-    };
-    createPostMutation.mutate(datanewPost);
+    if (selectedTicket?.tokenId == null) {
+      setComposerError('Vé này chưa được cấp tokenId (chưa mint thành công).');
+      return;
+    }
+
+    const salePrice = Number(composerForm.salePrice);
+    if (!Number.isFinite(salePrice) || salePrice <= 0) {
+      setComposerError('Vui lòng nhập giá muốn bán hợp lệ.');
+      return;
+    }
+
+    // Giá tối đa 120% giá gốc
+    const MAX_RESALE_PRICE_MULTIPLIER = 1.2;
+    const originalPrice = Number(selectedTicket.price || 0);
+    const maxAllowed = originalPrice * MAX_RESALE_PRICE_MULTIPLIER;
+
+    if (originalPrice > 0 && salePrice > maxAllowed) {
+      setComposerError(
+        `Giá bán không được lớn hơn 120% giá gốc (${maxAllowed} USDT).`
+      );
+      return;
+    }
+
+    const ticketIdsWeb3 = [BigInt(selectedTicket.tokenId)];
+    const pricesWeb3 = [ethers.parseUnits(salePrice.toString(), 6)];
+
+    try {
+      await handleListTicketWeb3({
+        ticketIdsWeb3,
+        pricesWeb3,
+        walletAddress: trimmedWalletAddress,
+      });
+
+      const datanewPost = {
+        content: trimmedContent,
+        images: [],
+        walletAddress: trimmedWalletAddress,
+        relatedEvent: relatedEventId,
+        relatedTickets: [
+          {
+            ticketId: selectedTicket?.id || selectedTicket?.ticketId,
+            price: salePrice,
+          },
+        ],
+        postType: 'marketplace_listing',
+      };
+      createPostMutation.mutate(datanewPost);
+    } catch (error) {
+      console.error('Lỗi khi tương tác Web3:', error);
+      setComposerError(error.message || 'Có lỗi xảy ra khi tương tác với blockchain.');
+    }
   };
 
+  const handleCancelSell = async (ticket) => {
+    console.log('[CANCEL SELL] Canceling sell for ticket:', ticket);
+
+    const ticketId = ticket._id || ticket.id;
+    const tokenId = ticket.tokenId;
+
+    if (!tokenId) {
+      toast.error('Không tìm thấy tokenId của vé. Vui lòng liên hệ hỗ trợ.');
+      return;
+    }
+
+    try {
+      // Bước 1: Gọi Smart Contract hủy niêm yết (Gas funding + batchCancelListings)
+      await handleCancelListingWeb3({ ticketIdsWeb3: [BigInt(tokenId)] });
+
+      // Bước 2: Sau khi Blockchain thành công, gọi API Backend cập nhật trạng thái vé
+      await cancelTicketListing(ticketId);
+
+      toast.success('Hủy bán vé thành công! Vé của bạn đã được gỡ khỏi sàn giao dịch.');
+      queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+    } catch (error) {
+      console.error('[CANCEL SELL] Error:', error);
+      toast.error(error.message || 'Có lỗi xảy ra khi hủy bán vé. Vui lòng thử lại.');
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Search Bar & Filter */}
@@ -329,6 +398,7 @@ export default function MyTicketsPage() {
                 key={ticket._id || ticket.id}
                 ticket={ticket}
                 onClickSell={clickSellTicket}
+                onCancelSell={handleCancelSell}
               />
             ))}
           </div>
@@ -585,6 +655,10 @@ export default function MyTicketsPage() {
                 <p className="text-destructive bg-destructive-background rounded-lg px-3 py-2 text-sm">
                   {composerError}
                 </p>
+              ) : isWeb3Processing && web3StatusMessage ? (
+                <p className="text-primary bg-primary/10 rounded-lg px-3 py-2 text-sm">
+                  {web3StatusMessage}
+                </p>
               ) : null}
             </div>
             {/* Footer Buttons */}
@@ -592,13 +666,13 @@ export default function MyTicketsPage() {
               <Button
                 variant="secondary"
                 onClick={() => setIsComposerOpen(false)}
-                disabled={createPostMutation.isLoading}
+                disabled={createPostMutation.isLoading || createPostMutation.isPending || isWeb3Processing}
               >
                 Hủy
               </Button>
               <Button
                 onClick={handleCreatePost}
-                loading={createPostMutation.isLoading}
+                loading={createPostMutation.isLoading || createPostMutation.isPending || isWeb3Processing}
               >
                 {'Đăng bán'}
               </Button>
@@ -606,6 +680,20 @@ export default function MyTicketsPage() {
           </div>
         </div>
       </Modal>
+
+      {isCancelingWeb3 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-2xl">
+            <LoadingSpinner className="mb-4 h-12 w-12 text-primary" />
+            <h3 className="mb-2 text-lg font-bold text-gray-900">
+              Đang hủy niêm yết vé...
+            </h3>
+            <p className="animate-pulse font-medium text-blue-600">
+              {cancelWeb3StatusMessage}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

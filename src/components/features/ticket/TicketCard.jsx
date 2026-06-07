@@ -62,7 +62,7 @@ const MINT_STATUS_CONFIG = {
   },
 };
 
-export default function TicketCard({ ticket, onClickSell = () => {} }) {
+export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSell = () => {} }) {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -139,8 +139,6 @@ export default function TicketCard({ ticket, onClickSell = () => {} }) {
       console.error('[TicketCard] Không thể khởi tạo polling check-in:', err);
     }
   };
-
-  const handleCancelSellTicket = () => {};
 
   const handleExportQR = async () => {
     try {
@@ -352,7 +350,7 @@ export default function TicketCard({ ticket, onClickSell = () => {} }) {
                 </div>
               ) : ticket.status === 'selling' ? (
                 <Button
-                  onClick={handleCancelSellTicket}
+                  onClick={() => onCancelSell(ticket)}
                   className="w-full md:w-auto"
                   variant="destructive"
                   size="sm"

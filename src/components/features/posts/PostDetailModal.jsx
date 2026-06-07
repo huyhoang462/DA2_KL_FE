@@ -161,6 +161,7 @@ const PostDetailModal = ({
   likeCount,
   onToggleLike,
   onSharePost,
+  onBuyTickets = () => {},
 }) => {
   if (!isOpen || !post) return null;
 
@@ -340,13 +341,17 @@ const PostDetailModal = ({
                               <span className="mt-1 inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
                                 Đang bán
                               </span>
+                            ) : ticket.status === 'expired' ? (
+                              <span className="mt-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+                                Hết hạn
+                              </span>
                             ) : post?.author?._id !== ticket?.owner ? (
                               <span className="mt-1 inline-block rounded bg-red-200 px-1.5 py-0.5 text-[10px] font-medium text-red-500">
                                 Đã bán
                               </span>
                             ) : (
                               <span className="mt-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
-                                Tạm khóa
+                                Ngưng bán
                               </span>
                             )}
                           </div>
@@ -376,7 +381,7 @@ const PostDetailModal = ({
                     </div>
 
                     <button
-                      onClick={handleBuyTickets}
+                      onClick={() => onBuyTickets(selectedTicketIds)}
                       className="bg-primary hover:bg-primary-hover flex items-center gap-1 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
                     >
                       Mua ngay •{' '}

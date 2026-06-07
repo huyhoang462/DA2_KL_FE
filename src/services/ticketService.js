@@ -83,3 +83,14 @@ export const getOrganizerTickets = async (showId, filters = {}) => {
     throw extractError(error);
   }
 };
+
+export const cancelTicketListing = async (ticketId) => {
+  try {
+    const response = await axiosInstance.patch(
+      `${API_BASE_URL}/tickets/${ticketId}/cancel-listing`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
