@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Menu,
@@ -51,7 +51,7 @@ const Header = () => {
     autoLoadList: false,
   });
 
-  const handleLogout = async () => {
+ const handleLogout = useCallback(async () => {
     await appLogout({
       onBeforeClearAuth: () => {
         setDropdownOpen(false);
@@ -60,9 +60,9 @@ const Header = () => {
         nav('/');
       },
     });
-  };
+  }, [appLogout, nav]);
 
-  const userMenuItems = [
+const userMenuItems = useMemo(() => [
     {
       label: 'Thông báo',
       icon: <Bell className="mr-2 h-4 w-4" />,
@@ -87,15 +87,22 @@ const Header = () => {
         setDropdownOpen(false);
       },
     },
-
     {
       label: 'Đăng xuất',
       icon: <LogOut className="mr-2 h-4 w-4" />,
       onClick: handleLogout,
-      className:
-        'text-destructive hover:bg-destructive-background font-semibold',
+      className: 'text-destructive hover:bg-destructive-background font-semibold',
     },
-  ];
+  ], [nav, handleLogout]);
+
+  const handleNotificationClick = useCallback(async () => {
+    const nextOpen = !notificationOpen;
+    setNotificationOpen(nextOpen);
+
+    if (nextOpen) {
+      await refreshAll();
+    }
+  }, [notificationOpen, refreshAll]);
 
   const renderUserDropdown = () => (
     <div
@@ -151,17 +158,10 @@ const Header = () => {
       <div className="relative flex h-8 items-center gap-4">
         <div ref={notificationRef} className="relative">
           <NotificationBell
-            unreadCount={unreadCount}
+          unreadCount={unreadCount}
             loading={loadingCount}
             isOpen={notificationOpen}
-            onClick={async () => {
-              const nextOpen = !notificationOpen;
-              setNotificationOpen(nextOpen);
-
-              if (nextOpen) {
-                await refreshAll();
-              }
-            }}
+            onClick={handleNotificationClick} // <-- Truyền hàm đã được tối ưu
             className="text-primary-foreground bg-background-secondary"
           />
 

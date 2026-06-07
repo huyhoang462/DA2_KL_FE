@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react'; // <-- Import thêm memo
 import { Bell } from 'lucide-react';
 
 const NotificationBell = ({
@@ -27,4 +27,5 @@ const NotificationBell = ({
   );
 };
 
-export default NotificationBell;
+// Sử dụng memo để React so sánh props trước khi re-render
+export default memo(NotificationBell);

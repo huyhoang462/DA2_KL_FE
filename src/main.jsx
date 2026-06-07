@@ -10,6 +10,7 @@ import { Provider } from 'react-redux';
 
 // 1. Import PrivyProvider
 import { PrivyProvider } from '@privy-io/react-auth';
+import { SocketProvider } from './contexts/SocketContext.jsx';
 
 // Polyfill Buffer cho bundle của Privy (tránh lỗi "Buffer is not defined")
 if (!window.Buffer) {
@@ -57,7 +58,9 @@ createRoot(document.getElementById('root')).render(
       >
         {/* Web3Provider nằm trong Privy để sử dụng được Smart Wallets */}
         <Web3Provider>
-          <App />
+          <SocketProvider>
+            <App />
+          </SocketProvider>
         </Web3Provider>
       </PrivyProvider>
     </QueryClientProvider>
