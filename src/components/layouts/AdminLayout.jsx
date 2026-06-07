@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react'; // THÊM: useCallback
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -37,7 +37,12 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const appLogout = useAppLogout();
   const user = useSelector((state) => state.auth.user);
+
+  // KHỞI TẠO REF: Đóng dropdown khi click ngoài vùng chọn
   const notificationRef = useClickOutside(() => setNotificationOpen(false));
+  const profileDropdownRef = useClickOutside(() =>
+    setProfileDropdownOpen(false)
+  ); // THÊM MỚI
 
   const {
     notifications,
@@ -46,7 +51,6 @@ const AdminLayout = () => {
     loadingCount,
     listError,
     hasMore,
-    ensureNotificationsLoaded,
     loadMore,
     refreshAll,
     markOneAsRead,
@@ -56,6 +60,16 @@ const AdminLayout = () => {
     role: 'admin',
     autoLoadList: false,
   });
+
+  // TỐI ƯU HÓA: Hàm click thông báo đồng bộ với Header User và Organizer
+  const handleNotificationClick = useCallback(async () => {
+    const nextOpen = !notificationOpen;
+    setNotificationOpen(nextOpen);
+
+    if (nextOpen) {
+      await refreshAll();
+    }
+  }, [notificationOpen, refreshAll]);
 
   const handleLogoutRequest = () => {
     setProfileDropdownOpen(false);
@@ -84,51 +98,12 @@ const AdminLayout = () => {
   };
 
   const menuItems = [
-    {
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      path: '/admin/dashboard',
-    },
-    {
-      label: 'Quản lý người dùng',
-      icon: Users,
-      path: '/admin/users',
-    },
-    {
-      label: 'Quản lý sự kiện',
-      icon: Calendar,
-      path: '/admin/events',
-    },
-    // {
-    //   label: 'Duyệt sự kiện',
-    //   icon: UserCheck,
-    //   path: '/admin/event-approvals',
-    // },
-    {
-      label: 'Thống kê',
-      icon: BarChart3,
-      path: '/admin/reports',
-    },
-    {
-      label: 'Báo cáo nội dung',
-      icon: Flag,
-      path: '/admin/content-reports',
-    },
-    {
-      label: 'Giao dịch',
-      icon: CreditCard,
-      path: '/admin/transactions',
-    },
-    // {
-    //   label: 'Danh mục',
-    //   icon: FileText,
-    //   path: '/admin/categories',
-    // },
-    // {
-    //   label: 'Cài đặt',
-    //   icon: Settings,
-    //   path: '/admin/settings',
-    // },
+    { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { label: 'Quản lý người dùng', icon: Users, path: '/admin/users' },
+    { label: 'Quản lý sự kiện', icon: Calendar, path: '/admin/events' },
+    { label: 'Thống kê', icon: BarChart3, path: '/admin/reports' },
+    { label: 'Báo cáo nội dung', icon: Flag, path: '/admin/content-reports' },
+    { label: 'Giao dịch', icon: CreditCard, path: '/admin/transactions' },
   ];
 
   const SidebarItem = ({ item }) => (
@@ -219,33 +194,16 @@ const AdminLayout = () => {
             >
               <Menu className="h-6 w-6" />
             </button>
-
-            {/* Search */}
-            {/* <div className="hidden md:block">
-              <div className="relative">
-                <Search className="text-text-placeholder absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm..."
-                  className="border-border-default bg-background-primary text-text-primary placeholder:text-text-placeholder focus:border-primary focus:ring-primary/20 w-80 rounded-lg border py-2 pr-4 pl-9 text-sm focus:ring-2 focus:outline-none"
-                />
-              </div>
-            </div> */}
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Notification Bell */}
             <div ref={notificationRef} className="relative">
               <NotificationBell
                 unreadCount={unreadCount}
                 loading={loadingCount}
                 isOpen={notificationOpen}
-                onClick={async () => {
-                  const nextOpen = !notificationOpen;
-                  setNotificationOpen(nextOpen);
-                  if (nextOpen) {
-                    await ensureNotificationsLoaded();
-                  }
-                }}
+                onClick={handleNotificationClick} // SỬA: Đồng bộ logic callback tối ưu
               />
 
               {notificationOpen && (
@@ -279,7 +237,9 @@ const AdminLayout = () => {
             </div>
 
             {/* Profile Dropdown */}
-            <div className="relative">
+            <div ref={profileDropdownRef} className="relative">
+              {' '}
+              {/* SỬA: Đã bọc ref click outside */}
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="hover:bg-background-primary flex items-center gap-2 rounded-lg px-3 py-2 transition-colors"
@@ -291,7 +251,6 @@ const AdminLayout = () => {
                 </div>
                 <ChevronDown className="text-text-secondary h-4 w-4" />
               </button>
-
               {profileDropdownOpen && (
                 <div className="bg-background-secondary border-border-default absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border shadow-lg">
                   <div className="p-2">

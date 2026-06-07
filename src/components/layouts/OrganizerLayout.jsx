@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react'; // THÊM: useCallback
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -34,13 +34,6 @@ const organizerNavItems = [
   { name: 'Thông báo', path: '/organizer/notifications', icon: Bell },
   { name: 'Bài đăng', path: '/organizer/posts', icon: FileText },
   { name: 'Hồ sơ', path: '/organizer/profile', icon: Building2 },
-
-  // {
-  //   name: 'Phân tích tổng quan',
-  //   path: '/organizer/analytics',
-  //   icon: BarChart2,
-  // },
-  // { name: 'Cài đặt tài khoản', path: '/organizer/settings', icon: UserCog },
 ];
 
 const OrganizerLayout = () => {
@@ -52,7 +45,13 @@ const OrganizerLayout = () => {
   const navigate = useNavigate();
   const appLogout = useAppLogout();
   const user = useSelector((state) => state.auth.user);
+
+  // KHỞI TẠO REF: Click ra ngoài tự đóng dropdown thông báo & profile
   const notificationRef = useClickOutside(() => setNotificationOpen(false));
+  const profileDropdownRef = useClickOutside(() =>
+    setProfileDropdownOpen(false)
+  ); // THÊM MỚI
+
   const displayName = user?.name || user?.fullName || 'Organizer';
 
   const {
@@ -62,7 +61,6 @@ const OrganizerLayout = () => {
     loadingCount,
     listError,
     hasMore,
-    ensureNotificationsLoaded,
     loadMore,
     refreshAll,
     markOneAsRead,
@@ -72,6 +70,16 @@ const OrganizerLayout = () => {
     role: 'organizer',
     autoLoadList: false,
   });
+
+  // TỐI ƯU HÓA: Hàm click chuông thông báo đồng bộ với Header User
+  const handleNotificationClick = useCallback(async () => {
+    const nextOpen = !notificationOpen;
+    setNotificationOpen(nextOpen);
+
+    if (nextOpen) {
+      await refreshAll();
+    }
+  }, [notificationOpen, refreshAll]);
 
   const handleLogoutRequest = () => {
     setProfileDropdownOpen(false);
@@ -190,18 +198,13 @@ const OrganizerLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Notification Component */}
             <div ref={notificationRef} className="relative">
               <NotificationBell
                 unreadCount={unreadCount}
                 loading={loadingCount}
                 isOpen={notificationOpen}
-                onClick={async () => {
-                  const nextOpen = !notificationOpen;
-                  setNotificationOpen(nextOpen);
-                  if (nextOpen) {
-                    await ensureNotificationsLoaded();
-                  }
-                }}
+                onClick={handleNotificationClick} // SỬA: Dùng hàm tối ưu hoá giống User Header
               />
 
               {notificationOpen && (
@@ -235,7 +238,9 @@ const OrganizerLayout = () => {
             </div>
 
             {/* Profile Dropdown */}
-            <div className="relative">
+            <div ref={profileDropdownRef} className="relative">
+              {' '}
+              {/* SỬA: Đã bọc ref click outside */}
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="hover:bg-background-primary flex items-center gap-2 rounded-lg px-3 py-2 transition-colors"
@@ -247,7 +252,6 @@ const OrganizerLayout = () => {
                 </div>
                 <ChevronDown className="text-text-secondary h-4 w-4" />
               </button>
-
               {profileDropdownOpen && (
                 <div className="bg-background-secondary border-border-default absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border shadow-lg">
                   <div className="p-2">
