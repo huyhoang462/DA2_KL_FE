@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useSocket } from '../contexts/SocketContext';
 import {
   getNotifications,
   getUnreadNotificationsCount,
@@ -14,11 +15,11 @@ import {
 export const useNotifications = ({
   role = 'customer',
   pageSize = 20,
-  pollInterval = 20000,
   autoLoadList = false,
   initialFilter = 'all',
 } = {}) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const { socket } = useSocket();
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -178,14 +179,29 @@ export const useNotifications = ({
   }, [autoLoadList, isAuthenticated, loadNotifications, loadUnreadCount]);
 
   useEffect(() => {
-    if (!isAuthenticated || !pollInterval) return undefined;
+    if (!isAuthenticated || !socket) return;
 
-    const timer = window.setInterval(() => {
-      loadUnreadCount();
-    }, pollInterval);
+    const handleNewNotification = (rawNotification) => {
+      // 1. Chuẩn hóa dữ liệu mới nhận được cho khớp cấu trúc FE
+      const newNotif = normalizeNotification(rawNotification);
 
-    return () => window.clearInterval(timer);
-  }, [isAuthenticated, loadUnreadCount, pollInterval]);
+      // 2. Cập nhật list (thêm vào đầu mảng)
+      setNotifications((prev) => [newNotif, ...prev]);
+
+      // 3. Tăng biến đếm chưa đọc
+      setUnreadCount((prev) => prev + 1);
+
+      // 4. Hiện popup nhỏ (toast) báo cho user
+    };
+
+    // Đăng ký lắng nghe
+    socket.on('receiveNotification', handleNewNotification);
+
+    // Dọn dẹp (Cleanup) khi unmount để chống rò rỉ bộ nhớ (Memory Leak)
+    return () => {
+      socket.off('receiveNotification', handleNewNotification);
+    };
+  }, [socket, isAuthenticated]);
 
   const filteredNotifications = useMemo(() => {
     return notifications
