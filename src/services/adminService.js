@@ -214,6 +214,18 @@ export const deleteEvent = async (id, permanent = false) => {
   }
 };
 
+export const settleEvent = async (eventId, settlementData) => {
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/admin/events/${eventId}/settle`,
+      settlementData
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 // ============= REPORTS APIs =============
 
 export const getRevenueReport = async (params) => {

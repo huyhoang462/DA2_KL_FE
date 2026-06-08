@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -23,6 +23,10 @@ import {
 import { getMyPendingTickets } from '../../services/ticketService';
 import { useListTicketWeb3 } from '../../hooks/useListTicketWeb3';
 import { useCancelListingWeb3 } from '../../hooks/useCancelListingWeb3';
+import BuyResaleTicketModal from '../../components/features/posts/BuyResaleTicketModal';
+import { useBuyResaleWeb3 } from '../../hooks/useBuyResaleWeb3';
+import { orderService } from '../../services/orderService';
+import { usePrivy } from '@privy-io/react-auth';
 
 const PostSkeleton = () => (
   <div className="bg-background-secondary border-border-default animate-pulse rounded-2xl border p-5">
@@ -64,7 +68,25 @@ const Community = () => {
   const { isCancelingWeb3, cancelWeb3StatusMessage, handleCancelListingWeb3 } =
     useCancelListingWeb3();
 
+  // Buy Resale state
+  const { user: privyUser } = usePrivy();
+  const privyWalletAddress = privyUser?.wallet?.address;
+  const { isProcessing: isBuyResaleProcessing, statusMessage: buyResaleStatusMessage, handleBuyResaleWeb3 } = useBuyResaleWeb3();
+  const [buyResaleModalState, setBuyResaleModalState] = useState({
+    isOpen: false,
+    selectedTickets: [],
+    totalPrice: 0,
+    post: null,
+  });
+
   const isValidEvmWalletAddress = (value) => /^0x[a-fA-F0-9]{40}$/.test(value);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('purchase_success_toast') === 'true') {
+      toast.success('Mua vé thành công!');
+      sessionStorage.removeItem('purchase_success_toast');
+    }
+  }, []);
 
   const {
     data: feedResponse,
@@ -170,11 +192,92 @@ const Community = () => {
   };
 
   // xử lý mua lại vé
-  const handleBuyTickets = (selectedTicketIds) => {
+  const handleBuyTickets = (selectedTicketIds, postId) => {
     console.log('Mua lại vé với ticketIds:', selectedTicketIds);
-    toast.info(
-      'Tính năng mua lại vé đang được phát triển. Vui lòng chờ trong giây lát!'
-    );
+    if (!privyWalletAddress) {
+      toast.warning('Bạn cần đăng nhập bằng Embedded Wallet (Privy) để mua vé.');
+      return;
+    }
+
+    const post = feedPosts.find((p) => p.id === postId);
+    if (!post) {
+      toast.error('Không tìm thấy thông tin bài viết!');
+      return;
+    }
+
+    const ticketsToBuy = post.relatedTickets.filter(t => selectedTicketIds.includes(t.ticketId));
+    if (ticketsToBuy.length === 0) {
+      toast.error('Không tìm thấy thông tin vé muốn mua!');
+      return;
+    }
+
+    const totalPrice = ticketsToBuy.reduce((sum, t) => sum + (t.price || 0), 0);
+
+    setBuyResaleModalState({
+      isOpen: true,
+      selectedTickets: ticketsToBuy,
+      totalPrice,
+      post,
+    });
+  };
+
+  const handleConfirmBuyResale = async () => {
+    try {
+      const { selectedTickets, totalPrice } = buyResaleModalState;
+      const destinationPrivyAddress = privyWalletAddress;
+
+      // 1. Validate
+      const tokenIdsWeb3 = [];
+      const orderTicketsPayload = [];
+
+      for (const t of selectedTickets) {
+        if (t.tokenId == null) {
+          toast.error(`Vé ${t.ticketTypeName} chưa có tokenId, không thể mua Web3.`);
+          return;
+        }
+        tokenIdsWeb3.push(BigInt(t.tokenId));
+        orderTicketsPayload.push({
+          ticketId: t.ticketId,
+          resalePrice: t.price,
+        });
+      }
+
+      // 2. Gọi Backend tạo đơn hàng
+      const createOrderPayload = {
+        walletAddress: destinationPrivyAddress,
+        tickets: orderTicketsPayload,
+      };
+      const orderData = await orderService.createResaleOrder(createOrderPayload);
+      const orderId = orderData?.data?.orderId || orderData?.data?._id || orderData?._id;
+
+      if (!orderId) {
+        throw new Error('Không tạo được đơn hàng từ Server');
+      }
+
+      // 3. Gọi Web3 mua vé
+      const txHash = await handleBuyResaleWeb3({
+        tokenIdsWeb3,
+        totalPrice,
+        destinationPrivyAddress,
+      });
+
+      // 4. Finalize order với Backend
+      const finalizePayload = {
+        orderId,
+        txHash,
+        ticketIds: selectedTickets.map(t => t.ticketId), // mảng DB object IDs
+      };
+      await orderService.finalizeResaleOrder(finalizePayload);
+
+      sessionStorage.setItem('purchase_success_toast', 'true');
+      window.location.reload();
+    } catch (error) {
+      console.error('[BUY RESALE ERROR]', error);
+      // Lỗi hiển thị đã được handle ở hàm gọi hoặc catch ở đây sẽ log thêm
+      if (!error.message?.includes('Bạn đã từ chối')) {
+        toast.error(error.message || 'Giao dịch thất bại.');
+      }
+    }
   };
 
   const pendingTicketEvents = useMemo(
@@ -558,6 +661,16 @@ const Community = () => {
           </div>
         </div>
       )}
+
+      <BuyResaleTicketModal
+        isOpen={buyResaleModalState.isOpen}
+        onClose={() => setBuyResaleModalState({ ...buyResaleModalState, isOpen: false })}
+        selectedTickets={buyResaleModalState.selectedTickets}
+        totalPrice={buyResaleModalState.totalPrice}
+        isProcessing={isBuyResaleProcessing}
+        statusMessage={buyResaleStatusMessage}
+        onConfirmPayment={handleConfirmBuyResale}
+      />
     </div>
   );
 };

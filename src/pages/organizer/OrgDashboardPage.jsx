@@ -1,14 +1,19 @@
 // src/pages/manage/event/dashboard/OrgDashboardPage.jsx
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   getDashboardOverview,
   getRevenueChart,
+  settleEvent,
 } from '../../services/eventService';
+import { useClaimFundsWeb3 } from '../../hooks/useClaimFundsWeb3';
+import { CircleDollarSign } from 'lucide-react';
 
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import Button from '../../components/ui/Button';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import KeyMetricsDisplay from '../../components/features/organizer/KeyMetricsDisplay';
 import RevenueChart from '../../components/features/organizer/RevenueChart';
 import TicketBreakdownCard from '../../components/features/organizer/TicketBreakdownCard';
@@ -22,6 +27,9 @@ export default function OrgDashboardPage() {
     endDate: null,
     groupBy: 'day',
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { isClaiming, handleClaimFunds } = useClaimFundsWeb3();
 
   // Fetch Dashboard Overview
   const {
@@ -107,6 +115,10 @@ export default function OrgDashboardPage() {
         label: 'Đã hoàn thành',
         color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       },
+      settled: {
+        label: 'Đã tất toán',
+        color: 'bg-violet-100 text-violet-800 border-violet-200',
+      },
       rejected: {
         label: 'Bị từ chối',
         color: 'bg-red-100 text-red-800 border-red-200',
@@ -120,24 +132,82 @@ export default function OrgDashboardPage() {
   };
 
   const statusInfo = getStatusInfo(overviewData.eventInfo.status);
+  const eventInfo = overviewData.eventInfo;
+
+  const handleSettleEvent = async () => {
+    setIsModalOpen(false);
+    try {
+      if (!eventInfo.onChainEventId) {
+        throw new Error('Sự kiện chưa được cấu hình onChainEventId.');
+      }
+      const settlementData = await handleClaimFunds(eventInfo.onChainEventId);
+      await settleEvent(eventId, settlementData);
+      queryClient.invalidateQueries(['dashboardOverview', eventId]);
+    } catch (error) {
+      console.error('Lỗi khi tất toán:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Event Info Header (Optional) */}
-      {/* {overviewData.eventInfo && (
-        <div className="border-border-default bg-background-secondary rounded-lg border p-4">
-          <h2 className="text-text-primary text-xl font-bold">
-            {overviewData.eventInfo.eventName}
-          </h2>
-          <p className="text-text-secondary mt-1 text-sm">
-            Trạng thái:{' '}
-            <span
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium ${statusInfo.color}`}
-            >
-              {statusInfo.label}
-            </span>
-          </p>
+      {/* Event Info Header */}
+      {eventInfo && (
+        <div className="border-border-default bg-background-secondary rounded-lg border p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-text-primary text-2xl font-bold flex items-center gap-3">
+              {eventInfo.eventName}
+              <span
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${statusInfo.color}`}
+              >
+                {statusInfo.label}
+              </span>
+            </h2>
+          </div>
+          {eventInfo.status === 'completed' && (
+            <Button variant="success" onClick={() => setIsModalOpen(true)} disabled={isClaiming}>
+              {isClaiming ? 'Đang xử lý...' : 'Tất toán'}
+            </Button>
+          )}
         </div>
-      )} */}
+      )}
+
+      {/* Settlement Info Card */}
+      {eventInfo?.status === 'settled' && eventInfo.settlementInfo && (
+        <div className="border-border-default bg-background-secondary rounded-lg border p-6">
+          <h3 className="text-text-primary mb-4 text-lg font-bold">Thông tin tất toán</h3>
+          <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+            <div className="text-text-secondary flex flex-col gap-1">
+              <span>Ngày tất toán:</span>
+              <span className="text-text-primary font-medium">
+                {new Date(eventInfo.settlementInfo.settledAt).toLocaleString('vi-VN')}
+              </span>
+            </div>
+            <div className="text-text-secondary flex flex-col gap-1">
+              <span>Transaction Hash:</span>
+              <a
+                href={`https://amoy.polygonscan.com/tx/${eventInfo.settlementInfo.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-500 hover:underline break-all"
+              >
+                {eventInfo.settlementInfo.txHash}
+              </a>
+            </div>
+            <div className="text-text-secondary flex flex-col gap-1">
+              <span>Ví Organizer (nhận {eventInfo.settlementInfo.organizerAmount} USDT):</span>
+              <span className="text-text-primary font-medium break-all">
+                {eventInfo.settlementInfo.organizerAddress}
+              </span>
+            </div>
+            <div className="text-text-secondary flex flex-col gap-1">
+              <span>Ví Admin (nhận {eventInfo.settlementInfo.adminAmount} USDT):</span>
+              <span className="text-text-primary font-medium break-all">
+                {eventInfo.settlementInfo.adminTreasuryAddress}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Key Metrics */}
       <KeyMetricsDisplay data={overviewData.metrics} />
@@ -162,6 +232,27 @@ export default function OrgDashboardPage() {
         data={overviewData.recentOrders || []}
         eventId={eventId}
       /> */}
+
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        title="Ký xác nhận tất toán sự kiện"
+        icon={
+          <div
+            className={`bg-success/10 mx-auto flex h-14 w-14 items-center justify-center rounded-full`}
+          >
+            <CircleDollarSign
+              className="text-success h-8 w-8"
+              aria-hidden="true"
+            />
+          </div>
+        }
+        message="Bạn có chắc chắn muốn tất toán sự kiện này? Xác nhận sẽ cung cấp chữ ký gọi Smart Contract để chuyển tiền vào ví của bạn."
+        confirmText="Xác nhận"
+        confirmVariant="success"
+        cancelText="Hủy"
+        onConfirm={handleSettleEvent}
+      />
     </div>
   );
 }

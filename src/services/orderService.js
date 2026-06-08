@@ -176,6 +176,30 @@ const finalizeOrder = async (orderData) => {
     throw extractError(error);
   }
 };
+const createResaleOrder = async (orderPayload) => {
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/payment/create-resale-order`,
+      orderPayload
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
+const finalizeResaleOrder = async (orderPayload) => {
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/payment/finalize-resale-order`,
+      orderPayload
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 export const orderService = {
   createPayment,
   getOrderStatus,
@@ -186,4 +210,6 @@ export const orderService = {
   cancelOrder,
   resendPaymentLink,
   updateOrderMintStatus,
+  createResaleOrder,
+  finalizeResaleOrder,
 };

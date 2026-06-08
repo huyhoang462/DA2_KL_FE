@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import useClickOutside from '../../hooks/useClickOutside';
+import ConfirmModal from '../ui/ConfirmModal';
 import SearchBar from '../features/search/SearchBar';
 import { useNotifications } from '../../hooks/useNotifications';
 import NotificationBell from '../features/notification/NotificationBell';
@@ -28,6 +29,8 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useClickOutside(() => setDropdownOpen(false));
   const mobileMenuRef = useClickOutside(() => setMobileMenuOpen(false));
   const notificationRef = useClickOutside(() => setNotificationOpen(false));
@@ -52,14 +55,34 @@ const Header = () => {
   });
 
   const handleLogout = async () => {
-    await appLogout({
-      onBeforeClearAuth: () => {
-        setDropdownOpen(false);
-      },
-      onAfterClearAuth: () => {
-        nav('/');
-      },
-    });
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      await appLogout({
+        onBeforeClearAuth: () => {
+          setDropdownOpen(false);
+        },
+        onAfterClearAuth: () => {
+          window.location.replace('/');
+        },
+      });
+    } finally {
+      setIsLoggingOut(false);
+      setLogoutConfirmOpen(false);
+    }
+  };
+
+  const handleLogoutRequest = () => {
+    if (isLoggingOut) return;
+    setDropdownOpen(false);
+    setMobileMenuOpen(false);
+    setLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutCancel = () => {
+    if (isLoggingOut) return;
+    setLogoutConfirmOpen(false);
   };
 
   const userMenuItems = [
@@ -91,7 +114,7 @@ const Header = () => {
     {
       label: 'Đăng xuất',
       icon: <LogOut className="mr-2 h-4 w-4" />,
-      onClick: handleLogout,
+      onClick: handleLogoutRequest,
       className:
         'text-destructive hover:bg-destructive-background font-semibold',
     },
@@ -112,13 +135,17 @@ const Header = () => {
         {userMenuItems.map((item) => (
           <li
             key={item.label}
-            className={`flex cursor-pointer items-center px-4 py-2 text-sm transition ${
-              item.className || 'hover:bg-primary/20'
-            }`}
-            onClick={item.onClick}
           >
-            {item.icon}
-            {item.label}
+            <button
+              type="button"
+              className={`flex w-full items-center px-4 py-2 text-sm transition ${
+                item.className || 'hover:bg-primary/20'
+              }`}
+              onClick={item.onClick}
+            >
+              {item.icon}
+              {item.label}
+            </button>
           </li>
         ))}
       </ul>
@@ -275,11 +302,11 @@ const Header = () => {
                 </button>
               ))}
               <button
-                className="text-destructive hover:bg-destructive-background flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition"
+                className="text-destructive hover:bg-destructive-background flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition disabled:cursor-not-allowed disabled:opacity-70"
                 onClick={() => {
-                  handleLogout();
-                  setMobileMenuOpen(false);
+                  handleLogoutRequest();
                 }}
+                disabled={isLoggingOut}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Đăng xuất
@@ -324,6 +351,18 @@ const Header = () => {
         </div>
       </div>
       {mobileMenuOpen && renderMobileMenu()}
+
+      <ConfirmModal
+        isOpen={logoutConfirmOpen}
+        title="Xác nhận đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?"
+        onConfirm={handleLogout}
+        onCancel={handleLogoutCancel}
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        confirmVariant="destructive"
+        isLoading={isLoggingOut}
+      />
     </header>
   );
 };

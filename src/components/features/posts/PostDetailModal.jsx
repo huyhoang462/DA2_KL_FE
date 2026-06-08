@@ -196,7 +196,7 @@ const PostDetailModal = ({
 
     console.log('Danh sách Ticket IDs đặt mua:', selectedTicketIds);
     // Thực hiện gọi API mua vé tại đây với payload là selectedTicketIds
-    // Ví dụ: await buyTicketsAPI({ ticketIds: selectedTicketIds });
+    onBuyTickets(selectedTicketIds, post.id);
   };
 
   // Tính toán tổng số tiền của các vé đang được chọn mua (Hiển thị trực quan trên nút Mua)
@@ -381,7 +381,7 @@ const PostDetailModal = ({
                     </div>
 
                     <button
-                      onClick={() => onBuyTickets(selectedTicketIds)}
+                      onClick={handleBuyTickets}
                       className="bg-primary hover:bg-primary-hover flex items-center gap-1 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
                     >
                       Mua ngay •{' '}

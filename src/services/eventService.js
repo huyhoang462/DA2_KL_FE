@@ -224,3 +224,15 @@ export const getRevenueChart = async (eventId, params = {}) => {
     throw extractError(error);
   }
 };
+
+export const settleEvent = async (eventId, settlementData) => {
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/events/${eventId}/settle`,
+      settlementData
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
