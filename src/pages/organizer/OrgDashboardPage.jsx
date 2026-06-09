@@ -137,10 +137,10 @@ export default function OrgDashboardPage() {
   const handleSettleEvent = async () => {
     setIsModalOpen(false);
     try {
-      if (!eventInfo.onChainEventId) {
-        throw new Error('Sự kiện chưa được cấu hình onChainEventId.');
+      if (!eventInfo.onChainIds?.length) {
+        throw new Error('Sự kiện chưa được cấu hình onChainId cho các hạng vé.');
       }
-      const settlementData = await handleClaimFunds(eventInfo.onChainEventId);
+      const settlementData = await handleClaimFunds(eventInfo.onChainIds);
       await settleEvent(eventId, settlementData);
       queryClient.invalidateQueries(['dashboardOverview', eventId]);
     } catch (error) {

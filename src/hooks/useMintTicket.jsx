@@ -75,6 +75,7 @@ const validateMintVoucher = (voucher, signature, index) => {
 
 export const useMintTicket = () => {
   const [isMinting, setIsMinting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const { signer, connectWallet } = useWeb3();
   const queryClient = useQueryClient();
 
@@ -82,6 +83,7 @@ export const useMintTicket = () => {
     console.log('Bắt đầu mint vé cho sự kiện:', event);
     try {
       setIsMinting(true);
+      setStatusMessage('Đang kết nối ví...');
       const isDevMode = import.meta.env?.DEV ?? false;
 
       // Bước 1: Kiểm tra môi trường ví (Wallet Environment Check)
@@ -105,6 +107,7 @@ export const useMintTicket = () => {
         method: 'eth_chainId',
       });
       if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
+        setStatusMessage('Đang chuyển mạng lưới...');
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
@@ -142,6 +145,7 @@ export const useMintTicket = () => {
       }
 
       // Bước 3: Chuẩn bị Dữ liệu Voucher (Data Formatting)
+      setStatusMessage('Đang chuẩn bị dữ liệu mint...');
       // Lấy voucher từ cục dữ liệu Event (đã fetch từ BE về)
       const vouchersData = event.vouchers;
       const signaturesData = event.signatures;
@@ -204,6 +208,7 @@ export const useMintTicket = () => {
       console.log('--------------------------');
 
       const seenNonces = new Set();
+      setStatusMessage('Đang kiểm tra dữ liệu voucher...');
       formattedVouchers.forEach((voucher, index) => {
         validateMintVoucher(voucher, signatures[index], index);
 
@@ -215,6 +220,7 @@ export const useMintTicket = () => {
       });
 
       try {
+        setStatusMessage('Đang kiểm tra giao dịch với Smart Contract...');
         await contract.batchMintEventTickets.staticCall(
           formattedVouchers,
           signatures
@@ -264,6 +270,7 @@ export const useMintTicket = () => {
         throw new Error(getMintPrecheckErrorMessage(precheckError));
       }
 
+      setStatusMessage('Đang chờ xác nhận mint trên ví...');
       const tx = await contract.batchMintEventTickets(
         formattedVouchers,
         signatures,
@@ -271,10 +278,12 @@ export const useMintTicket = () => {
       );
 
       // Bước 4b: Đợi Blockchain xác nhận giao dịch (Await)
+      setStatusMessage('Giao dịch mint đang được xử lý trên Blockchain...');
       const receipt = await tx.wait();
 
       // Bước 5: Báo cáo Backend và Chốt hạ
       try {
+        setStatusMessage('Đang cập nhật kết quả mint lên hệ thống...');
         await submitEventMintResult(event.id, {
           isSuccess: true,
           txHash: receipt.hash || tx.hash,
@@ -398,11 +407,13 @@ export const useMintTicket = () => {
       }
     } finally {
       setIsMinting(false);
+      setStatusMessage('');
     }
   };
 
   return {
     isMinting,
+    statusMessage,
     handleMintTicket,
   };
 };

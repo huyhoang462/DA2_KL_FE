@@ -11,11 +11,21 @@ import {
 
 export const useClaimFundsWeb3 = () => {
   const [isClaiming, setIsClaiming] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const { signer, connectWallet } = useWeb3();
 
-  const handleClaimFunds = async (onChainEventId) => {
+  const handleClaimFunds = async (onChainIds) => {
     try {
       setIsClaiming(true);
+      setStatusMessage('Đang kết nối ví...');
+
+      const normalizedOnChainIds = Array.isArray(onChainIds)
+        ? onChainIds.filter((onChainId) => onChainId !== null && onChainId !== undefined)
+        : [onChainIds].filter((onChainId) => onChainId !== null && onChainId !== undefined);
+
+      if (normalizedOnChainIds.length === 0) {
+        throw new Error('Sự kiện chưa có onChainId hợp lệ để tất toán.');
+      }
 
       if (!window.ethereum) {
         throw new Error(
@@ -23,18 +33,19 @@ export const useClaimFundsWeb3 = () => {
         );
       }
 
-      let currentSigner = signer;
-      if (!currentSigner) {
+      if (!signer) {
         await connectWallet();
-        const browserProvider = new ethers.BrowserProvider(window.ethereum);
-        currentSigner = await browserProvider.getSigner();
       }
+
+      let browserProvider = new ethers.BrowserProvider(window.ethereum);
+      let currentSigner = await browserProvider.getSigner();
 
       const currentNetwork = await window.ethereum.request({
         method: 'eth_chainId',
       });
       
       if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
+        setStatusMessage('Đang chuyển mạng lưới...');
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
@@ -62,8 +73,8 @@ export const useClaimFundsWeb3 = () => {
             throw switchError;
           }
         }
-        const newProvider = new ethers.BrowserProvider(window.ethereum);
-        currentSigner = await newProvider.getSigner();
+        browserProvider = new ethers.BrowserProvider(window.ethereum);
+        currentSigner = await browserProvider.getSigner();
       }
 
       const contract = new ethers.Contract(
@@ -75,6 +86,27 @@ export const useClaimFundsWeb3 = () => {
       const signerAddress = await currentSigner.getAddress();
       const adminTreasuryAddress = await contract.adminTreasury();
 
+      console.log('[CLAIM FUNDS] signerAddress:', signerAddress);
+      console.log('[CLAIM FUNDS] onChainIds:', normalizedOnChainIds);
+
+      setStatusMessage('Đang kiểm tra quyền organizer trên Smart Contract...');
+      for (const onChainId of normalizedOnChainIds) {
+        const evt = await contract.events(onChainId);
+        const organizerAddress = evt.organizer;
+
+        console.log('[CLAIM FUNDS] on-chain organizer check:', {
+          onChainId: onChainId?.toString?.() ?? onChainId,
+          signerAddress,
+          organizerAddress,
+        });
+
+        if (organizerAddress.toLowerCase() !== signerAddress.toLowerCase()) {
+          throw new Error(
+            `Ví đang kết nối (${signerAddress}) không phải organizer của onChainId ${onChainId}. Organizer on-chain là ${organizerAddress}.`
+          );
+        }
+      }
+
       const txOptions = {
         maxPriorityFeePerGas: 30000000000n, // 30 Gwei
         maxFeePerGas: 30000000000n, // 30 Gwei
@@ -85,10 +117,13 @@ export const useClaimFundsWeb3 = () => {
         toastId: 'claiming-toast',
       });
 
-      const tx = await contract.claimFunds(onChainEventId, txOptions);
+      setStatusMessage('Đang chờ xác nhận tất toán trên ví...');
+      const tx = await contract.batchClaimFunds(normalizedOnChainIds, txOptions);
+      setStatusMessage('Giao dịch tất toán đang được xử lý trên Blockchain...');
       const receipt = await tx.wait();
 
       // Parse Transfer logs from USDT token
+      setStatusMessage('Đang đọc kết quả chuyển tiền USDT...');
       const usdtInterface = new ethers.Interface(USDT_ABI);
       let organizerAmount = 0n;
       let adminAmount = 0n;
@@ -136,11 +171,13 @@ export const useClaimFundsWeb3 = () => {
       throw error;
     } finally {
       setIsClaiming(false);
+      setStatusMessage('');
     }
   };
 
   return {
     isClaiming,
+    statusMessage,
     handleClaimFunds,
   };
 };

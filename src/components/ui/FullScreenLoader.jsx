@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function FullScreenLoader() {
+export default function FullScreenLoader({ message = 'LOADING...' }) {
   return (
     <div className="from-background-primary to-foreground flex h-screen w-screen flex-col items-center justify-center bg-gradient-to-br">
       <div className="relative flex flex-col items-center">
@@ -14,8 +14,8 @@ export default function FullScreenLoader() {
               alt="ShineTicket Logo"
               className="h-24 w-auto"
             />
-            <p className="text-text-secondary mt-4 text-sm font-semibold tracking-[0.2em]">
-              LOADING...
+            <p className="text-text-secondary mt-4 max-w-64 text-center text-sm font-semibold tracking-[0.08em]">
+              {message}
             </p>
           </div>
         </div>

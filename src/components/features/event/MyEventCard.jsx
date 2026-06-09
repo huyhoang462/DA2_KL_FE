@@ -50,7 +50,7 @@ export default function MyEventCard({ event }) {
     className: 'bg-foreground text-text-secondary',
   };
 
-  const { isMinting, handleMintTicket } = useMintTicket();
+  const { isMinting, statusMessage, handleMintTicket } = useMintTicket();
 
   const actionLinks = [
     { label: 'Tổng quan', path: `/manage/${event.id}/dashboard` },
@@ -67,7 +67,7 @@ export default function MyEventCard({ event }) {
     <>
       {isMinting && (
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm">
-          <FullScreenLoader />
+          <FullScreenLoader message={statusMessage || 'Đang mint vé...'} />
         </div>
       )}
       <div className="border-border-default bg-background-secondary relative rounded-lg border shadow-sm transition-shadow hover:shadow-md">
