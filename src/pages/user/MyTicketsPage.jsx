@@ -189,6 +189,7 @@ export default function MyTicketsPage() {
     setComposerForm((prev) => ({
       ...prev,
       relatedEventId: ticket.eventId,
+      walletAddress: user?.walletAddress || '',
     }));
     setSelectedTicket({ ...ticket });
     setIsComposerOpen(true);
@@ -216,6 +217,9 @@ export default function MyTicketsPage() {
         queryKey: ['community-my-tickets', userId],
       });
       queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     },
     onError: (error) => {
       setComposerError(
