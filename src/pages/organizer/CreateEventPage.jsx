@@ -12,11 +12,9 @@ import PaymentInfoForm from '../../components/features/createEvent/PaymentInfoFo
 import {
   setCurrentStep,
   updateEventField,
+  clearEvent,
 } from '../../store/slices/eventSlice';
-import {
-  validateStepOne,
-  validateStepTwo,
-} from '../../utils/validation';
+import { validateStepOne, validateStepTwo } from '../../utils/validation';
 import { createEvent } from '../../services/eventService';
 
 const CreateEventPage = () => {
@@ -99,7 +97,7 @@ const CreateEventPage = () => {
       validationErrors = validateStepOne(eventData);
     } else if (currentStep === 2) {
       validationErrors = validateStepTwo(eventData);
-    } 
+    }
     // else if (currentStep === 3) {
     //   validationErrors = validateStepThree(eventData);
     // }
@@ -140,6 +138,7 @@ const CreateEventPage = () => {
         message: 'Sự kiện của bạn đã được tạo và gửi đi xét duyệt.',
       });
       setShowNotification(true);
+      dispatch(clearEvent());
     } catch (error) {
       setNotificationInfo({
         type: 'error',
@@ -161,7 +160,7 @@ const CreateEventPage = () => {
       validationErrors = validateStepOne(eventData);
     } else if (currentStep === 2) {
       validationErrors = validateStepTwo(eventData);
-    } 
+    }
     // else if (currentStep === 3) {
     //   validationErrors = validateStepThree(eventData);
     // }

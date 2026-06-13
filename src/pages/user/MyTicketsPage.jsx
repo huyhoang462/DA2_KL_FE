@@ -16,7 +16,10 @@ import {
 } from '../../components/features/posts/postUtils';
 import { toast } from 'react-toastify';
 
-import { getMyTickets, cancelTicketListing } from '../../services/ticketService';
+import {
+  getMyTickets,
+  cancelTicketListing,
+} from '../../services/ticketService';
 import TicketCard from '../../components/features/ticket/TicketCard';
 import TicketCardSkeleton from '../../components/features/ticket/TicketCardSkeleton';
 import Input from '../../components/ui/Input';
@@ -94,8 +97,10 @@ export default function MyTicketsPage() {
   const user = useSelector((state) => state.auth.user);
   const userId = user?.id;
 
-  const { isWeb3Processing, web3StatusMessage, handleListTicketWeb3 } = useListTicketWeb3();
-  const { isCancelingWeb3, cancelWeb3StatusMessage, handleCancelListingWeb3 } = useCancelListingWeb3();
+  const { isWeb3Processing, web3StatusMessage, handleListTicketWeb3 } =
+    useListTicketWeb3();
+  const { isCancelingWeb3, cancelWeb3StatusMessage, handleCancelListingWeb3 } =
+    useCancelListingWeb3();
 
   // Fetch tickets data
   const {
@@ -210,6 +215,7 @@ export default function MyTicketsPage() {
       queryClient.invalidateQueries({
         queryKey: ['community-my-tickets', userId],
       });
+      queryClient.invalidateQueries({ queryKey: ['myTickets'] });
     },
     onError: (error) => {
       setComposerError(
@@ -290,7 +296,9 @@ export default function MyTicketsPage() {
       createPostMutation.mutate(datanewPost);
     } catch (error) {
       console.error('Lỗi khi tương tác Web3:', error);
-      setComposerError(error.message || 'Có lỗi xảy ra khi tương tác với blockchain.');
+      setComposerError(
+        error.message || 'Có lỗi xảy ra khi tương tác với blockchain.'
+      );
     }
   };
 
@@ -312,11 +320,21 @@ export default function MyTicketsPage() {
       // Bước 2: Sau khi Blockchain thành công, gọi API Backend cập nhật trạng thái vé
       await cancelTicketListing(ticketId);
 
-      toast.success('Hủy bán vé thành công! Vé của bạn đã được gỡ khỏi sàn giao dịch.');
-      queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+      toast.success(
+        'Hủy bán vé thành công! Vé của bạn đã được gỡ khỏi sàn giao dịch.'
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['myTickets'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-feed'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['community-my-tickets', userId],
+        }),
+      ]);
     } catch (error) {
       console.error('[CANCEL SELL] Error:', error);
-      toast.error(error.message || 'Có lỗi xảy ra khi hủy bán vé. Vui lòng thử lại.');
+      toast.error(
+        error.message || 'Có lỗi xảy ra khi hủy bán vé. Vui lòng thử lại.'
+      );
     }
   };
   return (
@@ -486,7 +504,7 @@ export default function MyTicketsPage() {
       <Modal
         isOpen={isComposerOpen}
         title={'Đăng bán vé'}
-        onClose={() => setIsComposerOpen(false)}
+        onClose={closeComposer}
         xButton
         maxWidth="max-w-3xl"
       >
@@ -666,13 +684,21 @@ export default function MyTicketsPage() {
               <Button
                 variant="secondary"
                 onClick={() => setIsComposerOpen(false)}
-                disabled={createPostMutation.isLoading || createPostMutation.isPending || isWeb3Processing}
+                disabled={
+                  createPostMutation.isLoading ||
+                  createPostMutation.isPending ||
+                  isWeb3Processing
+                }
               >
                 Hủy
               </Button>
               <Button
                 onClick={handleCreatePost}
-                loading={createPostMutation.isLoading || createPostMutation.isPending || isWeb3Processing}
+                loading={
+                  createPostMutation.isLoading ||
+                  createPostMutation.isPending ||
+                  isWeb3Processing
+                }
               >
                 {'Đăng bán'}
               </Button>
@@ -684,7 +710,7 @@ export default function MyTicketsPage() {
       {isCancelingWeb3 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-2xl">
-            <LoadingSpinner className="mb-4 h-12 w-12 text-primary" />
+            <LoadingSpinner className="text-primary mb-4 h-12 w-12" />
             <h3 className="mb-2 text-lg font-bold text-gray-900">
               Đang hủy niêm yết vé...
             </h3>

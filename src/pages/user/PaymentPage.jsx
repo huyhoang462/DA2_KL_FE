@@ -528,7 +528,7 @@ export default function PaymentPage() {
           </>
         )}
 
-          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <AlertCircle className="h-5 w-5 flex-shrink-0 text-blue-600" />
           <div className="text-sm">
             <p className="font-medium text-blue-900">Lưu ý quan trọng:</p>
@@ -663,7 +663,7 @@ export default function PaymentPage() {
 
           <div className="lg:col-span-2">
             <div className="sticky top-24 space-y-8">
-              <CartInfoCard event={event} />
+              <CartInfoCard event={event} showId={showId} />
             </div>
           </div>
         </div>

@@ -4,11 +4,9 @@ import useCartSummary from '../../../hooks/useCartSummary';
 import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
 import PriceDisplay from '../../ui/PriceDisplay';
 
-export default function CartInfoCard({ event }) {
+export default function CartInfoCard({ event, showId = '' }) {
   const { summaryItems, totalAmount } = useCartSummary(event);
   const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
-
-  
 
   return (
     <div className="border-border-default bg-background-secondary rounded-lg border p-6 shadow-sm">
@@ -17,7 +15,7 @@ export default function CartInfoCard({ event }) {
           Tóm tắt đơn hàng
         </h3>
         <Link
-          to={`/select-tickets/${event.id}`}
+          to={`/select-tickets/${event.id}/${showId}`}
           className="text-primary hover:text-primary/80 text-sm font-medium underline"
         >
           Chọn lại vé

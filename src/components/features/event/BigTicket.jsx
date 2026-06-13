@@ -1,7 +1,7 @@
 // src/components/features/event/BigTicket.jsx
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, MapPin, Tag } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import useUsdtVndRate from '../../../hooks/useUsdtVndRate';
 import PriceDisplay from '../../ui/PriceDisplay';
@@ -12,10 +12,18 @@ export default function BigTicket({ event }) {
 
   const getMinPrice = (shows) => {
     if (!shows || shows.length === 0) return 0;
-    const allTickets = shows.flatMap((show) => show.tickets);
+    // An toàn: Tránh lỗi undefined khi map nếu show chưa có vé
+    const allTickets = shows.flatMap((show) => show.tickets || []);
     if (allTickets.length === 0) return 0;
     return Math.min(...allTickets.map((ticket) => ticket.price));
   };
+
+  const isEndEvent = useMemo(() => {
+    console.log('Calculating isEndEvent, shows:', event.shows);
+    return (
+      event?.shows?.filter((show) => show.status === 'pending').length === 0
+    );
+  }, [event.shows]);
 
   const minPrice = getMinPrice(event.shows);
   const hasMultipleShows = event.shows && event.shows.length > 1;
@@ -38,115 +46,145 @@ export default function BigTicket({ event }) {
     return null;
   };
 
+  // Hàm helper để render Category an toàn, chống Crash React
+  const getCategoryName = () => {
+    if (!event.category) return 'Sự kiện';
+    if (typeof event.category === 'string') return event.category;
+    return event.category.name || 'Sự kiện';
+  };
+
   return (
     <div className="w-full">
-      {/* Khối bọc ngoài cùng: Xử lý viền và cắt 1 nửa hình tròn */}
-      <div className="group border-border-default bg-background-secondary relative flex transform-gpu flex-col overflow-hidden rounded-3xl shadow-sm transition-shadow hover:shadow-md md:flex-row">
-        {/* --- KHỐI TRÁI (Ảnh Banner) --- */}
-        {/* FIX: Thêm overflow-hidden vào ĐÂY để ảnh không bị tràn ra khi scale */}
-        <div className="bg-foreground relative h-60 w-full flex-shrink-0 overflow-hidden md:h-auto md:w-[55%] lg:w-[60%]">
+      <div className="group border-border-default bg-background-secondary relative flex flex-col overflow-hidden rounded-3xl md:min-h-[280px] md:flex-row lg:min-h-[300px]">
+        {/* ── LEFT: Banner image ─────────────────────────────── */}
+        {/* FIX: Thêm overflow-hidden và isolate để chặn ảnh tràn đè lên các UI khác khi hover */}
+        <div className="border-border-default relative isolate z-0 h-56 w-full flex-shrink-0 overflow-hidden rounded-3xl border-2 md:absolute md:inset-y-0 md:left-0 md:h-full md:w-[55%] lg:w-[60%]">
           <img
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             src={event.bannerImageUrl}
             alt={event.name}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/10" />
         </div>
 
-        {/* --- KHỐI PHẢI (Thông tin) --- */}
-        <div className="relative z-10 flex flex-1 flex-col justify-between p-6 md:p-8 lg:p-10">
+        {/* ── Perforated divider (desktop only) ──────────────── */}
+        <div className="pointer-events-none absolute inset-y-0 z-20 hidden shadow-sm transition-shadow hover:shadow-md md:left-[55%] md:block lg:left-[60%]">
+          {/* Dashed line */}
+          <div className="absolute inset-y-0 left-[-3px] w-1.5 bg-[repeating-linear-gradient(to_bottom,var(--color-background-primary)_0,var(--color-background-primary)_8px,transparent_8px,transparent_16px)]" />
+          {/* Top notch */}
+          <div className="border-border-default bg-background-primary absolute -top-5 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full border" />
+          {/* Bottom notch */}
+          <div className="border-border-default bg-background-primary absolute -bottom-5 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full border" />
+        </div>
+
+        {/* ── Mobile perforated divider ──────────────────────── */}
+        <div className="pointer-events-none absolute inset-x-0 top-56 z-20 block md:hidden">
+          <div
+            className="absolute inset-x-0 top-0 h-px"
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(to right, var(--color-border-default) 0, var(--color-border-default) 8px, transparent 8px, transparent 16px)',
+            }}
+          />
+          {/* Left notch */}
+          <div className="border-border-default bg-background-primary absolute top-1/2 left-0 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border" />
+          {/* Right notch */}
+          <div className="border-border-default bg-background-primary absolute top-1/2 right-0 h-10 w-10 translate-x-1/2 -translate-y-1/2 rounded-full border" />
+        </div>
+
+        {/* ── RIGHT: Content ─────────────────────────────────── */}
+        <div className="border-border-default relative z-10 flex flex-1 flex-col justify-between rounded-3xl border-2 p-6 md:ml-[55%] md:p-7 lg:ml-[60%] lg:p-8">
+          {/* Top: tên sự kiện */}
           <div>
-            <h1 className="text-text-primary line-clamp-3 text-2xl leading-tight font-black md:text-3xl lg:text-4xl">
+            <h1 className="text-text-primary line-clamp-3 min-h-[2.5em] text-xl leading-tight font-black md:text-2xl lg:text-3xl">
               {event.name}
             </h1>
 
-            <div className="mt-6 flex flex-col gap-4">
+            {/* Info rows */}
+            <div className="mt-5 flex flex-col gap-3.5">
+              {/* Date */}
               <div className="flex items-start gap-3">
-                <div className="bg-foreground flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
-                  <Calendar className="text-primary h-5 w-5" />
+                <div className="bg-primary/10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl">
+                  {/* FIX ICON: Sử dụng kích thước chính xác h-[18px] w-[18px] vì Tailwind không có h-4.5 */}
+                  <Calendar className="text-primary h-[18px] w-[18px]" />
                 </div>
-                <div className="flex flex-col justify-center pt-0.5">
-                  <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+                <div className="min-w-0 pt-0.5">
+                  <p className="text-text-secondary text-[10px] font-bold tracking-widest uppercase">
                     Thời gian
-                  </span>
-                  <span className="text-text-primary text-sm font-bold md:text-base">
+                  </p>
+                  <p className="text-text-primary mt-0.5 text-sm font-semibold md:text-base">
                     {formattedDate}
-                  </span>
+                  </p>
                 </div>
               </div>
 
+              {/* Location */}
               <div className="flex items-start gap-3">
-                <div className="bg-foreground flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
-                  <MapPin className="text-primary h-5 w-5" />
+                <div className="bg-primary/10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl">
+                  <MapPin className="text-primary h-[18px] w-[18px]" />
                 </div>
-                <div className="flex flex-col justify-center pt-0.5">
-                  <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+                <div className="min-w-0 pt-0.5">
+                  <p className="text-text-secondary text-[10px] font-bold tracking-widest uppercase">
                     Địa điểm
-                  </span>
-                  <span className="text-text-primary line-clamp-2 text-sm font-bold md:text-base">
+                  </p>
+                  <p className="text-text-primary mt-0.5 line-clamp-2 min-h-[2.5em] text-sm font-semibold md:text-base">
                     {event.location?.address || 'Sự kiện Online'}
-                  </span>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-border-subtle mt-8 border-t pt-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between md:flex-col lg:flex-row">
+          {/* Bottom: giá + CTA */}
+          <div className="border-border-subtle mt-6 border-t pt-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              {/* Price */}
               {minPrice > 0 ? (
                 <div>
-                  <div className="text-text-secondary mb-1 text-sm font-bold">
+                  <p className="text-text-secondary mb-1 text-xs font-semibold tracking-wider uppercase">
                     Giá vé từ
-                  </div>
+                  </p>
                   <PriceDisplay
                     amountUsdt={minPrice}
                     rateVndPerUsdt={exchangeRateVndPerUsdt}
                     layout="stacked"
                     vndWrapper="plain"
                     usdtClassName="text-2xl font-black text-primary md:text-3xl"
-                    vndClassName="text-sm font-semibold text-text-secondary md:text-base"
+                    vndClassName="text-sm font-medium text-text-secondary mt-0.5"
                   />
                 </div>
               ) : (
-                <div className="text-success text-lg font-bold">Miễn phí</div>
+                <div>
+                  <p className="text-text-secondary mb-1 text-xs font-semibold tracking-wider uppercase">
+                    Giá vé
+                  </p>
+                  <p className="text-success text-2xl font-black">Miễn phí</p>
+                </div>
               )}
 
+              {/* CTA Button */}
               {hasMultipleShows ? (
                 <Button
-                  className="w-full shadow-sm hover:-translate-y-0.5 sm:w-auto md:w-full lg:w-auto"
                   size="lg"
+                  className="w-full sm:w-auto"
                   onClick={handleScrollToShowtimes}
                 >
                   Chọn suất diễn
                 </Button>
               ) : (
                 <Button
-                  className="w-full shadow-sm hover:-translate-y-0.5 sm:w-auto md:w-full lg:w-auto"
                   size="lg"
+                  className="w-full sm:w-auto"
+                  disabled={isEndEvent}
                   onClick={() =>
                     navigate(`/select-tickets/${event.id}/${getSingleShowId()}`)
                   }
                 >
-                  Mua vé ngay
+                  {isEndEvent ? 'Sự kiện đã kết thúc' : '  Mua vé ngay'}
                 </Button>
               )}
             </div>
           </div>
         </div>
-
-        <div className="border-background-primary absolute top-6 bottom-6 z-20 hidden w-0 border-l-2 border-dashed md:left-[55%] md:block lg:left-[60%]" />
-
-        <div className="border-border-default bg-background-primary absolute top-0 z-20 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border md:left-[55%] md:block lg:left-[60%]" />
-
-        <div className="border-border-default bg-background-primary absolute bottom-0 z-20 hidden h-12 w-12 -translate-x-1/2 translate-y-1/2 rounded-full border md:left-[55%] md:block lg:left-[60%]" />
-
-        {/* 2. GIAO DIỆN MOBILE (nhỏ hơn md) */}
-        {/* Nét đứt ngang thụt vào left-6, right-6 */}
-        <div className="border-border-default absolute top-60 right-6 left-6 z-20 block h-0 border-t-[1.5px] border-dashed md:hidden" />
-
-        <div className="border-border-default bg-background-primary absolute top-60 left-0 z-20 block h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border md:hidden" />
-
-        <div className="border-border-default bg-background-primary absolute top-60 right-0 z-20 block h-12 w-12 translate-x-1/2 -translate-y-1/2 rounded-full border md:hidden" />
       </div>
     </div>
   );

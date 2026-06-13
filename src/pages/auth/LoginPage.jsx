@@ -1,33 +1,78 @@
-import React, { useState } from 'react';
+// src/pages/auth/LoginPage.jsx
+import React, { useState, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { handleLogin, handleSyncWallet } from '../../services/authService';
 import { useDispatch } from 'react-redux';
+import { usePrivy } from '@privy-io/react-auth';
+
+import { handleLogin } from '../../services/authService';
 import { login } from '../../store/slices/authSlice';
+import { validateEmail } from '../../utils/validation';
+import { saveAccount, deleteAccount } from '../../utils/savedAccountsStorage'; // Thêm helper mới
+
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { validateEmail } from '../../utils/validation';
 import InputPassword from '../../components/ui/InputPassword';
 import ForgotPasswordModal from '../../components/features/auth/FogotPasswordModal';
-import { usePrivy } from '@privy-io/react-auth';
+import SavedAccountDropdown, {
+  useSavedAccountsDropdown,
+} from '../../components/features/auth/SavedAccountDropdown'; // Component mới tách
 
 export default function LoginPage() {
   const privyData = usePrivy();
   const { authenticated, ready, user: privyUser } = privyData;
-  // console.log('🔍 [LoginPage] PRIVY OBJECT:', privyData);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState({});
   const [loading, setLoading] = useState(false);
-
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const nav = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || null;
 
+  // ── Dropdown state ──
+  const emailInputRef = useRef(null);
+  const dropdownWrapRef = useRef(null);
+
+  const {
+    filtered,
+    shouldShow,
+    highlightIndex,
+    openDropdown,
+    closeDropdown,
+    removeAccount,
+    handleKeyDown,
+  } = useSavedAccountsDropdown(email);
+
+  // Xử lý khi người dùng chọn tài khoản từ Dropdown
+  const handleSelectSaved = useCallback(
+    (selectedAccount) => {
+      setEmail(selectedAccount.email);
+      try {
+        const decodedPw = selectedAccount.password
+          ? atob(selectedAccount.password)
+          : '';
+        setPassword(decodedPw);
+      } catch {
+        setPassword('');
+      }
+
+      closeDropdown();
+      // Bỏ focus ô Email đi để người dùng có thể bấm Đăng nhập luôn (vì đã điền đủ pass)
+      if (emailInputRef.current) emailInputRef.current.blur();
+    },
+    [closeDropdown]
+  );
+
+  const handleEmailBlur = useCallback(() => {
+    setTimeout(closeDropdown, 150);
+  }, [closeDropdown]);
+
+  // ── Submit ──
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage({});
@@ -47,19 +92,18 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    let data = null;
     try {
-      data = await handleLogin({ email, password });
-      console.log('🔥 [LoginPage] DỮ LIỆU BACKEND TRẢ VỀ:', data);
+      const data = await handleLogin({ email, password });
+
+      // ── XỬ LÝ NHỚ MẬT KHẨU ──
+      if (rememberMe) {
+        saveAccount(email, password); // Lưu cả 2
+      } else {
+        deleteAccount(email); // Xóa nếu không chọn nhớ
+      }
+
       dispatch(login(data));
-      console.log(
-        '✅ [LoginPage] Đã dispatch login, chờ PrivyJwtSyncWrapper gửi token cho Privy'
-      );
-      console.log('ℹ️ [LoginPage] Trạng thái Privy ngay sau login:', {
-        ready,
-        authenticated,
-        hasPrivyUser: !!privyUser,
-      });
+
       if (data.user.role === 'admin') {
         nav('/admin/dashboard', { replace: true });
       } else if (from) {
@@ -68,8 +112,6 @@ export default function LoginPage() {
         nav('/', { replace: true });
       }
     } catch (err) {
-      console.error('🔴 LỖI KHI KÍCH HOẠT VÍ:', err);
-      console.log('🔴 Token gây lỗi:', data?.privyToken);
       if (err?.status >= 400 && err?.status < 500) {
         setErrorMessage({
           error: err.message || 'Email hoặc mật khẩu không đúng!',
@@ -98,31 +140,51 @@ export default function LoginPage() {
             Đăng nhập vào <span className="text-primary">ShineTicket</span>
           </h1>
         </div>
+
         {errorMessage?.error && (
           <div className="text-destructive bg-destructive-background mb-4 rounded px-4 py-2 text-center text-sm">
             {errorMessage?.error}
           </div>
         )}
+
         <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
-          <div>
+          {/* ── Email input + dropdown ── */}
+          <div ref={dropdownWrapRef} className="relative">
             <Input
+              ref={emailInputRef}
               id="email"
               label="Email"
               spellCheck={false}
-              autoFocus
-              autoComplete="username"
+              autoFocus={false}
+              autoComplete="off"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
+                // Khi người dùng gõ mail mới, tự động reset pass cũ
+                setPassword('');
                 if (errorMessage.email)
                   setErrorMessage((pre) => ({ ...pre, email: undefined }));
                 if (errorMessage.error)
                   setErrorMessage((pre) => ({ ...pre, error: undefined }));
               }}
+              onFocus={openDropdown}
+              onBlur={handleEmailBlur}
+              onKeyDown={(e) => handleKeyDown(e, handleSelectSaved)}
               disabled={loading}
               error={errorMessage?.email}
             />
+
+            {shouldShow && (
+              <SavedAccountDropdown
+                items={filtered}
+                highlightIndex={highlightIndex}
+                onSelect={handleSelectSaved}
+                onRemove={removeAccount}
+              />
+            )}
           </div>
+
+          {/* ── Password ── */}
           <div>
             <InputPassword
               id="loginPassword"
@@ -139,13 +201,21 @@ export default function LoginPage() {
               loading={loading}
             />
           </div>
-          <div className="flex items-center justify-between">
-            <Link
-              to="/signup"
-              className="text-primary text-sm font-medium hover:underline"
-            >
-              Đăng ký
-            </Link>
+
+          {/* ── Row: Đăng ký | Nhớ mật khẩu | Quên mật khẩu ── */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Nhớ mật khẩu */}
+            <label className="flex cursor-pointer items-center gap-1.5 select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={loading}
+                className="border-border-default text-primary accent-primary h-4 w-4 cursor-pointer rounded"
+              />
+              <span className="text-text-primary text-sm">Nhớ mật khẩu</span>
+            </label>
+
             <button
               type="button"
               className="hover:text-primary text-text-primary cursor-pointer text-sm"
@@ -155,12 +225,22 @@ export default function LoginPage() {
               Quên mật khẩu?
             </button>
           </div>
+          <div className="text-text-secondary flex w-full justify-center gap-1 text-sm">
+            {'Bạn chưa có tài khoản? '}
+            <Link
+              to="/signup"
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              Đăng ký
+            </Link>
+          </div>
 
           <Button type="submit" loading={loading} className="w-full">
             Đăng nhập
           </Button>
         </form>
       </div>
+
       <ForgotPasswordModal
         isOpen={showForgotModal}
         onClose={() => setShowForgotModal(false)}
