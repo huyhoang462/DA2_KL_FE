@@ -200,12 +200,17 @@ export const countComments = (comments = []) =>
 
 export const getReplyDraftKey = (postId, commentId) => `${postId}_${commentId}`;
 
-export const getPostCategory = (post) => {
+export const getPostCategory = (post, userId) => {
   const type = (post?.postType || '').toLowerCase();
   const role = (post?.author?.role || '').toLowerCase();
 
   if (type === 'marketplace_listing' || post?.relatedTicket) return 'ticket';
   if (role === 'organizer' || post?.relatedEvent) return 'event';
+
+  if (userId && post?.author?.id === userId) {
+    console.log('MY POSTS');
+    return 'my';
+  }
 
   return 'all';
 };
