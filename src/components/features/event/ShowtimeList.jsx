@@ -12,44 +12,44 @@ const TicketItem = ({ ticket, exchangeRateVndPerUsdt }) => {
   const isAvailable = available > 0;
 
   return (
-    <div className="mx-4 border-t border-gray-100 bg-white p-4 first:border-t-0 last:rounded-b-lg">
+    <div className="border-border-subtle bg-foreground hover:bg-background-secondary border-t p-4 transition-colors first:border-t-0">
       <div className="flex items-center justify-between">
-        <div className="flex-1">
+        <div className="flex-1 pr-4">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-gray-900">{ticket.name}</h4>
+            <h4 className="text-text-primary text-sm font-bold">
+              {ticket.name}
+            </h4>
             {!isAvailable && (
-              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+              <span className="bg-destructive-background text-destructive rounded px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                 Hết vé
               </span>
             )}
           </div>
           {ticket.description && (
-            <p className="mt-1 text-sm text-gray-600">{ticket.description}</p>
+            <p className="text-text-secondary mt-1 line-clamp-2 text-xs font-medium">
+              {ticket.description}
+            </p>
           )}
         </div>
-        <div className="text-right">
-          <p
-            className={cn(
-              'text-lg font-bold',
-              isAvailable ? 'text-primary' : 'text-gray-400'
+        <div className="flex-shrink-0 text-right">
+          <PriceDisplay
+            amountUsdt={ticket.price}
+            rateVndPerUsdt={exchangeRateVndPerUsdt}
+            layout="stacked"
+            vndWrapper="plain"
+            usdtClassName={cn(
+              'text-sm md:text-base',
+              isAvailable
+                ? 'text-primary font-bold'
+                : 'text-text-placeholder font-bold'
             )}
-          >
-            <PriceDisplay
-              amountUsdt={ticket.price}
-              rateVndPerUsdt={exchangeRateVndPerUsdt}
-              layout="inline"
-              usdtClassName={cn(
-                isAvailable
-                  ? 'text-primary font-bold'
-                  : 'text-gray-400 font-bold'
-              )}
-              vndClassName={cn(
-                isAvailable
-                  ? 'text-text-secondary text-xs font-medium'
-                  : 'text-gray-400 text-xs font-medium'
-              )}
-            />
-          </p>
+            vndClassName={cn(
+              'text-xs',
+              isAvailable
+                ? 'text-text-secondary font-semibold'
+                : 'text-text-placeholder font-medium'
+            )}
+          />
         </div>
       </div>
     </div>
@@ -73,14 +73,12 @@ const ShowtimeAccordionItem = ({
     hour12: false,
     timeZone: 'UTC',
   });
-
   const formattedEndTime = endTime.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
     timeZone: 'UTC',
   });
-
   const formattedDate = startTime.toLocaleDateString('vi-VN', {
     weekday: 'short',
     day: '2-digit',
@@ -88,45 +86,43 @@ const ShowtimeAccordionItem = ({
     year: 'numeric',
   });
 
-  // Calculate total available tickets
   const totalAvailable =
     show.tickets?.reduce(
       (sum, ticket) => sum + (ticket.quantityTotal - ticket.quantitySold),
       0
     ) || 0;
-
   const hasAvailableTickets = totalAvailable > 0;
 
   const handleClickBuyTickets = (e) => {
     e.stopPropagation();
     navigate(`/select-tickets/${eventId}/${show._id || show.id}`);
   };
+
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div className="border-border-default bg-background-secondary overflow-hidden rounded-xl border transition-all">
       <div
-        className="flex cursor-pointer items-center justify-between bg-gray-50 px-6 py-4 transition-colors hover:bg-gray-100"
+        className="bg-foreground hover:bg-background-primary flex cursor-pointer flex-col gap-3 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
         onClick={onToggle}
-        aria-expanded={isOpen}
       >
         <div className="flex-1">
-          <div className="mb-2 flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="mb-1.5 flex items-center gap-2">
+            <h3 className="text-text-primary text-base font-bold">
               {show.name || 'Suất diễn chính'}
             </h3>
             {!hasAvailableTickets && (
-              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+              <span className="bg-destructive-background text-destructive rounded px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                 Hết vé
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
-              <span className="font-medium">{formattedDate}</span>
+          <div className="text-text-secondary flex items-center gap-3 text-xs font-semibold">
+            <div className="flex items-center gap-1">
+              <Calendar className="text-primary h-3.5 w-3.5" />
+              <span>{formattedDate}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
+            <div className="flex items-center gap-1">
+              <Clock className="text-primary h-3.5 w-3.5" />
               <span>
                 {formattedStartTime} - {formattedEndTime}
               </span>
@@ -134,7 +130,7 @@ const ShowtimeAccordionItem = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 sm:justify-end">
           <Button
             size="sm"
             disabled={
@@ -144,7 +140,7 @@ const ShowtimeAccordionItem = ({
             }
             onClick={handleClickBuyTickets}
             className={cn(
-              'min-w-[100px]',
+              'w-full sm:w-auto',
               !hasAvailableTickets && 'cursor-not-allowed'
             )}
           >
@@ -155,10 +151,10 @@ const ShowtimeAccordionItem = ({
               : 'Hết vé'}
           </Button>
 
-          <button className="rounded-full p-2 transition-colors hover:bg-gray-200">
+          <button className="bg-background-secondary hover:bg-border-subtle flex h-8 w-8 items-center justify-center rounded-full transition-colors">
             <ChevronDown
               className={cn(
-                'h-5 w-5 text-gray-500 transition-transform duration-300',
+                'text-text-primary h-4 w-4 transition-transform duration-300',
                 isOpen ? 'rotate-180' : 'rotate-0'
               )}
             />
@@ -168,13 +164,13 @@ const ShowtimeAccordionItem = ({
 
       <div
         className={cn(
-          'grid transition-all duration-500 ease-in-out',
+          'grid transition-all duration-300 ease-in-out',
           isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         )}
       >
         <div className="overflow-hidden">
           {show.tickets && show.tickets.length > 0 ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-border-subtle divide-y">
               {show.tickets.map((ticket) => (
                 <TicketItem
                   key={ticket._id || ticket.id}
@@ -184,7 +180,7 @@ const ShowtimeAccordionItem = ({
               ))}
             </div>
           ) : (
-            <div className="p-6 text-center text-gray-500">
+            <div className="text-text-secondary p-6 text-center text-sm font-medium">
               <p>Chưa có vé nào được mở bán cho suất diễn này</p>
             </div>
           )}
@@ -206,14 +202,14 @@ export default function ShowtimeList({ shows, eventId }) {
 
   if (!shows || shows.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-          <Calendar className="h-8 w-8 text-gray-400" />
+      <div className="border-border-default bg-foreground rounded-xl border p-8 text-center shadow-sm">
+        <div className="bg-background-primary mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+          <Calendar className="text-text-placeholder h-6 w-6" />
         </div>
-        <h3 className="mb-2 text-lg font-semibold text-gray-900">
+        <h3 className="text-text-primary mb-1 text-base font-bold">
           Chưa có suất diễn
         </h3>
-        <p className="text-gray-600">
+        <p className="text-text-secondary text-sm font-medium">
           Hiện tại chưa có thông tin về các suất diễn cho sự kiện này.
         </p>
       </div>
@@ -221,7 +217,7 @@ export default function ShowtimeList({ shows, eventId }) {
   }
 
   return (
-    <div className="space-y-4" data-showtime-list>
+    <div className="space-y-3" data-showtime-list>
       {shows.map((show) => (
         <ShowtimeAccordionItem
           key={show._id || show.id}
