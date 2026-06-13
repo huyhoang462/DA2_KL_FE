@@ -138,6 +138,9 @@ const Community = () => {
       queryClient.invalidateQueries({
         queryKey: ['community-my-tickets', userId],
       });
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     },
     onError: (error) => {
       setComposerError(
@@ -327,8 +330,12 @@ const Community = () => {
       return;
     }
     setComposerError('');
+    setComposerForm((prev) => ({
+      ...prev,
+      walletAddress: user?.walletAddress || '',
+    }));
     setIsComposerOpen(true);
-  }, [userId]);
+  }, [userId, user]);
 
   const handleCreatePost = useCallback(async () => {
     setComposerError('');

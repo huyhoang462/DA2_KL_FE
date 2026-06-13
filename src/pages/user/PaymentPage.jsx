@@ -58,8 +58,8 @@ export default function PaymentPage() {
   const [paymentUrl, setPaymentUrl] = useState('');
   const [orderId, setOrderId] = useState(null);
   const [paymentPlans, setPaymentPlans] = useState({ web3: null, vnd: null });
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vnd');
-  const [paymentFlowMethod, setPaymentFlowMethod] = useState('vnd');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('web3');
+  const [paymentFlowMethod, setPaymentFlowMethod] = useState('web3');
   const [expiresAt, setExpiresAt] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [paymentError, setPaymentError] = useState('');
@@ -518,12 +518,12 @@ export default function PaymentPage() {
               }
               loading={isProcessing}
               variant="primary"
-              className="w-full border-0 bg-gradient-to-r from-orange-400 to-rose-500 py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
+              className="w-full border-0 bg-primary-hover py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
             >
               <Wallet className="mr-2 h-5 w-5" />
               {isProcessing
                 ? statusMessage || 'Đang xử lý...'
-                : 'Approve rồi mua vé bằng USDT'}
+                : 'Approve  mua vé bằng USDT'}
             </Button>
           </>
         )}

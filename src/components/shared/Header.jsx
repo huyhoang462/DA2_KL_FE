@@ -190,7 +190,7 @@ const userMenuItems = useMemo(() => [
             loading={loadingCount}
             isOpen={notificationOpen}
             onClick={handleNotificationClick} // <-- Truyền hàm đã được tối ưu
-            className="text-primary-foreground bg-background-secondary"
+            className="text-primary bg-background-secondary"
           />
 
           {notificationOpen && (
@@ -224,7 +224,7 @@ const userMenuItems = useMemo(() => [
 
         <Link
           to="/community"
-          className="hover:bg-background-secondary bg-background-secondary text-primary-foreground hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
+          className="hover:bg-background-secondary bg-background-secondary text-primary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
         >
           <MessageCircleMore className="h-5 w-5" />
           <span>Cộng đồng</span>
@@ -235,7 +235,7 @@ const userMenuItems = useMemo(() => [
         >
           <UserIcon
             size={18}
-            className="text-primary-foreground bg-background-secondary h-8 w-8 rounded-full p-1 shadow"
+            className="text-primary bg-background-secondary h-8 w-8 rounded-full p-1 shadow"
           />
           <ChevronDown size={18} className="text-primary-foreground ml-1" />
           {dropdownOpen && renderUserDropdown()}
