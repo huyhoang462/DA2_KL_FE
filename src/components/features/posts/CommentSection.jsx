@@ -94,7 +94,7 @@ const RootCommentInput = ({
   const empty = !draft.trim();
 
   return (
-    <div className="flex gap-3 px-4 py-3 md:px-5">
+    <div className="flex gap-2 py-3">
       <Avatar src={currentUser?.avatar} name={currentUser?.name} />
       <div className="border-border-default bg-background-secondary focus-within:border-primary/50 flex flex-1 items-end gap-2 rounded-2xl border px-3 py-2.5 transition-colors">
         <AutoTextarea
@@ -137,7 +137,7 @@ const ReplyInput = ({
   return (
     <div className="mt-2 flex gap-2">
       <Avatar src={currentUser?.avatar} name={currentUser?.name} size="sm" />
-      <div className="border-border-default bg-background-secondary focus-within:border-primary/50 flex flex-1 items-end gap-2 rounded-xl border px-2.5 py-2 transition-colors">
+      <div className="border-border-default bg-background-secondary focus-within:border-primary/50 flex flex-1 items-end gap-2 rounded-xl border px-2 py-2 transition-colors">
         <AutoTextarea
           value={draft}
           onChange={onChange}
@@ -244,7 +244,7 @@ const CommentBubble = ({
     commentActionState.type === 'reply';
 
   return (
-    <div className="flex gap-2.5">
+    <div className="flex gap-1.5">
       <div className="flex flex-col items-center">
         <Avatar
           src={comment.author?.avatar}
@@ -420,7 +420,7 @@ const CommentSection = ({
       <div className="border-border-subtle mx-4 border-t md:mx-5" />
 
       {/* Comment list */}
-      <div className="px-4 pt-4 pb-6 md:px-5">
+      <div className="px-2 pt-4 pb-6">
         {commentState.isLoading && (
           <div className="space-y-5">
             {[1, 2].map((i) => (
@@ -486,7 +486,7 @@ const CommentSection = ({
 
                   {/* 2. Render TOÀN BỘ Reply (Đã gộp chung thành Level 1) */}
                   {allFlatReplies.length > 0 && (
-                    <div className="border-border-subtle ml-10 flex flex-col gap-3 border-l-[1.5px] pl-3 md:ml-12 md:pl-4">
+                    <div className="border-border-subtle ml-4 flex flex-col gap-3 border-l-[1.5px] pl-4">
                       {allFlatReplies.map((reply) => (
                         <CommentBubble
                           key={reply.id}

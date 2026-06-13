@@ -36,17 +36,30 @@ export default function EventDetailPage() {
   if (!event) return <ErrorDisplay message="Không tìm thấy sự kiện." />;
 
   return (
-    <div className="bg-background-primary text-text-primary container mx-auto min-h-screen">
-      <div className="mx-auto">
-        <div className="mb-10 grid grid-cols-1 space-y-8">
-          <BigTicket event={event} />
-          <EventDescription description={event.description} />
-          <EventOrganizerInfo organizer={event.organizer} />
+    <div className="bg-background-primary min-h-screen pt-6 pb-20">
+      <div className="container mx-auto max-w-7xl px-4 md:px-6">
+        {/* 1. Phần Hero Ticket full width phía trên */}
+        <BigTicket event={event} />
 
-          <div className="sticky top-20 space-y-6">
-            <h2 className="text-xl font-bold">Chọn vé của bạn</h2>
-            {/* ✅ Pass eventId to ShowtimeList */}
-            <ShowtimeList shows={event.shows} eventId={event._id || event.id} />
+        {/* 2. Cấu trúc 2 cột cho phần Content & Ticket Selection */}
+        <div className="mt-8 flex flex-col items-start gap-8 lg:flex-row lg:gap-10">
+          {/* Cột Trái: Thông tin chi tiết */}
+          <div className="flex w-full min-w-0 flex-1 flex-col space-y-8">
+            <EventDescription description={event.description} />
+            <EventOrganizerInfo organizer={event.organizer} />
+          </div>
+
+          {/* Cột Phải: Suất diễn & Mua vé (Sticky) */}
+          <div className="w-full flex-shrink-0 lg:sticky lg:top-24 lg:w-[400px] xl:w-[420px]">
+            <div className="border-border-default bg-background-secondary rounded-2xl border p-5 shadow-sm">
+              <h2 className="text-text-primary mb-5 text-xl font-bold">
+                Chọn vé của bạn
+              </h2>
+              <ShowtimeList
+                shows={event.shows}
+                eventId={event._id || event.id}
+              />
+            </div>
           </div>
         </div>
       </div>
