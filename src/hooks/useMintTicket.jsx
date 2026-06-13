@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
+import { useWallets } from '@privy-io/react-auth';
 import { toast } from 'react-toastify';
 import { useWeb3 } from '../contexts/Web3Provider';
 import { submitEventMintResult } from '../services/eventService';
@@ -76,7 +77,7 @@ const validateMintVoucher = (voucher, signature, index) => {
 export const useMintTicket = () => {
   const [isMinting, setIsMinting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  const { signer, connectWallet } = useWeb3();
+  const { wallets } = useWallets();
   const queryClient = useQueryClient();
 
   const handleMintTicket = async (event) => {
@@ -87,29 +88,25 @@ export const useMintTicket = () => {
       const isDevMode = import.meta.env?.DEV ?? false;
 
       // Bước 1: Kiểm tra môi trường ví (Wallet Environment Check)
-      if (!window.ethereum) {
+      const wallet = wallets[0];
+      if (!wallet) {
         throw new Error(
-          'Hệ thống không tìm thấy ví Web3. Vui lòng cài đặt ví MetaMask trên trình duyệt của bạn để tiếp tục.'
+          'Hệ thống không tìm thấy ví Web3. Vui lòng đăng nhập ví Privy để tiếp tục.'
         );
       }
 
-      let currentSigner = signer;
-      if (!currentSigner) {
-        // Tự động gọi lại hàm "Connect Wallet" ở Phần 1
-        await connectWallet();
-        // Cần lấy lại signer sau khi connect
-        const browserProvider = new ethers.BrowserProvider(window.ethereum);
-        currentSigner = await browserProvider.getSigner();
-      }
+      const ethereumProvider = await wallet.getEthereumProvider();
+      let browserProvider = new ethers.BrowserProvider(ethereumProvider);
+      let currentSigner = await browserProvider.getSigner();
 
       // Bước 2: Kiểm tra và Ép chuyển mạng lưới (Network Switch)
-      const currentNetwork = await window.ethereum.request({
+      const currentNetwork = await ethereumProvider.request({
         method: 'eth_chainId',
       });
       if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
         setStatusMessage('Đang chuyển mạng lưới...');
         try {
-          await window.ethereum.request({
+          await ethereumProvider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
           });
@@ -117,7 +114,7 @@ export const useMintTicket = () => {
           // If the network is not added to MetaMask, we can prompt to add it
           // Error code 4902 indicates that the chain has not been added to MetaMask.
           if (switchError.code === 4902) {
-            await window.ethereum.request({
+            await ethereumProvider.request({
               method: 'wallet_addEthereumChain',
               params: [
                 {
@@ -140,7 +137,7 @@ export const useMintTicket = () => {
 
         // Bắt buộc khởi tạo lại Provider và Signer sau khi ví vừa đổi mạng
         // Nếu không ethers.js sẽ báo lỗi "network changed: 1 => 80002"
-        const newProvider = new ethers.BrowserProvider(window.ethereum);
+        const newProvider = new ethers.BrowserProvider(ethereumProvider);
         currentSigner = await newProvider.getSigner();
       }
 

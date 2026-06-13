@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
+import { useWallets } from '@privy-io/react-auth';
 import { toast } from 'react-toastify';
 import { useWeb3 } from '../contexts/Web3Provider';
 import {
@@ -12,7 +13,7 @@ import {
 export const useClaimFundsWeb3 = () => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  const { signer, connectWallet } = useWeb3();
+  const { wallets } = useWallets();
 
   const handleClaimFunds = async (onChainIds) => {
     try {
@@ -27,33 +28,32 @@ export const useClaimFundsWeb3 = () => {
         throw new Error('Sự kiện chưa có onChainId hợp lệ để tất toán.');
       }
 
-      if (!window.ethereum) {
+      const wallet = wallets[0];
+      if (!wallet) {
         throw new Error(
-          'Hệ thống không tìm thấy ví Web3. Vui lòng cài đặt ví MetaMask trên trình duyệt của bạn để tiếp tục.'
+          'Hệ thống không tìm thấy ví Web3. Vui lòng đăng nhập ví Privy.'
         );
       }
 
-      if (!signer) {
-        await connectWallet();
-      }
+      const ethereumProvider = await wallet.getEthereumProvider();
 
-      let browserProvider = new ethers.BrowserProvider(window.ethereum);
+      let browserProvider = new ethers.BrowserProvider(ethereumProvider);
       let currentSigner = await browserProvider.getSigner();
 
-      const currentNetwork = await window.ethereum.request({
+      const currentNetwork = await ethereumProvider.request({
         method: 'eth_chainId',
       });
       
       if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
         setStatusMessage('Đang chuyển mạng lưới...');
         try {
-          await window.ethereum.request({
+          await ethereumProvider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
           });
         } catch (switchError) {
           if (switchError.code === 4902) {
-            await window.ethereum.request({
+            await ethereumProvider.request({
               method: 'wallet_addEthereumChain',
               params: [
                 {
@@ -73,7 +73,7 @@ export const useClaimFundsWeb3 = () => {
             throw switchError;
           }
         }
-        browserProvider = new ethers.BrowserProvider(window.ethereum);
+        browserProvider = new ethers.BrowserProvider(ethereumProvider);
         currentSigner = await browserProvider.getSigner();
       }
 

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
+import { useWallets } from '@privy-io/react-auth';
 import { requestGasFund, waitForGasFunding } from '../services/postService';
-import { MARKETPLACE_ADDRESS, MARKETPLACE_ABI } from '../constants/web3';
+import { MARKETPLACE_ADDRESS, MARKETPLACE_ABI, POLYGON_AMOY_CHAIN_ID } from '../constants/web3';
 
 // Thêm fragment của hàm batchCancelListings nếu trong MARKETPLACE_ABI chưa có
 const CANCEL_LISTING_ABI = [
@@ -12,19 +13,58 @@ const CANCEL_LISTING_ABI = [
 export const useCancelListingWeb3 = () => {
   const [isCancelingWeb3, setIsCancelingWeb3] = useState(false);
   const [cancelWeb3StatusMessage, setCancelWeb3StatusMessage] = useState('');
+  const { wallets } = useWallets();
 
   const handleCancelListingWeb3 = async ({ ticketIdsWeb3 }) => {
     try {
       setIsCancelingWeb3(true);
       setCancelWeb3StatusMessage('Đang kết nối ví...');
 
-      if (!window.ethereum) {
+      const wallet = wallets[0];
+      if (!wallet) {
         throw new Error(
-          'Không tìm thấy ví Web3. Vui lòng cài đặt MetaMask hoặc kết nối ví Privy.'
+          'Không tìm thấy ví Web3. Vui lòng đăng nhập hoặc kết nối ví Privy.'
         );
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const ethereumProvider = await wallet.getEthereumProvider();
+
+      // Kiểm tra và chuyển mạng nếu cần
+      const currentNetwork = await ethereumProvider.request({
+        method: 'eth_chainId',
+      });
+      if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
+        setCancelWeb3StatusMessage('Đang chuyển mạng lưới...');
+        try {
+          await ethereumProvider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            await ethereumProvider.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: POLYGON_AMOY_CHAIN_ID,
+                  chainName: 'Polygon Amoy Testnet',
+                  nativeCurrency: {
+                    name: 'MATIC',
+                    symbol: 'MATIC',
+                    decimals: 18,
+                  },
+                  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+                  blockExplorerUrls: ['https://amoy.polygonscan.com/'],
+                },
+              ],
+            });
+          } else {
+            throw switchError;
+          }
+        }
+      }
+
+      const provider = new ethers.BrowserProvider(ethereumProvider);
       const signer = await provider.getSigner();
       const signerAddress = await signer.getAddress();
 

@@ -528,20 +528,7 @@ export default function PaymentPage() {
           </>
         )}
 
-        {selectedPaymentMethod === 'web3' && (isProcessing || statusMessage) ? (
-          <div className="border-border-default bg-background-primary rounded-lg border p-4 text-sm">
-            <p className="text-text-primary font-semibold">
-              Trạng thái giao dịch
-            </p>
-            <p className="text-text-secondary mt-1">
-              {isProcessing
-                ? statusMessage || 'Đang xử lý giao dịch...'
-                : statusMessage}
-            </p>
-          </div>
-        ) : null}
-
-        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <AlertCircle className="h-5 w-5 flex-shrink-0 text-blue-600" />
           <div className="text-sm">
             <p className="font-medium text-blue-900">Lưu ý quan trọng:</p>

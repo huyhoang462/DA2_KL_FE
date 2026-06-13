@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
+import { useWallets } from '@privy-io/react-auth';
 import { toast } from 'react-toastify';
 import { useWeb3 } from '../contexts/Web3Provider';
 import { orderService } from '../services/orderService';
@@ -25,7 +26,7 @@ const toBigIntSafe = (value) => {
 export const useBuyTicketWeb3 = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  const { signer, connectWallet } = useWeb3();
+  const { wallets } = useWallets();
 
   const handleBuyWithWeb3 = async ({
     eventId,
@@ -44,32 +45,33 @@ export const useBuyTicketWeb3 = () => {
       setIsProcessing(true);
       setStatusMessage('Đang kết nối ví...');
 
-      if (!window.ethereum) {
+      const ethereumProvider = window.ethereum;
+      if (!ethereumProvider) {
         throw new Error(
-          'Hệ thống không tìm thấy ví Web3. Vui lòng cài đặt MetaMask.'
+          'Hệ thống không tìm thấy ví Web3 (ví dụ: MetaMask). Vui lòng cài đặt ví Web3 trên trình duyệt của bạn để tiếp tục thanh toán.'
         );
       }
 
-      let currentSigner = signer;
-      if (!currentSigner) {
-        await connectWallet();
-        const browserProvider = new ethers.BrowserProvider(window.ethereum);
-        currentSigner = await browserProvider.getSigner();
-      }
+      let currentSigner;
+      const browserProvider = new ethers.BrowserProvider(ethereumProvider);
+      
+      // Yêu cầu kết nối tài khoản
+      await browserProvider.send('eth_requestAccounts', []);
+      currentSigner = await browserProvider.getSigner();
 
-      const currentNetwork = await window.ethereum.request({
+      const currentNetwork = await ethereumProvider.request({
         method: 'eth_chainId',
       });
       if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
         setStatusMessage('Đang chuyển mạng lưới...');
         try {
-          await window.ethereum.request({
+          await ethereumProvider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
           });
         } catch (switchError) {
           if (switchError.code === 4902) {
-            await window.ethereum.request({
+            await ethereumProvider.request({
               method: 'wallet_addEthereumChain',
               params: [
                 {
@@ -89,7 +91,7 @@ export const useBuyTicketWeb3 = () => {
             throw switchError;
           }
         }
-        const newProvider = new ethers.BrowserProvider(window.ethereum);
+        const newProvider = new ethers.BrowserProvider(ethereumProvider);
         currentSigner = await newProvider.getSigner();
       }
 
@@ -252,7 +254,7 @@ export const useBuyTicketWeb3 = () => {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           setStatusMessage(
-            `Thanh toán thành công! Hệ thống đang cập nhật vé (đồng bộ ${attempt}/${maxAttempts})...`
+            `Thanh toán thành công! Hệ thống đang cập nhật vé.`
           );
           await orderService.updateOrderMintStatus(orderId, {
             txHash: receipt.hash || buyTx.hash,
