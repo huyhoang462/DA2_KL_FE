@@ -1,9 +1,9 @@
-// TicketCard.jsx - Horizontal Layout
+// TicketCard.jsx - Clean & Modern Layout
 
 import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Calendar, QrCode, Globe, Building, Ticket } from 'lucide-react';
+import { Calendar, QrCode, Globe, MapPin, Ticket, Clock } from 'lucide-react';
 
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
@@ -14,55 +14,68 @@ import { getMyTickets } from '../../../services/ticketService';
 const STATUS_CONFIG = {
   pending: {
     label: 'Chưa sử dụng',
-    bgColor: 'bg-blue-100',
-    textColor: 'text-blue-800',
+    bgColor: 'bg-violet-100',
+    textColor: 'text-violet-700',
+    dotColor: 'bg-violet-500',
   },
   checkedIn: {
     label: 'Đã check-in',
-    bgColor: 'bg-green-100',
-    textColor: 'text-green-800',
+    bgColor: 'bg-emerald-100',
+    textColor: 'text-emerald-700',
+    dotColor: 'bg-emerald-500',
   },
   selling: {
     label: 'Đang đăng bán',
-    bgColor: 'bg-yellow-100',
-    textColor: 'text-yellow-800',
+    bgColor: 'bg-amber-100',
+    textColor: 'text-amber-700',
+    dotColor: 'bg-amber-500',
   },
   out: {
     label: 'Đã ra ngoài',
-    bgColor: 'bg-gray-100',
-    textColor: 'text-gray-800',
+    bgColor: 'bg-slate-100',
+    textColor: 'text-slate-600',
+    dotColor: 'bg-slate-400',
   },
   expired: {
     label: 'Đã hết hạn',
     bgColor: 'bg-red-100',
-    textColor: 'text-red-800',
+    textColor: 'text-red-700',
+    dotColor: 'bg-red-400',
   },
   cancelled: {
     label: 'Đã hủy',
     bgColor: 'bg-red-100',
-    textColor: 'text-red-800',
+    textColor: 'text-red-700',
+    dotColor: 'bg-red-400',
   },
 };
 
 const MINT_STATUS_CONFIG = {
   pending: {
+    label: 'Đang mint',
     bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
+    textColor: 'text-blue-600',
     borderColor: 'border-blue-200',
   },
   minted: {
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
-    borderColor: 'border-green-200',
+    label: 'Đã mint',
+    bgColor: 'bg-emerald-50',
+    textColor: 'text-emerald-600',
+    borderColor: 'border-emerald-200',
   },
   default: {
-    bgColor: 'bg-gray-50',
-    textColor: 'text-gray-700',
-    borderColor: 'border-gray-200',
+    label: 'Chưa mint',
+    bgColor: 'bg-slate-50',
+    textColor: 'text-slate-500',
+    borderColor: 'border-slate-200',
   },
 };
 
-export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSell = () => {} }) {
+export default function TicketCard({
+  ticket,
+  onClickSell = () => {},
+  onCancelSell = () => {},
+}) {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrData, setQrData] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -77,35 +90,29 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
   const formatUtcTime = (dateValue) => {
     const date = new Date(dateValue);
     if (Number.isNaN(date.getTime())) return '';
-
     return `${String(date.getUTCHours()).padStart(2, '0')}:${String(
       date.getUTCMinutes()
     ).padStart(2, '0')}`;
   };
 
-  // Format ngày giờ
   const formattedDate = format(new Date(ticket.startTime), 'EEE, dd MMM yyyy', {
     locale: vi,
   });
-  const formattedTime = `${formatUtcTime(ticket.startTime)} - ${formatUtcTime(
+  const formattedTime = `${formatUtcTime(ticket.startTime)} – ${formatUtcTime(
     ticket.endTime
   )}`;
 
-  // Xác định icon location
   const isOnline = ticket.format === 'online';
-  const LocationIcon = isOnline ? Globe : Building;
+  const LocationIcon = isOnline ? Globe : MapPin;
 
   const startCheckinPolling = async (ticketId) => {
     try {
       if (!ticketId) return;
-
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
       }
-
       const startTime = Date.now();
-
       pollingIntervalRef.current = setInterval(async () => {
         const elapsed = Date.now() - startTime;
         if (elapsed >= 60_000) {
@@ -113,14 +120,12 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
           pollingIntervalRef.current = null;
           return;
         }
-
         try {
           const tickets = await getMyTickets();
           const currentId = ticketId;
           const found = tickets?.find(
             (t) => (t?._id || t?.id)?.toString() === currentId?.toString()
           );
-
           if (found && found.status === 'checkedIn') {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
@@ -129,62 +134,35 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
             }
           }
         } catch (err) {
-          console.error(
-            '[TicketCard] Lỗi khi kiểm tra trạng thái check-in:',
-            err
-          );
+          console.error('[TicketCard] Lỗi kiểm tra check-in:', err);
         }
       }, 3000);
     } catch (err) {
-      console.error('[TicketCard] Không thể khởi tạo polling check-in:', err);
+      console.error('[TicketCard] Lỗi polling:', err);
     }
   };
 
   const handleExportQR = async () => {
     try {
-      console.log('[TicketCard] Bắt đầu flow Xuất QR cho ticket:', {
-        rawTicket: ticket,
-        ticketId: ticket?._id || ticket?.id,
-        mintStatus: ticket?.mintStatus,
-      });
-
-      console.log('[TicketCard] Privy state:', {
-        ready,
-        authenticated,
-        hasPrivyUser: !!privyUser,
-        walletAddress: privyUser?.wallet?.address || null,
-      });
-
       if (!ready) {
         alert('Hệ thống ví đang khởi tạo, vui lòng thử lại sau vài giây.');
         return;
       }
-
       if (!authenticated || !privyUser || !privyUser.wallet?.address) {
-        alert(
-          'Không tìm thấy ví Privy. Vui lòng đăng nhập lại hoặc chờ ví được tạo rồi thử lại.'
-        );
+        alert('Không tìm thấy ví Privy. Vui lòng đăng nhập lại.');
         return;
       }
-
       const ticketId = ticket?._id || ticket?.id;
       const showId =
         ticket?.showId || ticket?.show?.id || ticket?.show?.showId || null;
       if (!ticketId) {
-        console.error('[TicketCard] Không tìm thấy ticketId (_id hoặc id)');
-        alert('Không xác định được mã vé để tạo QR.');
+        alert('Không xác định được mã vé.');
         return;
       }
-
       setLoadingQR(true);
-
       const timestamp = Date.now();
       const message = `Check-in ticket ${ticketId} at timestamp ${timestamp}`;
-      console.log('[TicketCard] Message sẽ ký:', message);
-
       const signature = await signMessage({ message });
-      console.log('[TicketCard] Đã ký xong, signature:', signature);
-
       const payload = {
         ticketId,
         showId,
@@ -192,20 +170,13 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
         timestamp,
         signature,
       };
-
       setQrData(JSON.stringify(payload));
       setTimeLeft(60);
       setShowQRModal(true);
       startCheckinPolling(ticketId);
       setLoadingQR(false);
     } catch (error) {
-      console.error('[TicketCard] Lỗi khi ký hoặc tạo QR:', error, {
-        code: error?.code,
-        message: error?.message,
-      });
       setLoadingQR(false);
-
-      // Nếu người dùng tự đóng popup / bấm hủy ký thì không hiện alert lỗi
       if (
         error?.code === 4001 ||
         (typeof error?.message === 'string' &&
@@ -213,10 +184,7 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
       ) {
         return;
       }
-
-      alert(
-        `Lỗi khi ký: ${error?.message || 'Bạn đã hủy ký hoặc có lỗi xảy ra.'}`
-      );
+      alert(`Lỗi khi ký: ${error?.message || 'Có lỗi xảy ra.'}`);
     }
   };
 
@@ -225,7 +193,6 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
       const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
     }
-
     if (timeLeft === 0 && qrData) {
       setQrData(null);
     }
@@ -242,130 +209,149 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
 
   return (
     <>
-      {/* Horizontal Card Layout */}
-      <div className="border-border-default bg-background-primary group overflow-hidden rounded-xl border transition-all hover:shadow-md">
-        <div className="flex flex-col gap-4 p-4 md:flex-row">
-          {/* Banner Image - Left Side */}
-          <div className="relative h-32 w-full flex-shrink-0 overflow-hidden rounded-lg md:h-36 md:w-48">
-            <img
-              src={ticket.bannerImageUrl}
-              alt={ticket.eventName}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            {/* Status Badge */}
-            <div className="absolute top-2 right-2">
+      {/* Bố cục Main Card: 
+        1. Sử dụng bg-background-secondary và border-border-default.
+        2. Dùng overflow-hidden để cắt gọn ảnh, không có hover rác làm lộ ảnh.
+        3. Hiệu ứng hover:-translate-y-1 áp dụng lên toàn bộ thẻ mượt mà không bị rách viền.
+      */}
+      <div className="group border-border-default bg-background-secondary relative mb-4 flex w-full flex-col overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md md:flex-row">
+        {/* --- Phần 1: Hình ảnh (Left) --- */}
+        <div className="bg-background-primary relative h-44 w-full flex-shrink-0 overflow-hidden md:h-auto md:w-56">
+          <img
+            src={ticket.bannerImageUrl}
+            alt={ticket.eventName}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {/* Overlay gradient nhẹ cho ảnh */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5" />
+        </div>
+
+        {/* --- Phần 2: Nội dung chính (Middle) --- */}
+        <div className="flex flex-1 flex-col p-4 md:p-6">
+          {/* Badges Trạng thái */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusConfig.bgColor} ${statusConfig.textColor}`}
+            >
               <span
-                className={`${statusConfig.bgColor} ${statusConfig.textColor} rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm`}
-              >
-                {statusConfig.label}
+                className={`h-1.5 w-1.5 rounded-full ${statusConfig.dotColor}`}
+              />
+              {statusConfig.label}
+            </span>
+
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${mintStatusConfig.bgColor} ${mintStatusConfig.textColor} ${mintStatusConfig.borderColor}`}
+            >
+              <svg className="h-3 w-3" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M7 1L8.8 5.1L13 5.6L9.9 8.5L10.8 13L7 10.8L3.2 13L4.1 8.5L1 5.6L5.2 5.1L7 1Z"
+                  fill="currentColor"
+                />
+              </svg>
+              NFT: {mintStatusConfig.label}
+            </span>
+          </div>
+
+          {/* Tên sự kiện */}
+          <div className="mb-4">
+            <h3 className="text-text-primary line-clamp-2 text-lg leading-tight font-bold md:text-xl">
+              {ticket.eventName}
+            </h3>
+            <p className="text-text-secondary mt-1 line-clamp-1 text-sm font-medium">
+              {ticket.showName}
+            </p>
+          </div>
+
+          {/* Thông tin chi tiết */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Thời gian */}
+            <div className="flex items-start gap-3">
+              <Calendar className="text-primary mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div className="flex flex-col">
+                <p className="text-text-primary text-sm font-semibold">
+                  {formattedDate}
+                </p>
+                <p className="text-text-secondary mt-0.5 flex items-center gap-1.5 text-xs font-medium">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formattedTime}
+                </p>
+              </div>
+            </div>
+
+            {/* Địa điểm */}
+            <div className="flex items-start gap-3 sm:col-span-2">
+              <LocationIcon className="text-primary mt-0.5 h-4 w-4 flex-shrink-0" />
+              <p className="text-text-primary line-clamp-3 text-sm leading-snug font-medium">
+                {ticket.location ||
+                  (isOnline ? 'Sự kiện trực tuyến' : 'Chưa có địa điểm')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* --- Đường nét đứt (Phân chia cuống vé) --- */}
+        {/* Dùng border-dashed chuẩn xác, không dùng khoét lỗ rỗng */}
+        <div className="border-border-default my-6 hidden border-l-[1.5px] border-dashed md:block" />
+        <div className="border-border-default mx-4 block border-t-[1.5px] border-dashed md:hidden" />
+
+        {/* --- Phần 3: Cuống vé & Thao tác (Right) --- */}
+        <div className="bg-foreground flex w-full flex-col justify-between p-4 md:w-56 md:p-6">
+          {/* Loại vé */}
+          <div className="mb-4 flex items-center gap-2 md:flex-col md:items-start md:gap-1">
+            <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+              Loại vé
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Ticket className="text-primary h-4 w-4" />
+              <span className="text-text-primary truncate text-sm font-bold">
+                {ticket.ticketTypeName}
               </span>
             </div>
           </div>
 
-          {/* Content - Right Side */}
-          <div className="flex flex-1 flex-col justify-between gap-3">
-            {/* Top Section: Event Info */}
-            <div className="space-y-2">
-              {/* Event Name */}
-              <div>
-                <h3 className="text-text-primary mb-0.5 line-clamp-1 text-base font-bold md:text-lg">
-                  {ticket.eventName}
-                </h3>
-                <p className="text-text-secondary line-clamp-1 text-xs md:text-sm">
-                  {ticket.showName}
-                </p>
-              </div>
-
-              {/* Details Grid */}
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {/* Date & Time */}
-                <div className="flex items-center gap-2">
-                  <Calendar className="text-primary h-4 w-4 flex-shrink-0" />
-                  <div className="text-text-primary min-w-0 text-xs md:text-sm">
-                    <p className="truncate font-medium">{formattedDate}</p>
-                    <p className="text-text-secondary text-xs">
-                      {formattedTime}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="flex items-center gap-2">
-                  <LocationIcon className="text-primary h-4 w-4 flex-shrink-0" />
-                  <p className="text-text-primary line-clamp-2 min-w-0 text-xs md:text-sm">
-                    {ticket.location ||
-                      (isOnline ? 'Sự kiện trực tuyến' : 'Chưa có địa điểm')}
-                  </p>
-                </div>
-
-                {/* Ticket Type */}
-                <div className="flex items-center gap-2 md:col-span-2">
-                  <Ticket className="text-primary h-4 w-4 flex-shrink-0" />
-                  <p className="text-text-primary truncate text-xs font-medium md:text-sm">
-                    {ticket.ticketTypeName}
-                  </p>
-                </div>
-
-                {/* Mint Status */}
-                <div className="flex items-center gap-2 md:col-span-2">
-                  <QrCode className="text-primary h-4 w-4 flex-shrink-0" />
-                  <p className="text-text-primary truncate text-xs md:text-sm">
-                    Trạng thái mint:{' '}
-                    <span
-                      className={`${mintStatusConfig.bgColor} ${mintStatusConfig.textColor} ${mintStatusConfig.borderColor} inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold`}
-                    >
-                      {ticket.mintStatus || 'Không có'}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Section: Action Button */}
-            <div className="flex items-center justify-end">
-              {ticket.status === 'pending' ? (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleExportQR}
-                    disabled={
-                      loadingQR ||
-                      ticket.status !== 'pending' ||
-                      ticket.mintStatus !== 'minted'
-                    }
-                    className="w-full md:w-auto"
-                    variant="primary"
-                    size="sm"
-                  >
-                    <QrCode className="mr-2 h-4 w-4" />
-                    {loadingQR ? 'Đang tạo QR...' : 'Xuất QR'}
-                  </Button>
-                  <Button
-                    onClick={() => onClickSell(ticket)}
-                    className="w-full md:w-auto"
-                    variant="primary"
-                    size="sm"
-                  >
-                    Bán vé
-                  </Button>
-                </div>
-              ) : ticket.status === 'selling' ? (
-                <Button
-                  onClick={() => onCancelSell(ticket)}
-                  className="w-full md:w-auto"
-                  variant="destructive"
-                  size="sm"
+          {/* Buttons */}
+          <div className="mt-auto flex flex-col gap-2.5">
+            {ticket.status === 'pending' && (
+              <>
+                <button
+                  onClick={handleExportQR}
+                  disabled={
+                    loadingQR ||
+                    ticket.status !== 'pending' ||
+                    ticket.mintStatus !== 'minted'
+                  }
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                    loadingQR || ticket.mintStatus !== 'minted'
+                      ? 'border-border-default bg-disabled-background text-disabled-text cursor-not-allowed opacity-70'
+                      : 'border-border-default bg-background-secondary text-primary hover:border-primary hover:bg-primary hover:text-primary-foreground'
+                  }`}
                 >
-                  Hủy bán vé
-                </Button>
-              ) : (
-                ''
-              )}
-            </div>
+                  <QrCode className="h-4 w-4" />
+                  {loadingQR ? 'Đang tạo...' : 'Xuất QR'}
+                </button>
+
+                <button
+                  onClick={() => onClickSell(ticket)}
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
+                >
+                  Bán vé
+                </button>
+              </>
+            )}
+
+            {ticket.status === 'selling' && (
+              <button
+                onClick={() => onCancelSell(ticket)}
+                className="border-destructive bg-destructive-background text-destructive-text-on-subtle hover:bg-destructive hover:text-destructive-foreground inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-200"
+              >
+                Hủy đăng bán
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* QR Code Modal */}
+      {/* --- Modal (Giữ nguyên cấu trúc logic) --- */}
       {showQRModal && qrData && (
         <Modal
           isOpen={showQRModal}
@@ -373,16 +359,18 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
           title="Mã QR Vé"
         >
           <div className="space-y-4 text-center">
-            <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-white p-4 shadow-sm">
-              <h3 className="mb-2 font-bold">Mã Check-in (Dynamic)</h3>
+            <div className="border-border-default bg-background-secondary mt-4 flex flex-col items-center justify-center rounded-xl border p-5 shadow-sm">
+              <h3 className="text-text-primary mb-3 font-bold">
+                Mã Check-in (Dynamic)
+              </h3>
               <div className="flex flex-col items-center">
-                <div className="rounded border-2 border-blue-500 p-2">
+                <div className="border-primary rounded-xl border-2 bg-white p-3">
                   <QRCodeSVG value={qrData} size={200} />
                 </div>
-                <p className="mt-3 animate-pulse text-lg font-bold text-red-600">
+                <p className="text-destructive mt-4 animate-pulse text-lg font-bold">
                   Hết hạn sau: {timeLeft}s
                 </p>
-                <p className="mt-1 max-w-[200px] text-center text-xs text-gray-500">
+                <p className="text-text-secondary mt-2 max-w-[220px] text-center text-xs font-medium">
                   Đưa mã này cho nhân viên soát vé. Không chụp màn hình.
                 </p>
                 <button
@@ -393,23 +381,20 @@ export default function TicketCard({ ticket, onClickSell = () => {}, onCancelSel
                     }
                     setShowQRModal(false);
                     setQrData(null);
-                    // Reload lại trang sau khi đóng popup
-                    if (typeof window !== 'undefined') {
-                      window.location.reload();
-                    }
+                    if (typeof window !== 'undefined') window.location.reload();
                   }}
-                  className="mt-3 rounded border border-gray-300 px-4 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                  className="border-border-default bg-background-primary text-text-primary hover:bg-border-subtle mt-4 rounded-lg border px-5 py-2 text-sm font-semibold transition-colors"
                 >
                   Đóng
                 </button>
               </div>
             </div>
-            <div className="text-text-secondary space-y-1 text-sm">
-              <p className="font-semibold">{ticket.eventName}</p>
-              <p>{ticket.showName}</p>
-              <p>{ticket.ticketTypeName}</p>
+            <div className="text-text-secondary space-y-1.5 text-sm">
+              <p className="text-text-primary font-bold">{ticket.eventName}</p>
+              <p className="font-medium">{ticket.showName}</p>
+              <p className="font-medium">{ticket.ticketTypeName}</p>
             </div>
-            <p className="text-text-tertiary text-xs">
+            <p className="text-text-placeholder text-xs">
               Vui lòng xuất trình mã QR này khi check-in tại sự kiện
             </p>
           </div>

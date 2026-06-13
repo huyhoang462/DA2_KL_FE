@@ -223,13 +223,6 @@ export default function MyOrdersPage() {
 
   const currentTab = STATUS_TABS.find((tab) => tab.key === activeTab);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
-
   return (
     <div className="space-y-6">
       {/* Search Bar & Status Filter */}
@@ -389,7 +382,7 @@ export default function MyOrdersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-text-primary text-sm font-semibold">
-                            {formatCurrency(order.totalAmount)}
+                            {order.totalAmount} USDT
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
