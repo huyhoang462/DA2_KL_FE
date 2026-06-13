@@ -86,12 +86,12 @@ const PostDetailModal = ({
       title="Bài viết"
       onClose={onClose}
       xButton
-      maxWidth="max-w-5xl" // Mở rộng Modal để đủ không gian cho 2 cột
+      maxWidth="max-w-6xl" // Mở rộng Modal để đủ không gian cho 2 cột
     >
       {/* Container chính: 2 cột trên PC, 1 cột trên Mobile */}
       <div className="mt-2 flex flex-col gap-6 md:h-[75vh] md:flex-row md:gap-0 md:overflow-hidden">
         {/* ─── CỘT TRÁI: NỘI DUNG BÀI VIẾT ─── */}
-        <div className="custom-scrollbar w-full flex-shrink-0 md:w-[55%] md:overflow-y-auto md:pr-6 lg:w-[60%]">
+        <div className="custom-scrollbar w-full flex-shrink-0 md:w-[55%] md:overflow-y-auto md:pr-6 lg:w-[70%]">
           <div className="space-y-5 pb-4 md:pb-0">
             {/* Tác giả */}
             <div className="flex items-start gap-3">
@@ -299,7 +299,7 @@ const PostDetailModal = ({
         </div>
 
         {/* ─── CỘT PHẢI: TƯƠNG TÁC & BÌNH LUẬN ─── */}
-        <div className="border-border-default flex w-full flex-col border-t pt-4 md:w-[45%] md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:w-[40%]">
+        <div className="border-border-default flex w-full flex-col border-t pt-4 md:w-[45%] md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:w-[30%]">
           {/* Thanh Action (Ghim cố định trên cùng cột phải) */}
           <div className="border-border-subtle flex flex-shrink-0 items-center justify-between border-b pb-3">
             <button
