@@ -191,10 +191,10 @@ export default function OrderDetailModal({ order, onClose }) {
                           {item.quantity}
                         </td>
                         <td className="text-text-primary px-4 py-3 text-right text-sm">
-                          {formatCurrency(item.priceAtPurchase)}
+                          {item.priceAtPurchase} USDT
                         </td>
                         <td className="text-text-primary px-4 py-3 text-right text-sm font-semibold">
-                          {formatCurrency(item.priceAtPurchase * item.quantity)}
+                          {item.priceAtPurchase * item.quantity} USDT
                         </td>
                       </tr>
                     ))}
@@ -214,7 +214,7 @@ export default function OrderDetailModal({ order, onClose }) {
                     Tổng tiền vé
                   </span>
                   <span className="text-text-primary text-sm font-medium">
-                    {formatCurrency(order.totalAmount)}
+                    {order.totalAmount} USDT
                   </span>
                 </div>
                 <div className="border-border-default my-2 border-t" />
@@ -223,7 +223,7 @@ export default function OrderDetailModal({ order, onClose }) {
                     Tổng thanh toán
                   </span>
                   <span className="text-primary text-xl font-bold">
-                    {formatCurrency(order.totalAmount)}
+                    {order.totalAmount} USDT
                   </span>
                 </div>
               </div>
@@ -269,7 +269,7 @@ export default function OrderDetailModal({ order, onClose }) {
                         </div>
                         <div className="text-right">
                           <p className="text-text-primary text-lg font-bold">
-                            {formatCurrency(transaction.amount)}
+                            {transaction.amount} USDT
                           </p>
                           <span
                             className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
