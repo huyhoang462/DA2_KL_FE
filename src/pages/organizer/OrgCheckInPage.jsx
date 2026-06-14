@@ -254,7 +254,7 @@ const OrgCheckInPage = () => {
                               {ticket.name}
                             </p>
                             <p className="text-text-secondary text-sm">
-                              {ticket.price.toLocaleString()}đ • Check-in:{' '}
+                              {ticket.price.toLocaleString()} USDT • Check-in:{' '}
                               {ticket.checkinRate || 0}%
                             </p>
                           </div>
@@ -387,7 +387,8 @@ const OrgCheckInPage = () => {
                                   )}
                                 </p>
                                 <p className="text-text-secondary text-xs">
-                                  {ticket.ticketType.price.toLocaleString()}đ
+                                  {ticket.ticketType.price.toLocaleString()}{' '}
+                                  USDT
                                 </p>
                                 {/* NFT Token ID */}
                                 {ticket.mintStatus === 'minted' &&

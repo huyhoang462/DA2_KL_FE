@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         <div className="flex items-center gap-2">
           <div className="bg-primary h-3 w-3 rounded-full" />
           <span className="text-sm text-gray-600">Doanh thu:</span>
-          <span className="text-primary font-bold">{`${payload[0].value.toLocaleString('vi-VN')}đ`}</span>
+          <span className="text-primary font-bold">{`${payload[0].value.toLocaleString('vi-VN')} USDT`}</span>
         </div>
       </div>
     );
@@ -78,14 +78,14 @@ export default function RevenueChart({ data, summary, groupBy }) {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               <span>
-                Trung bình: {avgDaily.toLocaleString('vi-VN')}đ/
+                Trung bình: {avgDaily.toLocaleString('vi-VN')} USDT/
                 {groupBy === 'hour' ? 'giờ' : 'ngày'}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               <span>
-                Cao nhất: {maxRevenue.toLocaleString('vi-VN')}đ
+                Cao nhất: {maxRevenue.toLocaleString('vi-VN')} USDT
                 {peakDate && ` (${peakDate})`}
               </span>
             </div>

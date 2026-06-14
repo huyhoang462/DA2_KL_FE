@@ -361,9 +361,9 @@ const AdminTransactionsPage = () => {
               <table className="w-full">
                 <thead className="bg-background-primary border-border-default border-b">
                   <tr>
-                    <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    {/* <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Mã giao dịch
-                    </th>
+                    </th> */}
                     <th className="text-text-secondary px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                       Mã đơn hàng
                     </th>
@@ -403,9 +403,9 @@ const AdminTransactionsPage = () => {
                         key={transaction._id}
                         className="hover:bg-background-primary"
                       >
-                        <td className="text-text-primary px-4 py-4 font-mono text-sm">
+                        {/* <td className="text-text-primary px-4 py-4 font-mono text-sm">
                           {transaction.transactionCode}
-                        </td>
+                        </td> */}
                         <td className="text-text-primary px-4 py-4 font-mono text-sm">
                           {transaction.order?.orderCode}
                         </td>
@@ -431,8 +431,8 @@ const AdminTransactionsPage = () => {
                         <td className="text-text-secondary px-4 py-4 text-sm">
                           {formatDate(transaction.createdAt)}
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-4 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleViewDetail(transaction._id)}
                               className="text-primary hover:text-primary-dark"

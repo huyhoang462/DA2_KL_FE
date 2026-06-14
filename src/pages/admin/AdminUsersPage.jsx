@@ -284,7 +284,7 @@ const AdminUsersPage = () => {
                         </p>
                         <p className="text-text-secondary flex items-center gap-1">
                           <DollarSign className="h-3 w-3" />
-                          {((user.totalSpent || 0) / 1000).toFixed(0)}K VNĐ
+                          {(user.totalSpent || 0).toFixed(2)} USDT
                         </p>
                       </div>
                     </td>

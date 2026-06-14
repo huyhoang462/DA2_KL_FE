@@ -141,6 +141,7 @@ export const normalizePost = (post) => {
           price: Number(ticket.price || 0),
           originalPrice: Number(ticket.ticket.ticketType.price || 0),
           status: ticket.ticket.status || 'unknown',
+          owner: ticket.ticket.owner || 'unknown',
         }))
       : null,
   };

@@ -6,7 +6,7 @@ import { handleSyncWallet } from '../../services/authService';
 import { updateWalletAddress } from '../../store/slices/authSlice';
 
 const WalletSyncWrapper = ({ children }) => {
-  const { user: privyUser, ready, authenticated } = usePrivy();
+  const { user: privyUser, ready } = usePrivy();
   const isBackendAuthenticated = useSelector(
     (state) => state.auth.isAuthenticated
   );
@@ -17,24 +17,19 @@ const WalletSyncWrapper = ({ children }) => {
   const hasSynced = useRef(false);
   const lastSyncedAddress = useRef(null);
 
+  // Reset sync state khi user logout — tránh bug khi re-login với cùng wallet
   useEffect(() => {
-    // Hàm kiểm tra và sync
+    if (!isBackendAuthenticated) {
+      hasSynced.current = false;
+      lastSyncedAddress.current = null;
+    }
+  }, [isBackendAuthenticated]);
+
+  useEffect(() => {
     const checkAndSync = async () => {
-      // console.log('[Sync Check] State snapshot:', {
-      //   ready,
-      //   privyAuthenticated: authenticated,
-      //   hasPrivyUser: !!privyUser,
-      //   walletAddress: privyUser?.wallet?.address || null,
-      //   isBackendAuthenticated,
-      // });
-
-      if (ready && authenticated && privyUser) {
-        //  console.log('🧩 [PrivyUser FULL OBJECT]:', privyUser);
-      }
-
       const walletAddress = privyUser?.wallet?.address;
 
-      // Điều kiện sync
+      // Điều kiện sync: Privy ready, backend đã auth, và có wallet address
       if (ready && isBackendAuthenticated && walletAddress) {
         // Ngăn gọi trùng lặp: đang sync HOẶC đã sync address này rồi
         if (isSyncing.current || lastSyncedAddress.current === walletAddress) {
@@ -61,7 +56,9 @@ const WalletSyncWrapper = ({ children }) => {
     };
 
     checkAndSync();
-  }, [privyUser, isBackendAuthenticated, ready, authenticated, dispatch]);
+    // Bỏ `authenticated` khỏi deps: không dùng trong logic, gây trigger effect thừa.
+    // Chỉ cần: privyUser (wallet address), isBackendAuthenticated, ready, dispatch.
+  }, [privyUser, isBackendAuthenticated, ready, dispatch]);
 
   return <>{children}</>;
 };

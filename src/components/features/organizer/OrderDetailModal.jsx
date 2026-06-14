@@ -142,7 +142,7 @@ const OrderDetailModal = ({ isOpen, onClose, orderId }) => {
                   <div className="flex justify-between text-base font-semibold">
                     <span>Tổng tiền:</span>
                     <span className="text-primary">
-                      {order.totalAmount.toLocaleString('vi-VN')}đ
+                      {order.totalAmount.toLocaleString('vi-VN')} USDT
                     </span>
                   </div>
                 </div>
@@ -233,12 +233,13 @@ const OrderDetailModal = ({ isOpen, onClose, orderId }) => {
                       </h4>
                       <p className="text-sm text-gray-600">
                         {item.quantity || 0} vé ×{' '}
-                        {(item.priceAtPurchase || 0).toLocaleString('vi-VN')}đ
+                        {(item.priceAtPurchase || 0).toLocaleString('vi-VN')}
+                        USDT
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">
-                        {(item.subtotal || 0).toLocaleString('vi-VN')}đ
+                        {(item.subtotal || 0).toLocaleString('vi-VN')}USDT
                       </p>
                     </div>
                   </div>

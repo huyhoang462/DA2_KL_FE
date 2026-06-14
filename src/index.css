@@ -82,6 +82,14 @@
   /* Trạng thái Vô hiệu hóa (Disabled) */
   --color-disabled-background: #e9ecef; /* Nền cho button, input bị vô hiệu hóa */
   --color-disabled-text: #adb5bd; /* Chữ cho các element bị vô hiệu hóa */
+
+  /* -------------------------------------------------- */
+  /* 5. MÀU DÀNH RIÊNG CHO FOOTER (DARK MODE INVERTED)    */
+  /* -------------------------------------------------- */
+  --color-footer-bg: #111827; /* Xám đen đậm, tạo độ sâu và tương phản mạnh để neo trang web */
+  --color-footer-text-primary: #f9fafb; /* Trắng xám cho các tiêu đề chính */
+  --color-footer-text-secondary: #9ca3af; /* Xám nhạt cho text phụ, link */
+  --color-footer-border: #374151; /* Line viền mờ chia mảng trong footer */
 }
 [data-theme='light'] {
   --background-primary: #f9db1c;
@@ -165,7 +173,7 @@ button {
   cursor: pointer;
 }
 
-a,
+/* a,
 p,
 div,
 h1,
@@ -175,7 +183,7 @@ h4,
 h5,
 h6 {
   @apply select-none;
-}
+} */
 
 @keyframes reveal {
   from {

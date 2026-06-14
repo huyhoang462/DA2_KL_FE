@@ -78,7 +78,7 @@ const CustomTooltip = ({ active, payload }) => {
     const percentage = ((data.sold / totalSold) * 100).toFixed(1);
 
     return (
-      <div className="border-border-default b g-white max-w-xs rounded-lg border px-4 py-3 shadow-lg">
+      <div className="border-border-default rounded-lg border bg-white px-4 py-3 shadow-lg backdrop-blur-sm">
         <div className="mb-2 flex items-center gap-2">
           <div
             className="h-3 w-3 rounded-full"
@@ -101,7 +101,7 @@ const CustomTooltip = ({ active, payload }) => {
             <p>
               Giá:{' '}
               <span className="text-text-primary font-semibold">
-                {data.price.toLocaleString('vi-VN')}đ
+                {data.price.toLocaleString('vi-VN')} USDT
               </span>
             </p>
           )}
