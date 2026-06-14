@@ -135,7 +135,7 @@ export default function LoginPage() {
           aria-label="Đóng"
         />
         <div className="mb-6 flex flex-col items-center">
-          <img src="/favicon.ico" alt="Logo" className="mb-2 h-16" />
+          <img src="/favicon.ico" alt="Logo" className="mb-2 h-32" />
           <h1 className="text-text-primary text-2xl font-bold">
             Đăng nhập vào <span className="text-primary">ShineTicket</span>
           </h1>

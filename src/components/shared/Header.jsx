@@ -166,14 +166,14 @@ const userMenuItems = useMemo(() => [
         <div className="flex items-center gap-3">
           <Link
             to="/login"
-            className="text-primary-foreground bg-background-secondary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow-md"
+            className="text-primary  bg-background-secondary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow-md"
           >
             <LogIn className="h-4 w-4" />
             Đăng nhập
           </Link>
           <Link
             to="/signup"
-            className="text-primary-foreground bg-background-secondary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow-md"
+            className="text-primary bg-background-secondary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition hover:shadow-md"
           >
             <UserPlus className="h-4 w-4" />
             Đăng ký
@@ -272,7 +272,7 @@ const userMenuItems = useMemo(() => [
             <>
               <Link
                 to="/login"
-                className="text-text-primary hover:bg-primary/10 hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition"
+                className="text-primary hover:bg-primary/10 hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-base font-medium transition"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <LogIn className="h-5 w-5" />
