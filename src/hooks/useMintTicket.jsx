@@ -88,16 +88,27 @@ export const useMintTicket = () => {
       const isDevMode = import.meta.env?.DEV ?? false;
 
       // Bước 1: Kiểm tra môi trường ví (Wallet Environment Check)
-      const wallet = wallets[0];
-      if (!wallet) {
+      let ethereumProvider;
+      let browserProvider;
+      let currentSigner;
+
+      if (window.ethereum) {
+        // Default: Luôn ưu tiên dùng MetaMask (window.ethereum) nếu người dùng có cài extension
+        ethereumProvider = window.ethereum;
+        browserProvider = new ethers.BrowserProvider(window.ethereum);
+        await browserProvider.send('eth_requestAccounts', []); // Yêu cầu kết nối ví
+        currentSigner = await browserProvider.getSigner();
+      } else if (wallets && wallets.length > 0) {
+        // Fallback: Dùng ví kết nối qua Privy nếu không tìm thấy MetaMask gốc
+        const wallet = wallets[0];
+        ethereumProvider = await wallet.getEthereumProvider();
+        browserProvider = new ethers.BrowserProvider(ethereumProvider);
+        currentSigner = await browserProvider.getSigner();
+      } else {
         throw new Error(
-          'Hệ thống không tìm thấy ví Web3. Vui lòng đăng nhập ví Privy để tiếp tục.'
+          'Hệ thống không tìm thấy ví Web3. Vui lòng cài đặt MetaMask để tiếp tục thanh toán.'
         );
       }
-
-      const ethereumProvider = await wallet.getEthereumProvider();
-      let browserProvider = new ethers.BrowserProvider(ethereumProvider);
-      let currentSigner = await browserProvider.getSigner();
 
       // Bước 2: Kiểm tra và Ép chuyển mạng lưới (Network Switch)
       const currentNetwork = await ethereumProvider.request({
