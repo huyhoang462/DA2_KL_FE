@@ -123,7 +123,7 @@ const UserOrdersTab = ({ userId }) => {
               {statistics.paid?.count || 0}
             </p>
             <p className="text-text-secondary mt-1 text-xs">
-              {((statistics.paid?.amount || 0) / 1000000).toFixed(1)}M VNĐ
+              {(statistics.paid?.amount || 0).toFixed(2)} USDT
             </p>
           </div>
           <div className="bg-background-primary border-border-default rounded-lg border p-4">
@@ -132,7 +132,7 @@ const UserOrdersTab = ({ userId }) => {
               {statistics.cancelled?.count || 0}
             </p>
             <p className="text-text-secondary mt-1 text-xs">
-              {((statistics.cancelled?.amount || 0) / 1000000).toFixed(1)}M VNĐ
+              {(statistics.cancelled?.amount || 0).toFixed(2)} USDT
             </p>
           </div>
           <div className="bg-background-primary border-border-default rounded-lg border p-4">
@@ -143,7 +143,7 @@ const UserOrdersTab = ({ userId }) => {
               {statistics.refunded?.count || 0}
             </p>
             <p className="text-text-secondary mt-1 text-xs">
-              {((statistics.refunded?.amount || 0) / 1000000).toFixed(1)}M VNĐ
+              {(statistics.refunded?.amount || 0).toFixed(2)} USDT
             </p>
           </div>
         </div>
@@ -168,7 +168,7 @@ const UserOrdersTab = ({ userId }) => {
                 }}
                 labelStyle={{ color: '#F3F4F6' }}
               />
-              <Bar dataKey="amount" fill="#3B82F6" name="Số tiền (VNĐ)" />
+              <Bar dataKey="amount" fill="#3B82F6" name="Số tiền (USDT)" />
             </BarChart>
           </ResponsiveContainer>
         </div>

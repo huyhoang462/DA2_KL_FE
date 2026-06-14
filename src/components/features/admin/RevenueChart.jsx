@@ -33,7 +33,7 @@ const RevenueChart = ({ data }) => {
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}:{' '}
               {entry.name === 'Doanh thu'
-                ? `${entry.value.toLocaleString('vi-VN')} VNĐ`
+                ? `${entry.value.toLocaleString('vi-VN')} USDT`
                 : `${entry.value} vé`}
             </p>
           ))}
@@ -52,7 +52,7 @@ const RevenueChart = ({ data }) => {
           yAxisId="left"
           stroke="#10B981"
           style={{ fontSize: '12px' }}
-          tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+          tickFormatter={(value) => `${value}`}
         />
         <YAxis
           yAxisId="right"

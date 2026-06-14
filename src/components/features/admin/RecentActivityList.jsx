@@ -67,7 +67,7 @@ export const TransactionsList = ({ transactions }) => (
         <ActivityItem
           key={transaction.id}
           icon={DollarSign}
-          title={`${transaction.amount.toLocaleString('vi-VN')} VNĐ`}
+          title={`${transaction.amount.toLocaleString('vi-VN')} USDT`}
           subtitle={
             <span>
               {transaction.buyer?.name} -

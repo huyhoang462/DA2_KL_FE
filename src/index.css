@@ -165,7 +165,7 @@ button {
   cursor: pointer;
 }
 
-a,
+/* a,
 p,
 div,
 h1,
@@ -175,7 +175,7 @@ h4,
 h5,
 h6 {
   @apply select-none;
-}
+} */
 
 @keyframes reveal {
   from {

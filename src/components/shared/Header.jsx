@@ -73,51 +73,54 @@ const Header = () => {
     }
   };
 
-  const handleLogoutRequest = () => {
+  const handleLogoutRequest = useCallback(() => {
     if (isLoggingOut) return;
     setDropdownOpen(false);
     setMobileMenuOpen(false);
     setLogoutConfirmOpen(true);
-  };
+  }, [isLoggingOut]);
 
   const handleLogoutCancel = () => {
     if (isLoggingOut) return;
     setLogoutConfirmOpen(false);
   };
 
-const userMenuItems = useMemo(() => [
-    {
-      label: 'Thông báo',
-      icon: <Bell className="mr-2 h-4 w-4" />,
-      onClick: () => {
-        nav('/notifications');
-        setDropdownOpen(false);
+  const userMenuItems = useMemo(
+    () => [
+      {
+        label: 'Thông báo',
+        icon: <Bell className="mr-2 h-4 w-4" />,
+        onClick: () => {
+          nav('/notifications');
+          setDropdownOpen(false);
+        },
       },
-    },
-    {
-      label: 'Thông tin tài khoản',
-      icon: <User className="mr-2 h-4 w-4" />,
-      onClick: () => {
-        nav('/user/profile');
-        setDropdownOpen(false);
+      {
+        label: 'Thông tin tài khoản',
+        icon: <User className="mr-2 h-4 w-4" />,
+        onClick: () => {
+          nav('/user/profile');
+          setDropdownOpen(false);
+        },
       },
-    },
-    {
-      label: 'Vé của tôi',
-      icon: <Ticket className="mr-2 h-4 w-4" />,
-      onClick: () => {
-        nav('/user/tickets');
-        setDropdownOpen(false);
+      {
+        label: 'Vé của tôi',
+        icon: <Ticket className="mr-2 h-4 w-4" />,
+        onClick: () => {
+          nav('/user/tickets');
+          setDropdownOpen(false);
+        },
       },
-    },
-    {
-      label: 'Đăng xuất',
-      icon: <LogOut className="mr-2 h-4 w-4" />,
-      onClick: handleLogoutRequest,
-      className:
-        'text-destructive hover:bg-destructive-background font-semibold',
-    },
-  ], [nav, handleLogout]);
+      {
+        label: 'Đăng xuất',
+        icon: <LogOut className="mr-2 h-4 w-4" />,
+        onClick: handleLogoutRequest,
+        className:
+          'text-destructive hover:bg-destructive-background font-semibold',
+      },
+    ],
+    [nav, handleLogoutRequest]
+  );
 
   const handleNotificationClick = useCallback(async () => {
     const nextOpen = !notificationOpen;
@@ -141,9 +144,7 @@ const userMenuItems = useMemo(() => [
       </div>
       <ul className="py-1">
         {userMenuItems.map((item) => (
-          <li
-            key={item.label}
-          >
+          <li key={item.label}>
             <button
               type="button"
               className={`flex w-full items-center px-4 py-2 text-sm transition ${
@@ -186,7 +187,7 @@ const userMenuItems = useMemo(() => [
       <div className="relative flex h-8 items-center gap-4">
         <div ref={notificationRef} className="relative">
           <NotificationBell
-          unreadCount={unreadCount}
+            unreadCount={unreadCount}
             loading={loadingCount}
             isOpen={notificationOpen}
             onClick={handleNotificationClick} // <-- Truyền hàm đã được tối ưu
@@ -224,7 +225,7 @@ const userMenuItems = useMemo(() => [
 
         <Link
           to="/community"
-          className="hover:bg-background-secondary bg-background-secondary text-primary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
+          className="hover:bg-background-primary/90 bg-background-secondary text-primary hover:text-primary flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
         >
           <MessageCircleMore className="h-5 w-5" />
           <span>Cộng đồng</span>

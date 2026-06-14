@@ -7,9 +7,7 @@ import { useSubscribeToJwtAuthWithFlag } from '@privy-io/react-auth';
 const PrivyJwtSyncWrapper = ({ children }) => {
   const { isAuthenticated, privyToken } = useSelector((state) => state.auth);
 
-  const hasPrivyToken = !!privyToken;
-  const enabled = true;
-  const shouldAuthenticateWithPrivy = Boolean(isAuthenticated && hasPrivyToken);
+  const shouldAuthenticateWithPrivy = Boolean(isAuthenticated && privyToken);
 
   // Fix stale closure: luôn dùng ref để lưu giá trị mới nhất
   // vì Privy có thể gọi getExternalJwt sau khi component đã re-render
@@ -21,45 +19,17 @@ const PrivyJwtSyncWrapper = ({ children }) => {
     shouldAuthRef.current = shouldAuthenticateWithPrivy;
   }, [privyToken, shouldAuthenticateWithPrivy]);
 
-  // Log mỗi khi state auth thay đổi
-  useEffect(() => {
-    console.log('🔁 [PrivyJwtSync] Redux auth state changed:', {
-      isAuthenticated,
-      hasPrivyToken,
-      enabled,
-      shouldAuthenticateWithPrivy,
-      privyTokenSample: privyToken ? `${privyToken.slice(0, 20)}...` : null,
-    });
-  }, [
-    isAuthenticated,
-    hasPrivyToken,
-    enabled,
-    shouldAuthenticateWithPrivy,
-    privyToken,
-  ]);
-
   useSubscribeToJwtAuthWithFlag({
-    enabled,
+    enabled: true,
     // Chỉ xác thực với Privy khi app thực sự đang authenticated.
     isAuthenticated: shouldAuthenticateWithPrivy,
     // Ở project hiện tại chưa quản lý state loading cho auth, nên để false
     isLoading: false,
     getExternalJwt: async () => {
       // Đọc từ ref thay vì closure để luôn có giá trị mới nhất
-      const currentToken = privyTokenRef.current;
-      const currentShouldAuth = shouldAuthRef.current;
-
-      console.log('[PrivyJwtSync] getExternalJwt called with (from ref):', {
-        enabled,
-        hasToken: !!currentToken,
-        shouldAuth: currentShouldAuth,
-      });
-
-      if (currentShouldAuth && currentToken) {
-        console.log('📨 [PrivyJwtSync] Sending privyToken to Privy');
-        return currentToken;
+      if (shouldAuthRef.current && privyTokenRef.current) {
+        return privyTokenRef.current;
       }
-      console.log('⏸️ [PrivyJwtSync] Not sending JWT (no token)');
       return undefined;
     },
   });
@@ -68,4 +38,3 @@ const PrivyJwtSyncWrapper = ({ children }) => {
 };
 
 export default PrivyJwtSyncWrapper;
-

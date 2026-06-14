@@ -16,6 +16,7 @@ import { orderService } from '../../services/orderService';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import OrgOrdersTableSkeleton from '../../components/ui/OrgOrdersTableSkeleton';
 import { orderStatusMap, paymentMethodMap } from '../../utils/mockData';
+import { toast } from 'react-toastify';
 
 const OrgOrdersPage = () => {
   const { id: eventId } = useParams();
@@ -55,10 +56,10 @@ const OrgOrdersPage = () => {
     mutationFn: (orderId) => orderService.cancelOrder(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries(['event-orders', eventId]);
-      alert('Đã hủy đơn hàng thành công');
+      toast.success('Đã hủy đơn hàng thành công');
     },
     onError: (error) => {
-      alert(error.message || 'Có lỗi xảy ra khi hủy đơn hàng');
+      toast.error(error.message || 'Có lỗi xảy ra khi hủy đơn hàng');
     },
   });
 
@@ -66,10 +67,10 @@ const OrgOrdersPage = () => {
   const resendPaymentMutation = useMutation({
     mutationFn: (orderId) => orderService.resendPaymentLink(orderId),
     onSuccess: () => {
-      alert('Đã gửi lại link thanh toán thành công');
+      toast.success('Đã gửi lại link thanh toán thành công');
     },
     onError: (error) => {
-      alert(error.message || 'Có lỗi xảy ra khi gửi lại link thanh toán');
+      toast.error(error.message || 'Có lỗi xảy ra khi gửi lại link thanh toán');
     },
   });
 
@@ -142,7 +143,7 @@ const OrgOrdersPage = () => {
       sortable: true,
       render: (value) => (
         <span className="font-semibold text-gray-900">
-          {value.toLocaleString('vi-VN')}đ
+          {value.toLocaleString('vi-VN')} USDT
         </span>
       ),
     },
@@ -173,7 +174,7 @@ const OrgOrdersPage = () => {
         const paymentMethod = latestTransaction?.paymentMethod;
         return paymentMethod
           ? paymentMethodMap[paymentMethod] || paymentMethod
-          : 'Chưa';
+          : '_';
       },
     },
   ];
@@ -250,13 +251,15 @@ const OrgOrdersPage = () => {
 
   const handleResendEmail = (order) => {
     if (order.status !== 'pending') {
-      alert('Chỉ có thể gửi lại link thanh toán cho đơn hàng chờ thanh toán');
+      toast.error(
+        'Chỉ có thể gửi lại link thanh toán cho đơn hàng chờ thanh toán'
+      );
       return;
     }
 
     const isExpired = new Date(order.expiresAt) < new Date();
     if (isExpired) {
-      alert('Đơn hàng đã hết hạn, không thể gửi lại link thanh toán');
+      toast.error('Đơn hàng đã hết hạn, không thể gửi lại link thanh toán');
       return;
     }
 
@@ -267,7 +270,7 @@ const OrgOrdersPage = () => {
 
   const handleCancelOrder = (order) => {
     if (order.status !== 'pending') {
-      alert('Chỉ có thể hủy đơn hàng chờ thanh toán');
+      toast.error('Chỉ có thể hủy đơn hàng chờ thanh toán');
       return;
     }
 
@@ -279,7 +282,7 @@ const OrgOrdersPage = () => {
   const handleExportOrder = (order) => {
     // TODO: Implement export functionality
     console.log('Exporting order:', order.orderCode);
-    alert(`Đang xuất PDF cho đơn hàng ${order.orderCode}`);
+    toast.info(`Đang xuất PDF cho đơn hàng ${order.orderCode}`);
   };
 
   // Loading state
@@ -351,7 +354,8 @@ const OrgOrdersPage = () => {
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="text-primary text-2xl font-bold">
-            {stats.totalRevenue.toLocaleString('vi-VN')}đ
+            {stats.totalRevenue.toLocaleString('vi-VN')}{' '}
+            <span className="text-sm">USDT</span>
           </div>
           <div className="text-sm text-gray-600">Tổng doanh thu</div>
         </div>

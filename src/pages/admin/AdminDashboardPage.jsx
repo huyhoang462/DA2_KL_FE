@@ -144,15 +144,15 @@ const AdminDashboardPage = () => {
           value={overview?.events?.total?.toLocaleString() || '0'}
           subtitle={`${overview?.events?.pending || 0} chờ duyệt, ${overview?.events?.ongoing || 0} đang diễn ra`}
           icon={Calendar}
-          color="purple"
+          color="purple-500"
           onClick={() => navigate('/admin/events')}
         />
         <StatCard
           title="Doanh thu tháng này"
-          value={`${((overview?.revenue?.thisMonth || 0) / 1000000).toFixed(1)}M`}
-          subtitle={`Hôm nay: ${((overview?.revenue?.today || 0) / 1000).toFixed(0)}K VNĐ`}
+          value={`${overview?.revenue?.thisMonth || 0} `}
+          subtitle={`Hôm nay: ${overview?.revenue?.today || 0} USDT`}
           icon={DollarSign}
-          color="green"
+          color="green-500"
           trend={overview?.revenue?.growth}
           onClick={() => navigate('/admin/reports?tab=revenue')}
         />
@@ -161,7 +161,7 @@ const AdminDashboardPage = () => {
           value={overview?.tickets?.total?.toLocaleString() || '0'}
           subtitle={`${overview?.tickets?.today || 0} vé hôm nay`}
           icon={Ticket}
-          color="orange"
+          color="orange-500"
           onClick={() => navigate('/admin/reports?tab=tickets')}
         />
       </div>

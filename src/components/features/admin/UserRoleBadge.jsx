@@ -14,15 +14,21 @@ const UserRoleBadge = ({ role }) => {
       textColor: 'text-blue-500',
       borderColor: 'border-blue-500/30',
     },
-    user: {
-      text: 'User',
+    organizer: {
+      text: 'Organizer',
+      bgColor: 'bg-orange-500/10',
+      textColor: 'text-orange-500',
+      borderColor: 'border-orange-500/30',
+    },
+    customer: {
+      text: 'Customer',
       bgColor: 'bg-gray-500/10',
       textColor: 'text-gray-500',
       borderColor: 'border-gray-500/30',
     },
   };
 
-  const config = roleConfig[role] || roleConfig.user;
+  const config = roleConfig[role] || roleConfig.customer;
 
   return (
     <span

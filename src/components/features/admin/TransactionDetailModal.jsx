@@ -38,7 +38,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
       title="Chi tiết giao dịch"
       onClose={onClose}
       size="xl"
-      maxWidth="max-w-2xl "
+      maxWidth="max-w-4xl "
     >
       <div className="max-h-[80vh] space-y-6 overflow-y-auto">
         {/* Transaction Info */}

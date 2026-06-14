@@ -24,7 +24,6 @@ import { getUserById } from '../../services/adminService';
 const AdminUserDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('orders');
 
   // Fetch user overview
   const {
@@ -169,7 +168,8 @@ const AdminUserDetailPage = () => {
                 Tổng chi tiêu
               </p>
               <p className="text-text-primary mt-2 text-3xl font-bold">
-                {((user.totalSpent || 0) / 1000000).toFixed(1)}M
+                {(user.totalSpent || 0).toFixed(2)}{' '}
+                <span className="text-base">USDT</span>
               </p>
             </div>
             <div className="rounded-lg bg-green-500/10 p-3">
@@ -209,41 +209,33 @@ const AdminUserDetailPage = () => {
         </div>
       </div>
 
-      {user?.role === 'user' && (
-        <div className="bg-background-secondary border-border-default rounded-lg border">
-          {/* Tab Navigation */}
-          <div className="border-border-default flex border-b">
+      <div className="bg-background-secondary border-border-default rounded-lg border">
+        {/* Tab Navigation */}
+        <div className="border-border-default flex border-b">
+          {user?.role === 'customer' && (
             <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-6 py-4 text-sm font-medium transition-colors ${
-                activeTab === 'orders'
-                  ? 'border-primary text-primary border-b-2'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
+              className={`px-6 py-4 text-sm font-medium transition-colors ${'border-primary text-primary border-b-2'}`}
             >
               <ShoppingBag className="mr-2 inline-block h-4 w-4" />
               Đơn hàng
             </button>
+          )}
+          {user?.role === 'organizer' && (
             <button
-              onClick={() => setActiveTab('events')}
-              className={`px-6 py-4 text-sm font-medium transition-colors ${
-                activeTab === 'events'
-                  ? 'border-primary text-primary border-b-2'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
+              className={`px-6 py-4 text-sm font-medium transition-colors ${'border-primary text-primary border-b-2'}`}
             >
               <CalendarDays className="mr-2 inline-block h-4 w-4" />
               Sự kiện
             </button>
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-6">
-            {activeTab === 'orders' && <UserOrdersTab userId={id} />}
-            {activeTab === 'events' && <UserEventsTab userId={id} />}
-          </div>
+          )}
         </div>
-      )}
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {user?.role === 'customer' && <UserOrdersTab userId={id} />}
+          {user?.role === 'organizer' && <UserEventsTab userId={id} />}
+        </div>
+      </div>
     </div>
   );
 };

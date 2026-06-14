@@ -42,8 +42,8 @@ export default function KeyMetricsDisplay({ data }) {
       <MetricItem
         icon={DollarSign}
         label="Tổng doanh thu"
-        value={`${data.totalRevenue.toLocaleString('vi-VN')}đ`}
-        subValue={`TB/đơn: ${data.revenuePerOrder.toLocaleString('vi-VN')}đ`}
+        value={`${data.totalRevenue.toLocaleString('vi-VN')} USDT`}
+        subValue={`TB/đơn: ${data.revenuePerOrder.toLocaleString('vi-VN')} USDT`}
       />
       <MetricItem
         icon={Ticket}

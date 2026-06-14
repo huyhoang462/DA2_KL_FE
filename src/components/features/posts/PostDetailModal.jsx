@@ -180,12 +180,14 @@ const PostDetailModal = ({
                   {/* Danh sách vé */}
                   <div className="bg-background-secondary border-border-default rounded-xl border p-4 shadow-sm">
                     <h4 className="text-text-primary mb-3 text-sm font-bold tracking-wide uppercase">
-                      Danh sách vé đang bán ({post.relatedTickets.length})
+                      Danh sách vé ({post.relatedTickets.length})
                     </h4>
 
                     <div className="flex flex-col gap-3">
                       {post.relatedTickets.map((ticket) => {
                         const isSelling = ticket.status === 'selling';
+                        const isOwnerTicket = ticket.owner === currentUser?.id;
+                        const isSold = ticket.owner !== post.author.id;
                         const isChecked = selectedTicketIds.includes(
                           ticket.ticketId
                         );
@@ -196,19 +198,28 @@ const PostDetailModal = ({
                             title={
                               isOwnerPost
                                 ? 'Bạn là chủ bài viết'
-                                : isSelling
-                                  ? 'Nhấn để chọn vé này'
-                                  : 'Vé này không còn bán'
+                                : isOwnerTicket
+                                  ? 'Bạn đã mua vé này'
+                                  : isSold
+                                    ? 'Vé đã được bán'
+                                    : isSelling
+                                      ? 'Nhấn để chọn vé này'
+                                      : 'Vé này không còn bán'
                             }
                             onClick={() =>
                               isSelling &&
                               !isOwnerPost &&
+                              !isOwnerTicket &&
+                              !isSold &&
                               handleSelectTicket(ticket.ticketId)
                             }
                             className={`flex items-center justify-between rounded-xl border p-3 transition-all ${
                               isOwnerPost
                                 ? 'border-border-subtle bg-disabled-background cursor-not-allowed opacity-80'
-                                : isSelling
+                                : isSelling &&
+                                    !isOwnerPost &&
+                                    !isOwnerTicket &&
+                                    !isSold
                                   ? 'border-border-default hover:border-primary bg-foreground cursor-pointer hover:shadow-sm'
                                   : 'border-border-subtle bg-disabled-background cursor-not-allowed opacity-60'
                             } ${isChecked ? 'border-primary bg-primary/5 ring-primary/20 ring-1' : ''}`}
@@ -229,7 +240,7 @@ const PostDetailModal = ({
 
                               <div>
                                 <p className="text-text-primary text-sm font-bold">
-                                  {ticket.ticketTypeName}
+                                  {ticket.ticketTypeName} {ticket?.owner}
                                   <span className="text-text-placeholder mx-1">
                                     •
                                   </span>
@@ -239,7 +250,11 @@ const PostDetailModal = ({
                                   <span className="text-text-secondary text-xs font-medium line-through">
                                     {ticket.originalPrice} USDT
                                   </span>
-                                  {isSelling ? (
+                                  {isSold ? (
+                                    <span className="bg-destructive-background text-destructive rounded px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                                      Đã bán
+                                    </span>
+                                  ) : isSelling ? (
                                     <span className="bg-success-background text-success-text-on-subtle rounded px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                                       Đang bán
                                     </span>

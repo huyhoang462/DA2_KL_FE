@@ -59,7 +59,7 @@ export default function RecentOrdersCard({ data, eventId }) {
               </p>
             </div>
             <p className="text-text-primary font-semibold">
-              {order.totalAmount.toLocaleString('vi-VN')} đ
+              {order.totalAmount.toLocaleString('vi-VN')} USDT
             </p>
           </div>
         ))}
