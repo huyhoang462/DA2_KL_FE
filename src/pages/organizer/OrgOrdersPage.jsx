@@ -119,14 +119,14 @@ const OrgOrdersPage = () => {
         </div>
       ),
     },
-    {
-      key: 'showName',
-      header: 'Suất diễn',
-      sortable: false,
-      render: (value) => (
-        <span className="text-sm text-gray-700">{value || 'N/A'}</span>
-      ),
-    },
+    // {
+    //   key: 'showName',
+    //   header: 'Suất diễn',
+    //   sortable: false,
+    //   render: (value) => (
+    //     <span className="text-sm text-gray-700">{value || 'N/A'}</span>
+    //   ),
+    // },
     {
       key: 'ticketCount',
       header: 'Số vé',

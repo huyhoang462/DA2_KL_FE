@@ -46,7 +46,7 @@ const StatCard = ({
         <p className="text-text-secondary mb-1 text-sm font-medium">{title}</p>
         <p className="text-text-primary mb-2 text-3xl font-bold">{value}</p>
         {subtitle && <p className="text-text-secondary text-sm">{subtitle}</p>}
-        {trend && (
+        {/* {trend && (
           <div
             className={`mt-2 flex items-center gap-1 text-sm font-medium ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}
           >
@@ -61,7 +61,7 @@ const StatCard = ({
               vs tháng trước
             </span>
           </div>
-        )}
+        )} */}
       </div>
       <div
         className={`bg-${color}/10 rounded-lg p-3 transition-transform group-hover:scale-110`}
@@ -167,7 +167,7 @@ const AdminDashboardPage = () => {
       </div>
 
       {/* Transaction Stats */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      {/* <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <StatCard
           title="Giao dịch thành công"
           value={overview?.transactions?.success?.toLocaleString() || '0'}
@@ -189,7 +189,7 @@ const AdminDashboardPage = () => {
           color="destructive"
           onClick={() => navigate('/admin/transactions?status=failed')}
         />
-      </div>
+      </div> */}
 
       {/* Top Selling Events */}
       {topSellingEvents && topSellingEvents.length > 0 && (
