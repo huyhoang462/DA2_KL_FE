@@ -208,7 +208,7 @@ export const useMintTicket = () => {
         }
       );
 
-      // Gọi hàm batchMintEventTickets thay vì mintEventTickets
+      // Gọi hàm batchRegisterEvents thay vì batchMintEventTickets
       console.log('--- DEBUG: MINT PARAMS ---');
       console.log('formattedVouchers:', formattedVouchers);
       console.log('signatures:', signatures);
@@ -229,7 +229,7 @@ export const useMintTicket = () => {
 
       try {
         setStatusMessage('Đang kiểm tra giao dịch với Smart Contract...');
-        await contract.batchMintEventTickets.staticCall(
+        await contract.batchRegisterEvents.staticCall(
           formattedVouchers,
           signatures
         );
@@ -262,7 +262,7 @@ export const useMintTicket = () => {
             });
 
             try {
-              await contract.batchMintEventTickets.staticCall(
+              await contract.batchRegisterEvents.staticCall(
                 [voucher],
                 [signature]
               );
@@ -278,8 +278,8 @@ export const useMintTicket = () => {
         throw new Error(getMintPrecheckErrorMessage(precheckError));
       }
 
-      setStatusMessage('Đang chờ xác nhận mint trên ví...');
-      const tx = await contract.batchMintEventTickets(
+      setStatusMessage('Đang chờ xác nhận đăng ký sự kiện trên ví...');
+      const tx = await contract.batchRegisterEvents(
         formattedVouchers,
         signatures,
         txOptions
