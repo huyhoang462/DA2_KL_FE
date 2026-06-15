@@ -131,14 +131,14 @@ const PostComposerModal = ({
           </div>
         )}
 
-        <Button
+        {/* <Button
           variant="secondary"
           onClick={onAddImage}
           className="w-full sm:w-auto"
         >
           <ImagePlus className="mr-2 h-4 w-4" />
           {addImageLabel}
-        </Button>
+        </Button> */}
 
         {error && (
           <p className="text-destructive bg-destructive-background rounded-lg px-3 py-2 text-sm">

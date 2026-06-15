@@ -332,6 +332,7 @@ export default function TicketCard({
 
                 <button
                   onClick={() => onClickSell(ticket)}
+                  disabled={ticket.mintStatus !== 'minted'}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
                 >
                   Bán vé
