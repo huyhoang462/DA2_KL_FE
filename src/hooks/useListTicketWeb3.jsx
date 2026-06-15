@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
-import { useWallets } from '@privy-io/react-auth';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { requestGasFund, waitForGasFunding } from '../services/postService';
 import {
   CONTRACT_ADDRESS,
@@ -10,10 +10,34 @@ import {
   POLYGON_AMOY_CHAIN_ID,
 } from '../constants/web3';
 
+const resolvePrivyWallet = (wallets, privyWalletAddress) => {
+  if (!privyWalletAddress) {
+    throw new Error(
+      'Không tìm thấy ví Privy. Vui lòng đăng nhập lại để đăng bán vé.'
+    );
+  }
+
+  const matchedWallet = wallets.find(
+    (w) => w.address?.toLowerCase() === privyWalletAddress.toLowerCase()
+  );
+  if (matchedWallet) return matchedWallet;
+
+  const embeddedWallet = wallets.find((w) => w.walletClientType === 'privy');
+  if (embeddedWallet) return embeddedWallet;
+
+  if (wallets[0]) return wallets[0];
+
+  throw new Error(
+    'Không tìm thấy ví Privy. Vui lòng đăng nhập hoặc kết nối ví Privy.'
+  );
+};
+
 export const useListTicketWeb3 = () => {
   const [isWeb3Processing, setIsWeb3Processing] = useState(false);
   const [web3StatusMessage, setWeb3StatusMessage] = useState('');
+  const { user: privyUser, ready, authenticated } = usePrivy();
   const { wallets } = useWallets();
+  const privyWalletAddress = privyUser?.wallet?.address;
 
   const handleListTicketWeb3 = async ({
     ticketIdsWeb3,
@@ -22,21 +46,23 @@ export const useListTicketWeb3 = () => {
   }) => {
     try {
       setIsWeb3Processing(true);
-      setWeb3StatusMessage('Đang kết nối ví...');
+      setWeb3StatusMessage('Đang kết nối ví Privy...');
 
-      const wallet = wallets[0];
-      if (!wallet) {
-        throw new Error(
-          'Không tìm thấy ví Web3. Vui lòng đăng nhập hoặc kết nối ví Privy.'
-        );
+      if (!ready || !authenticated) {
+        throw new Error('Bạn cần đăng nhập bằng Privy để đăng bán vé.');
       }
 
+      const wallet = resolvePrivyWallet(wallets, privyWalletAddress);
       const ethereumProvider = await wallet.getEthereumProvider();
       
       // Kiểm tra và chuyển mạng nếu cần
       const currentNetwork = await ethereumProvider.request({
         method: 'eth_chainId',
       });
+      let provider;
+      let signer;
+      let signerAddress;
+
       if (currentNetwork !== POLYGON_AMOY_CHAIN_ID) {
         setWeb3StatusMessage('Đang chuyển mạng lưới...');
         try {
@@ -66,22 +92,35 @@ export const useListTicketWeb3 = () => {
             throw switchError;
           }
         }
+
+        provider = new ethers.BrowserProvider(ethereumProvider);
+        signer = await provider.getSigner();
+        signerAddress = await signer.getAddress();
+      } else {
+        provider = new ethers.BrowserProvider(ethereumProvider);
+        signer = await provider.getSigner();
+        signerAddress = await signer.getAddress();
       }
 
-      const provider = new ethers.BrowserProvider(ethereumProvider);
-      const signer = await provider.getSigner();
-      const signerAddress = await signer.getAddress();
+      if (signerAddress.toLowerCase() !== privyWalletAddress.toLowerCase()) {
+        throw new Error(
+          `Ví đang kết nối (${signerAddress}) không khớp với ví Privy đang đăng nhập (${privyWalletAddress}).`
+        );
+      }
+
+      console.log('[POST] Privy wallet:', privyWalletAddress);
+      console.log('[POST] Fund receiver (MetaMask):', walletAddress);
 
       setWeb3StatusMessage('Đang kiểm tra phí Gas...');
-      console.log('[POST] Requesting gas funding for:', signerAddress);
+      console.log('[POST] Requesting gas funding for:', privyWalletAddress);
 
       try {
-        await requestGasFund(signerAddress);
+        await requestGasFund(privyWalletAddress);
         console.log(
           '[POST] Gas funding request sent, waiting for confirmation...'
         );
         setWeb3StatusMessage('Đang chờ nạp Gas...');
-        await waitForGasFunding(signerAddress);
+        await waitForGasFunding(privyWalletAddress);
         console.log('[POST] Gas funding confirmed!');
       } catch (gasError) {
         if (gasError?.message?.includes('pending gas fund request')) {
@@ -106,7 +145,7 @@ export const useListTicketWeb3 = () => {
       );
 
       const isApproved = await ticketContract.isApprovedForAll(
-        signerAddress,
+        privyWalletAddress,
         MARKETPLACE_ADDRESS
       );
 
@@ -135,17 +174,17 @@ export const useListTicketWeb3 = () => {
         try {
           const owner = await ticketContract.ownerOf(ticketId);
           console.log(
-            `[TICKET #${i}] Owner: ${owner}, Expected: ${signerAddress}`
+            `[TICKET #${i}] Owner: ${owner}, Expected Privy: ${privyWalletAddress}`
           );
-          if (owner.toLowerCase() !== signerAddress.toLowerCase()) {
+          if (owner.toLowerCase() !== privyWalletAddress.toLowerCase()) {
             throw new Error(
-              `Vé #${i} không thuộc về bạn. Chủ sở hữu: ${owner}`
+              `Vé #${ticketId} không thuộc về ví Privy của bạn. Chủ sở hữu: ${owner}`
             );
           }
         } catch (ownerError) {
           console.error(`[TICKET #${i}] Ownership check failed:`, ownerError);
           throw new Error(
-            `Lỗi kiểm tra vé #${i}: ${ownerError?.reason || ownerError?.message}`
+            `Lỗi kiểm tra vé #${ticketId}: ${ownerError?.reason || ownerError?.message}`
           );
         }
       }
@@ -159,7 +198,7 @@ export const useListTicketWeb3 = () => {
         ticketIds: ticketIdsWeb3.map((id) => id.toString()),
         prices: pricesWeb3.map((p) => ethers.formatUnits(p, 6)),
         fundReceiver: walletAddress,
-        signerAddress,
+        privyWalletAddress,
       });
 
       try {
