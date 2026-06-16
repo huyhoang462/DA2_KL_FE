@@ -1,78 +1,65 @@
 import React from 'react';
 import {
-  PieChart,
-  Pie,
-  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
 
-const COLORS = [
-  '#3B82F6',
-  '#10B981',
-  '#F59E0B',
-  '#EF4444',
-  '#8B5CF6',
-  '#EC4899',
-];
-
 const CategoryDistributionChart = ({ data }) => {
-  // Format data cho chart
-  const chartData = data.map((item) => ({
-    name: item.name,
-    value: item.count,
-  }));
+  // Sắp xếp data từ cao xuống thấp sẽ làm chart đẹp hơn rất nhiều
+  const chartData = [...data]
+    .map((item) => ({
+      name: item.name,
+      value: item.count,
+    }))
+    .sort((a, b) => b.value - a.value);
 
-  // Custom tooltip
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background-secondary border-border-default rounded-lg border p-3 shadow-lg">
-          <p className="text-text-primary text-sm font-semibold">
-            {payload[0].name}
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+          <p className="text-sm font-semibold text-gray-800">
+            {payload[0].payload.name}
           </p>
           <p className="text-primary text-sm font-medium">
             {payload[0].value} sự kiện
           </p>
-          {/* <p className="text-text-secondary text-xs">
-            {((payload[0].percent || 0) * 100).toFixed(1)}%
-          </p> */}
         </div>
       );
     }
     return null;
   };
 
-  // Custom label
-  const renderLabel = (entry) => {
-    return `${entry.name} (${entry.value})`;
-  };
-
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderLabel}
-          outerRadius={100}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          verticalAlign="bottom"
-          height={36}
-          wrapperStyle={{ fontSize: '12px' }}
+    // Tăng height lên để các thanh bar có không gian
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart
+        data={chartData}
+        layout="vertical" // Quan trọng: Chuyển thành chart ngang
+        margin={{ top: 10, right: 30, left: 40, bottom: 0 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+        <XAxis type="number" hide /> {/* Ẩn trục X đi cho gọn */}
+        <YAxis
+          type="category"
+          dataKey="name"
+          width={150} // Tăng width để chứa đủ text tiếng Việt
+          tick={{ fontSize: 12, fill: '#4B5563' }}
+          axisLine={false}
+          tickLine={false}
         />
-      </PieChart>
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F3F4F6' }} />
+        <Bar
+          dataKey="value"
+          fill="#0d9488"
+          radius={[0, 4, 4, 0]} // Bo góc nhẹ ở đầu thanh bar
+          barSize={20}
+        />
+      </BarChart>
     </ResponsiveContainer>
   );
 };

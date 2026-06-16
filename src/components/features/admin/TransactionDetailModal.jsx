@@ -51,7 +51,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
               <p className="text-text-secondary mb-1 text-sm">Mã giao dịch</p>
               <div className="flex items-center gap-2">
                 <p className="text-text-primary font-mono text-sm">
-                  {transaction.transactionCode}
+                  {transaction.transactionCode?.slice(0, 10)}
                 </p>
                 <button
                   onClick={() =>
