@@ -207,6 +207,31 @@ export default function TicketCard({
     };
   }, []);
 
+  const convertLegacyTicketCode = (longCode) => {
+    if (!longCode) return '';
+
+    if (longCode.length === 9 && longCode.includes('-')) {
+      return longCode.toUpperCase();
+    }
+
+    const SAFE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+    let shortCode = '';
+
+    for (let i = 0; i < 8; i++) {
+      let hashValue = i + 1; // Khởi tạo seed ban đầu
+
+      for (let j = 0; j < longCode.length; j++) {
+        hashValue =
+          (hashValue * 31 + longCode.charCodeAt(j) * (i + 1)) % 1000000009;
+      }
+
+      const randomIndex = hashValue % SAFE_ALPHABET.length;
+      shortCode += SAFE_ALPHABET[randomIndex];
+    }
+
+    return `${shortCode.slice(0, 4)}-${shortCode.slice(4, 8)}`;
+  };
+
   return (
     <>
       {/* Bố cục Main Card: 
@@ -296,13 +321,24 @@ export default function TicketCard({
 
         {/* --- Phần 3: Cuống vé & Thao tác (Right) --- */}
         <div className="bg-foreground flex w-full flex-col justify-between p-4 md:w-56 md:p-6">
-          {/* Loại vé */}
-          <div className="mb-4 flex items-center gap-2 md:flex-col md:items-start md:gap-1">
-            <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+          <div className="mb-4 flex items-center gap-2 md:gap-1">
+            {/* <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
               Loại vé
-            </span>
+            </span> */}
             <div className="flex items-center gap-1.5">
               <Ticket className="text-primary h-4 w-4" />
+              <span className="text-text-primary truncate text-sm font-bold">
+                {convertLegacyTicketCode(ticket.qrCode)}
+              </span>
+            </div>
+          </div>
+          {/* Loại vé */}
+          <div className="mb-4 flex items-center gap-2 md:gap-1">
+            <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+              Loại:
+            </span>
+            <div className="flex items-center gap-1.5">
+              {/* <Ticket className="text-primary h-4 w-4" /> */}
               <span className="text-text-primary truncate text-sm font-bold">
                 {ticket.ticketTypeName}
               </span>
@@ -333,7 +369,7 @@ export default function TicketCard({
                 <button
                   onClick={() => onClickSell(ticket)}
                   disabled={ticket.mintStatus !== 'minted'}
-                  className="bg-primary text-primary-foreground hover:bg-primary-hover inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-sm font-semibold shadow-sm ${ticket.mintStatus !== 'minted' ? 'bg-disabled-background text-disabled-text cursor-not-allowed opacity-70' : 'bg-primary text-primary-foreground hover:bg-primary-hover transition-all duration-200 hover:shadow-md active:scale-95'}`}
                 >
                   Bán vé
                 </button>
