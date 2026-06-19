@@ -11,6 +11,7 @@ import {
   getSellingFastEvents,
   getEventsByCategory,
   getFeaturedEvents,
+  getRecommendations,
 } from '../services/eventService';
 
 // Category IDs
@@ -47,6 +48,14 @@ const HomePage = () => {
         badge="🔥"
         queryKey={['events', 'trending']}
         queryFn={() => getTrendingEvents(8)}
+        showViewAll={false}
+      />
+
+      <EventSection
+        title="Gợi Ý Cho Bạn"
+        badge="✨"
+        queryKey={['events', 'recommendations']}
+        queryFn={getRecommendations}
         showViewAll={false}
       />
 

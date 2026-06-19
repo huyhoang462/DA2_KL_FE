@@ -25,6 +25,15 @@ export const cleanUp = async () => {
 };
 
 // Home page APIs
+export const getRecommendations = async () => {
+  try {
+    const response = await axiosInstance.get(`${API_BASE_URL}/recommendation`);
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
+
 export const getFeaturedEvents = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/home/featured`);
