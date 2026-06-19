@@ -339,8 +339,119 @@ const Community = () => {
     setIsComposerOpen(true);
   }, [userId]);
   const handleCreatePost = useCallback(async () => {
-    /* Giữ nguyên toàn bộ logic validate và gọi API của bạn */
-  }, []);
+    setComposerError('');
+    const trimmedContent = composerForm.content.trim();
+    const trimmedWalletAddress = composerForm.walletAddress.trim();
+
+    if (!trimmedWalletAddress) {
+      setComposerError('Vui lòng nhập địa chỉ ví MetaMask để nhận tiền.');
+      return;
+    }
+    if (!isValidEvmWalletAddress(trimmedWalletAddress)) {
+      setComposerError('Địa chỉ ví MetaMask không hợp lệ.');
+      return;
+    }
+    if (trimmedContent.length < POST_CONTENT_MIN_LENGTH) {
+      setComposerError(
+        `Nội dung phải từ ${POST_CONTENT_MIN_LENGTH} ký tự trở lên.`
+      );
+      return;
+    }
+    if (
+      !Array.isArray(composerForm.selectedTicketIds) ||
+      composerForm.selectedTicketIds.length === 0
+    ) {
+      setComposerError('Bài viết community phải gắn với ít nhất 1 vé của bạn.');
+      return;
+    }
+
+    const selectedMetas = composerForm.selectedTicketIds
+      .map((ticketId) => pendingTicketMetaMap.get(String(ticketId)))
+      .filter(Boolean);
+
+    if (selectedMetas.length !== composerForm.selectedTicketIds.length) {
+      setComposerError('Có vé đã chọn không còn tồn tại. Vui lòng chọn lại.');
+      return;
+    }
+
+    const eventId = String(selectedMetas[0]?.eventId || '');
+    if (
+      !eventId ||
+      selectedMetas.some((meta) => String(meta.eventId) !== eventId)
+    ) {
+      setComposerError('Bạn chỉ có thể chọn vé trong cùng 1 sự kiện.');
+      return;
+    }
+
+    const tickets = [];
+    const ticketIdsWeb3 = [];
+    const pricesWeb3 = [];
+
+    for (const meta of selectedMetas) {
+      const originalPrice = Number(meta.originalPrice || 0);
+      const salePrice = Number(
+        composerForm.salePrices?.[String(meta.ticketId)]
+      );
+
+      if (!Number.isFinite(salePrice) || salePrice <= 0) {
+        setComposerError(
+          `Vui lòng nhập giá bán hợp lệ cho vé #${String(meta.ticketId).slice(-6)}.`
+        );
+        return;
+      }
+
+      const maxAllowed = originalPrice * MAX_RESALE_PRICE_MULTIPLIER;
+      if (originalPrice > 0 && salePrice > maxAllowed) {
+        setComposerError(
+          `Giá bán của vé #${String(meta.ticketId).slice(-6)} không được lớn hơn 120% giá gốc (${maxAllowed} USDT).`
+        );
+        return;
+      }
+
+      if (meta.tokenId == null) {
+        setComposerError(
+          `Vé #${String(meta.ticketId).slice(-6)} chưa được cấp tokenId (chưa mint thành công).`
+        );
+        return;
+      }
+
+      tickets.push({ ticketId: meta.ticketId, price: salePrice });
+      ticketIdsWeb3.push(BigInt(meta.tokenId));
+      pricesWeb3.push(ethers.parseUnits(salePrice.toString(), 6));
+    }
+
+    setIsProcessing(true);
+    try {
+      await handleListTicketWeb3({
+        ticketIdsWeb3,
+        pricesWeb3,
+        walletAddress: trimmedWalletAddress,
+      });
+      createPostMutation.mutate({
+        content: trimmedContent,
+        images: [],
+        walletAddress: trimmedWalletAddress,
+        relatedEvent: eventId,
+        relatedTickets: tickets.map((item) => ({
+          ticketId: item.ticketId,
+          price: item.price,
+        })),
+        postType: 'marketplace_listing',
+      });
+    } catch (error) {
+      setComposerError(
+        error.message || 'Có lỗi xảy ra khi tương tác với blockchain.'
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [
+    composerForm,
+    pendingTicketMetaMap,
+    isValidEvmWalletAddress,
+    handleListTicketWeb3,
+    createPostMutation,
+  ]);
   const handleContentChange = useCallback((value) => {
     setComposerForm((prev) => ({
       ...prev,

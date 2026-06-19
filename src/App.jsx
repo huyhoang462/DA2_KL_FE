@@ -102,7 +102,11 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route
-                element={<ProtectedRoute allowedRoles={['user', 'staff']} />}
+                element={
+                  <ProtectedRoute
+                    allowedRoles={['user', 'staff', 'customer']}
+                  />
+                }
               >
                 <Route
                   path="/payment/vnpay-return"
