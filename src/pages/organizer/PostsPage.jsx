@@ -21,6 +21,7 @@ import {
   deletePost,
   getAllPosts,
 } from '../../services/postService';
+import useImageUpload from '../../hooks/useImageUpload';
 
 const PostSkeleton = () => (
   <div className="bg-background-secondary border-border-default animate-pulse rounded-2xl border p-5">
@@ -136,11 +137,20 @@ const PostsPage = () => {
     setIsComposerOpen(true);
   };
 
-  const handleAddImageToComposer = () => {
-    setComposerForm((prev) => ({
-      ...prev,
-      images: [...prev.images, buildImageFromSeed()].slice(0, 4),
-    }));
+  const { uploadImage, isUploading, error: uploadError } = useImageUpload();
+
+  const handleAddImageFile = async (file) => {
+    try {
+      const uploadedImage = await uploadImage(file);
+      if (uploadedImage && uploadedImage.url) {
+        setComposerForm((prev) => ({
+          ...prev,
+          images: [...prev.images, uploadedImage.url].slice(0, 4),
+        }));
+      }
+    } catch (error) {
+      setComposerError('Lỗi khi tải ảnh lên. Vui lòng thử lại.');
+    }
   };
 
   const handleCreatePost = () => {
@@ -282,7 +292,8 @@ const PostsPage = () => {
         entityEmptyMessage="Hiện chưa có sự kiện đã duyệt để gắn vào bài viết."
         entityError={eventsError?.message || ''}
         images={composerForm.images}
-        onAddImage={handleAddImageToComposer}
+        onAddImageFile={handleAddImageFile}
+        imageUploadStatus={isUploading ? 'uploading' : uploadError ? 'error' : 'idle'}
         onRemoveImage={(index) =>
           setComposerForm((prev) => ({
             ...prev,

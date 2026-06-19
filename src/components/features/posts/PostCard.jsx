@@ -11,6 +11,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CONTENT_PREVIEW_LIMIT, formatDateTime, fromNow } from './postUtils';
+import PostImageCarousel from './PostImageCarousel';
 
 const PostCard = ({
   post,
@@ -161,24 +162,7 @@ const PostCard = ({
 
       {/* ── Images (event_promotion) ── */}
       {post.postType === 'event_promotion' && post.images.length > 0 && (
-        <button
-          type="button"
-          onClick={() => onOpen(post.id)}
-          className={`mt-3 grid w-full gap-0.5 text-left ${
-            post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
-          }`}
-        >
-          {post.images.map((image, index) => (
-            <img
-              key={`${post.id}-image-${index}`}
-              src={image}
-              alt="Post"
-              className={`w-full object-cover ${
-                post.images.length === 1 ? 'aspect-video' : 'aspect-square'
-              }`}
-            />
-          ))}
-        </button>
+        <PostImageCarousel images={post.images} onClick={() => onOpen(post.id)} />
       )}
 
       {/* ── Marketplace listing preview ── */}

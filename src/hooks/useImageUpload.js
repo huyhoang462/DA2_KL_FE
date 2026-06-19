@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axiosInstance from '../api/axios';
 import axios from 'axios';
+import imageCompression from 'browser-image-compression';
 
 const useImageUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -11,12 +12,25 @@ const useImageUpload = () => {
     setError(null);
 
     try {
+      // 1. Nén ảnh
+      const options = {
+        maxSizeMB: 1, // Kích thước tối đa 1MB
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      console.log(`Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+
+      // 2. Lấy signature
       const signatureResponse = await axiosInstance.get('/uploads/signature');
       const { timestamp, signature, cloudName, apiKey, folder } =
         signatureResponse.data;
 
+      // 3. Upload lên Cloudinary
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile); // Dùng ảnh đã nén
       formData.append('api_key', apiKey);
       formData.append('timestamp', timestamp);
       formData.append('signature', signature);

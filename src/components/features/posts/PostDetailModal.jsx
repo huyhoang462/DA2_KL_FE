@@ -10,6 +10,7 @@ import {
   formatDateTime,
   fromNow,
 } from './postUtils';
+import PostImageCarousel from './PostImageCarousel';
 
 const PostDetailModal = ({
   post,
@@ -125,24 +126,7 @@ const PostDetailModal = ({
 
             {/* Hình ảnh */}
             {post.images.length > 0 && (
-              <div
-                className={`border-border-subtle grid gap-1 overflow-hidden rounded-xl border ${
-                  post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
-                }`}
-              >
-                {post.images.map((image, index) => (
-                  <img
-                    key={`${post.id}-detail-image-${index}`}
-                    src={image}
-                    alt="Post"
-                    className={`w-full object-cover ${
-                      post.images.length === 1
-                        ? 'aspect-video'
-                        : 'aspect-square'
-                    }`}
-                  />
-                ))}
-              </div>
+              <PostImageCarousel images={post.images} />
             )}
 
             {/* Khối MarketPlace / Vé */}

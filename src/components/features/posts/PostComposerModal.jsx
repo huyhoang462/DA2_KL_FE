@@ -2,6 +2,7 @@ import { ImagePlus, X } from 'lucide-react';
 import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
 import TextArea from '../../ui/TextArea';
+import ImageUploader from '../../ui/ImageUploader';
 
 const PostComposerModal = ({
   isOpen,
@@ -22,9 +23,9 @@ const PostComposerModal = ({
   entityEmptyMessage = '',
   entityError = '',
   images = [],
-  onAddImage,
+  onAddImageFile,
+  imageUploadStatus = 'idle',
   onRemoveImage,
-  addImageLabel,
   error = '',
   onClose,
   onSubmit,
@@ -73,7 +74,7 @@ const PostComposerModal = ({
         </div>
 
         {entityLabel && (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 mb-4">
             <label className="text-text-secondary block text-sm font-medium">
               {entityLabel}
             </label>
@@ -110,35 +111,44 @@ const PostComposerModal = ({
             </p>
           )}
 
-        {images.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {images.map((image, index) => (
-              <div key={image} className="relative overflow-hidden rounded-lg">
-                <img
-                  src={image}
-                  alt={`composer-${index + 1}`}
-                  className="aspect-video w-full object-cover"
-                />
-                <button
-                  onClick={() => onRemoveImage(index)}
-                  className="bg-destructive text-destructive-foreground absolute top-2 right-2 rounded-full p-1"
-                  aria-label="Xoa anh"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+        {(images.length > 0 || onAddImageFile) && (
+          <div className="mb-4">
+            <label className="text-text-secondary mb-1.5 block text-sm font-medium">
+              Tải ảnh lên ({images.length}/4)
+            </label>
+
+            {images.length > 0 && (
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                {images.map((image, index) => (
+                  <div key={image} className="relative overflow-hidden rounded-lg">
+                    <img
+                      src={image}
+                      alt={`composer-${index + 1}`}
+                      className="aspect-video w-full object-cover"
+                    />
+                    <button
+                      onClick={() => onRemoveImage(index)}
+                      className="bg-destructive text-destructive-foreground absolute top-2 right-2 rounded-full p-1"
+                      aria-label="Xoa anh"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+
+            {onAddImageFile && images.length < 4 && (
+              <ImageUploader
+                onChange={(file) => {
+                  if (file) onAddImageFile(file);
+                }}
+                status={imageUploadStatus}
+                className="aspect-auto min-h-[120px] py-4"
+              />
+            )}
           </div>
         )}
-
-        {/* <Button
-          variant="secondary"
-          onClick={onAddImage}
-          className="w-full sm:w-auto"
-        >
-          <ImagePlus className="mr-2 h-4 w-4" />
-          {addImageLabel}
-        </Button> */}
 
         {error && (
           <p className="text-destructive bg-destructive-background rounded-lg px-3 py-2 text-sm">
