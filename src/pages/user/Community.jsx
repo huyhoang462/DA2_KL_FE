@@ -653,6 +653,20 @@ const Community = () => {
         </div>
       )}
 
+      {isProcessing && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-2xl">
+            <LoadingSpinner className="text-primary mb-4 h-12 w-12" />
+            <h3 className="mb-2 text-lg font-bold text-gray-900">
+              Đang niêm yết vé...
+            </h3>
+            <p className="animate-pulse font-medium text-blue-600">
+              {web3StatusMessage || 'Vui lòng xác nhận trên ví của bạn...'}
+            </p>
+          </div>
+        </div>
+      )}
+
       <BuyResaleTicketModal
         isOpen={buyResaleModalState.isOpen}
         onClose={() =>
