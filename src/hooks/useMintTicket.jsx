@@ -38,8 +38,12 @@ const getMintPrecheckErrorMessage = (error, voucherIndex = null) => {
 };
 
 const validateMintVoucher = (voucher, signature, index) => {
-  if (!Array.isArray(voucher) || voucher.length !== 8) {
+  if (!Array.isArray(voucher) || voucher.length !== 9) {
     throw new Error(`Voucher[${index}] có định dạng không hợp lệ.`);
+  }
+
+  if (!voucher[8] || typeof voucher[8] !== 'string' || !voucher[8].startsWith('0x')) {
+    throw new Error(`Voucher[${index}] thiếu hoặc sai định dạng địa chỉ organizer. Đây có thể là sự kiện được duyệt theo phiên bản cũ, vui lòng tạo lại sự kiện mới!`);
   }
 
   if (!signature || typeof signature !== 'string') {
@@ -169,8 +173,13 @@ export const useMintTicket = () => {
       }
 
       // Chuẩn hóa mảng vouchers để convert eventId sang BigInt giống với yêu cầu của smart contract nếu cần
-      const formattedVouchers = vouchersData.map((v) => {
+      const formattedVouchers = vouchersData.map((v, index) => {
         const rawVoucher = v.voucher || v;
+        
+        if (!rawVoucher.organizer) {
+          throw new Error(`Sự kiện này được duyệt theo hệ thống cũ (thiếu địa chỉ organizer). Vui lòng tạo lại sự kiện mới để có thể phát hành vé.`);
+        }
+
         return [
           BigInt(rawVoucher.eventId),
           rawVoucher.quantity,
@@ -180,6 +189,7 @@ export const useMintTicket = () => {
           rawVoucher.checkinGasPerTicket,
           rawVoucher.expiryTime,
           rawVoucher.nonce,
+          rawVoucher.organizer,
         ];
       });
 
@@ -255,6 +265,7 @@ export const useMintTicket = () => {
               checkinGasPerTicket: voucher[5],
               expiryTime: voucher[6],
               nonce: voucher[7],
+              organizer: voucher[8],
               signaturePreview:
                 typeof signature === 'string'
                   ? `${signature.slice(0, 18)}...${signature.slice(-10)}`

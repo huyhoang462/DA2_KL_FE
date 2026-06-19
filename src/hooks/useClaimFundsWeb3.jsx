@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useWallets } from '@privy-io/react-auth';
 import { toast } from 'react-toastify';
 import { useWeb3 } from '../contexts/Web3Provider';
+import { requestGasFund, waitForGasFunding } from '../services/postService';
 import {
   CONTRACT_ADDRESS,
   CONTRACT_ABI,
@@ -105,6 +106,18 @@ export const useClaimFundsWeb3 = () => {
             `Ví đang kết nối (${signerAddress}) không phải organizer của onChainId ${onChainId}. Organizer on-chain là ${organizerAddress}.`
           );
         }
+      }
+
+      setStatusMessage('Đang kiểm tra phí Gas...');
+      try {
+        await requestGasFund(signerAddress);
+        setStatusMessage('Đang chờ nạp Gas...');
+        await waitForGasFunding(signerAddress);
+      } catch (gasError) {
+        if (gasError?.message?.includes('pending gas fund request')) {
+          throw new Error('Bạn đã có một yêu cầu nạp gas đang chờ. Vui lòng chờ khoảng 1-2 phút để hoàn thành.');
+        }
+        throw gasError;
       }
 
       const txOptions = {

@@ -11,6 +11,7 @@ import {
 import { useClaimFundsWeb3 } from '../../hooks/useClaimFundsWeb3';
 import { CircleDollarSign } from 'lucide-react';
 
+
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import Button from '../../components/ui/Button';
 import ConfirmModal from '../../components/ui/ConfirmModal';
@@ -19,6 +20,7 @@ import RevenueChart from '../../components/features/organizer/RevenueChart';
 import TicketBreakdownCard from '../../components/features/organizer/TicketBreakdownCard';
 import RecentOrdersCard from '../../components/features/organizer/RecentOrdersCard';
 import DashboardSkeleton from '../../components/features/organizer/DashboardSkeleton';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 export default function OrgDashboardPage() {
   const { id: eventId } = useParams();
@@ -29,7 +31,7 @@ export default function OrgDashboardPage() {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { isClaiming, handleClaimFunds } = useClaimFundsWeb3();
+  const { isClaiming, statusMessage, handleClaimFunds } = useClaimFundsWeb3();
 
   // Fetch Dashboard Overview
   const {
@@ -253,6 +255,20 @@ export default function OrgDashboardPage() {
         cancelText="Hủy"
         onConfirm={handleSettleEvent}
       />
+
+      {isClaiming && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center rounded-xl bg-white p-8 shadow-2xl">
+            <LoadingSpinner className="text-primary mb-4 h-12 w-12" />
+            <h3 className="mb-2 text-lg font-bold text-gray-900">
+              Đang xử lý tất toán...
+            </h3>
+            <p className="animate-pulse font-medium text-blue-600">
+              {statusMessage || 'Đang chờ xử lý...'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
