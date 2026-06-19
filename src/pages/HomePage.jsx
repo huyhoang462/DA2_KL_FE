@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import BannerCarousel from '../components/features/event/BannerCarousel';
 import BannerCarouselSkeleton from '../components/ui/BannerCarouselSkeleton';
 import EventSection from '../components/features/event/EventSection';
+import { useAuth } from '../hooks/useAuth';
 import {
   getAllEvents,
   getNewEvents,
@@ -24,6 +25,7 @@ const CATEGORIES = {
 };
 
 const HomePage = () => {
+  const { isAuthenticated } = useAuth();
   const { data: allEvents, isLoading: isLoadingAll } = useQuery({
     queryKey: ['events', 'all'],
     queryFn: getFeaturedEvents,
@@ -51,13 +53,15 @@ const HomePage = () => {
         showViewAll={false}
       />
 
-      <EventSection
-        title="Gợi Ý Cho Bạn"
-        badge="✨"
-        queryKey={['events', 'recommendations']}
-        queryFn={getRecommendations}
-        showViewAll={false}
-      />
+      {isAuthenticated && (
+        <EventSection
+          title="Gợi Ý Cho Bạn"
+          badge="✨"
+          queryKey={['events', 'recommendations']}
+          queryFn={getRecommendations}
+          showViewAll={false}
+        />
+      )}
 
       <EventSection
         title="Sắp hết vé"
