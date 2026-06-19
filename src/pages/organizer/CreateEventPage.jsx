@@ -83,8 +83,15 @@ const CreateEventPage = () => {
         const minDate = new Date(Math.min(...showDates));
         const maxDate = new Date(Math.max(...showDates));
 
-        transformedEventData.startDate = minDate.toISOString().split('T')[0];
-        transformedEventData.endDate = maxDate.toISOString().split('T')[0];
+        const formatLocalDate = (d) => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        transformedEventData.startDate = formatLocalDate(minDate);
+        transformedEventData.endDate = formatLocalDate(maxDate);
       }
     }
 
