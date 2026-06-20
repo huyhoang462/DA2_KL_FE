@@ -64,7 +64,7 @@ const Header = () => {
           setDropdownOpen(false);
         },
         onAfterClearAuth: () => {
-          window.location.replace('/');
+          nav('/login', { replace: true });
         },
       });
     } finally {

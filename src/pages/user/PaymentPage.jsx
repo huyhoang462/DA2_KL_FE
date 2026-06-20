@@ -364,14 +364,6 @@ export default function PaymentPage() {
     }
   };
 
-  const handleOpenVndPayment = () => {
-    setPaymentFlowMethod('vnd');
-
-    if (!paymentUrl) return;
-
-    window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-  };
-
   if (isLoadingEvent) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -380,11 +372,11 @@ export default function PaymentPage() {
     );
   }
 
-  if (!cart.items || Object.keys(cart.items).length === 0) {
-    return (
-      <ErrorDisplay message="Giỏ hàng của bạn đang trống. Vui lòng chọn vé." />
-    );
-  }
+  // if (!cart.items || Object.keys(cart.items).length === 0) {
+  //   return (
+  //     <ErrorDisplay message="Giỏ hàng của bạn đang trống. Vui lòng chọn vé." />
+  //   );
+  // }
 
   if (!event) {
     return <ErrorDisplay message="Không thể tải thông tin sự kiện." />;
@@ -470,15 +462,32 @@ export default function PaymentPage() {
               </ol>
             </div>
 
-            <Button
-              onClick={handleOpenVndPayment}
-              disabled={!paymentUrl}
-              variant="default"
-              className="w-full py-6 text-lg font-semibold"
-            >
-              <ExternalLink className="mr-2 h-5 w-5" />
-              Mở trang thanh toán VNPay
-            </Button>
+            {paymentUrl ? (
+              <a
+                href={paymentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setPaymentFlowMethod('vnd')} // Vẫn khóa execution state an toàn ở đây!
+                className="block w-full"
+              >
+                <Button
+                  variant="default"
+                  className="pointer-events-none w-full py-6 text-lg font-semibold"
+                >
+                  <ExternalLink className="mr-2 h-5 w-5" />
+                  Mở trang thanh toán VNPay
+                </Button>
+              </a>
+            ) : (
+              <Button
+                disabled={true}
+                variant="default"
+                className="w-full py-6 text-lg font-semibold"
+              >
+                <LoadingSpinner className="mr-2 h-5 w-5 border-white" />
+                Đang tải trang thanh toán...
+              </Button>
+            )}
           </>
         ) : (
           <>
@@ -518,7 +527,7 @@ export default function PaymentPage() {
               }
               loading={isProcessing}
               variant="primary"
-              className="w-full border-0 bg-primary-hover py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
+              className="bg-primary-hover w-full border-0 py-6 text-lg font-semibold text-white hover:from-orange-500 hover:to-rose-600"
             >
               <Wallet className="mr-2 h-5 w-5" />
               {isProcessing

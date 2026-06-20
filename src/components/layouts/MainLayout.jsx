@@ -6,10 +6,10 @@ import ScrollToTop from '../shared/ScrollToTop';
 
 const MainLayout = () => {
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background">
       <ScrollToTop />
       <Header />
-      <div className="pt-hheader">
+      <div className="pt-hheader min-h-screen">
         <main className="mx-auto p-4">
           <Outlet />
         </main>

@@ -9,6 +9,7 @@ import {
   CreditCard,
   RefreshCw,
   Ban,
+  Package,
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -19,22 +20,25 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import OrderDetailModal from '../../components/features/order/OrderDetailModal';
 import { formatDate } from '../../utils/formatDate';
 
+// "paid" tab bao gồm cả paid lẫn completed từ DB
 const STATUS_TABS = [
   {
     key: 'pending',
     label: 'Chờ thanh toán',
     icon: Clock,
     emptyMessage: 'Bạn không có đơn hàng nào đang chờ thanh toán',
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-50',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
   },
   {
     key: 'paid',
     label: 'Đã thanh toán',
     icon: CheckCircle,
     emptyMessage: 'Bạn chưa có đơn hàng nào đã thanh toán',
-    color: 'text-green-500',
-    bgColor: 'bg-green-50',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
   },
   {
     key: 'failed',
@@ -43,38 +47,57 @@ const STATUS_TABS = [
     emptyMessage: 'Bạn không có đơn hàng nào thanh toán thất bại',
     color: 'text-red-500',
     bgColor: 'bg-red-50',
+    borderColor: 'border-red-200',
   },
   {
     key: 'cancelled',
     label: 'Đã hủy',
     icon: Ban,
     emptyMessage: 'Bạn không có đơn hàng nào bị hủy',
-    color: 'text-gray-500',
-    bgColor: 'bg-gray-50',
+    color: 'text-slate-500',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-200',
   },
 ];
 
 const STATUS_CONFIG = {
   pending: {
     label: 'Chờ thanh toán',
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-50',
+    dotColor: 'bg-amber-400',
   },
   paid: {
     label: 'Đã thanh toán',
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    dotColor: 'bg-emerald-400',
+  },
+  // completed = paid + tickets đã được mint
+  completed: {
+    label: 'Đã thanh toán',
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    dotColor: 'bg-emerald-500',
   },
   failed: {
     label: 'Thất bại',
-    color: 'text-red-600',
+    color: 'text-red-700',
     bgColor: 'bg-red-50',
+    dotColor: 'bg-red-400',
   },
   cancelled: {
     label: 'Đã hủy',
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50',
+    dotColor: 'bg-slate-400',
   },
+};
+
+// Hàm map status DB sang tab key
+const getTabKeyForStatus = (status) => {
+  if (status === 'paid' || status === 'completed') return 'paid';
+  return status; // pending, failed, cancelled
 };
 
 export default function MyOrdersPage() {
@@ -144,7 +167,7 @@ export default function MyOrdersPage() {
     selectedOrder,
   ]);
 
-  // Filter orders based on status and search
+  // Filter orders: tab "paid" bao gồm cả paid lẫn completed
   const filteredOrders = useMemo(() => {
     if (!allOrders) return [];
 
@@ -159,8 +182,8 @@ export default function MyOrdersPage() {
 
       if (!matchesSearch) return false;
 
-      // Filter by status
-      return order.status === activeTab;
+      // Filter by status - paid tab bao gồm cả "paid" và "completed"
+      return getTabKeyForStatus(order.status) === activeTab;
     });
 
     // Sort by createdAt (newest first)
@@ -171,14 +194,15 @@ export default function MyOrdersPage() {
     return filtered;
   }, [activeTab, searchTerm, allOrders]);
 
-  // Calculate status counts
+  // Calculate status counts - gộp paid + completed vào tab "paid"
   const statusCounts = useMemo(() => {
     if (!allOrders) return {};
     const counts = { pending: 0, paid: 0, failed: 0, cancelled: 0 };
 
     allOrders.forEach((order) => {
-      if (Object.prototype.hasOwnProperty.call(counts, order.status)) {
-        counts[order.status]++;
+      const tabKey = getTabKeyForStatus(order.status);
+      if (Object.prototype.hasOwnProperty.call(counts, tabKey)) {
+        counts[tabKey]++;
       }
     });
 
@@ -206,39 +230,46 @@ export default function MyOrdersPage() {
 
   // Handle actions
   const handlePayment = (order) => {
-    // Navigate to payment page or trigger payment
     navigate(`/payment/${order.id}`);
   };
 
   const handleCancelOrder = async (order) => {
-    // TODO: Implement cancel order API call
     console.log('Cancel order:', order.id);
     refetch();
   };
 
   const handleRetryPayment = (order) => {
-    // Navigate to payment retry
     navigate(`/payment/${order.id}`);
   };
 
   const currentTab = STATUS_TABS.find((tab) => tab.key === activeTab);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <h2 className="text-text-primary text-xl font-bold tracking-tight">
+          Lịch sử đơn hàng
+        </h2>
+        <p className="text-text-secondary text-sm">
+          Quản lý và theo dõi tất cả đơn hàng của bạn
+        </p>
+      </div>
+
       {/* Search Bar & Status Filter */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="text-text-placeholder absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
+          <Search className="text-text-placeholder absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Tìm kiếm theo mã đơn hàng, tên sự kiện..."
-            inputClassName="pl-10 py-2.5"
+            inputClassName="pl-9 py-2.5 text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         {/* Status Select */}
-        <div className="relative min-w-[220px]">
+        <div className="relative min-w-[200px]">
           <select
             value={activeTab}
             onChange={(e) => setActiveTab(e.target.value)}
@@ -273,7 +304,7 @@ export default function MyOrdersPage() {
 
       {/* Orders Table */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-16">
           <LoadingSpinner size="lg" />
         </div>
       ) : isError ? (
@@ -284,43 +315,42 @@ export default function MyOrdersPage() {
         <div className="space-y-4">
           <p className="text-text-secondary text-sm">
             Hiển thị{' '}
-            <span className="font-semibold">
+            <span className="text-text-primary font-semibold">
               {(currentPage - 1) * ITEMS_PER_PAGE + 1}
             </span>
-            -
-            <span className="font-semibold">
+            –
+            <span className="text-text-primary font-semibold">
               {Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)}
             </span>{' '}
             trong tổng số{' '}
-            <span className="font-semibold">{filteredOrders.length}</span> đơn
-            hàng
+            <span className="text-text-primary font-semibold">
+              {filteredOrders.length}
+            </span>{' '}
+            đơn hàng
           </p>
 
           {/* Table */}
-          <div className="border-border-default bg-background-secondary overflow-hidden rounded-lg border">
+          <div className="border-border-default bg-background-secondary overflow-hidden rounded-xl border shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-background-primary border-border-default border-b">
                   <tr>
-                    {/* <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
-                      Mã đơn hàng
-                    </th> */}
-                    <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    <th className="text-text-secondary px-5 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                       Sự kiện
                     </th>
-                    <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    <th className="text-text-secondary px-5 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                       Số lượng
                     </th>
-                    <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    <th className="text-text-secondary px-5 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                       Tổng tiền
                     </th>
-                    <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    <th className="text-text-secondary px-5 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                       Trạng thái
                     </th>
-                    <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    <th className="text-text-secondary px-5 py-3.5 text-left text-xs font-semibold tracking-wider uppercase">
                       Ngày tạo
                     </th>
-                    <th className="text-text-secondary px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">
+                    <th className="text-text-secondary px-5 py-3.5 text-right text-xs font-semibold tracking-wider uppercase">
                       Thao tác
                     </th>
                   </tr>
@@ -335,118 +365,119 @@ export default function MyOrdersPage() {
                     return (
                       <tr
                         key={order.id}
-                        className="hover:bg-background-primary transition-colors"
+                        className="hover:bg-background-primary/60 transition-colors duration-150"
                       >
-                        {/* <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-text-primary text-sm font-medium">
-                            {order.orderCode}
-                          </div>
-                          {order.status === 'pending' && order.expiresAt && (
-                            <div
-                              className={`mt-1 text-xs ${
-                                expired ? 'text-red-500' : 'text-text-secondary'
-                              }`}
-                            >
-                              {expired
-                                ? 'Đã hết hạn'
-                                : `Hết hạn: ${formatDate(order.expiresAt, 'HH:mm DD/MM/YYYY')}`}
-                            </div>
-                          )}
-                        </td> */}
-                        <td className="px-6 py-4">
+                        {/* Event */}
+                        <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            {event?.bannerImageUrl && (
+                            {event?.bannerImageUrl ? (
                               <img
                                 src={event.bannerImageUrl}
                                 alt={event.name}
-                                className="h-12 w-12 rounded-lg object-cover"
+                                className="h-11 w-11 flex-shrink-0 rounded-lg object-cover shadow-sm"
                               />
+                            ) : (
+                              <div className="bg-background-primary border-border-default flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border">
+                                <Package className="text-text-tertiary h-5 w-5" />
+                              </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <div className="text-text-primary truncate text-sm font-medium">
+                              <div className="text-text-primary truncate text-sm font-semibold">
                                 {event?.name || 'N/A'}
                               </div>
-                              <div className="text-text-secondary mt-1 text-xs">
-                                {firstItem?.ticketType?.show?.name || 'N/A'}
+                              <div className="text-text-secondary mt-0.5 text-xs">
+                                {firstItem?.ticketType?.show?.name || ''}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-text-primary text-sm">
+
+                        {/* Ticket count */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <span className="text-text-primary text-sm font-medium">
                             {order.ticketCount === 0
                               ? order?.items?.length
                               : order.ticketCount}{' '}
                             vé
-                          </div>
+                          </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-text-primary text-sm font-semibold">
-                            {order.totalAmount} USDT
-                          </div>
+
+                        {/* Total */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <span className="text-text-primary text-sm font-bold">
+                            {order.totalAmount}{' '}
+                            <span className="text-text-secondary font-normal">
+                              USDT
+                            </span>
+                          </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+
+                        {/* Status badge */}
+                        <td className="px-5 py-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                              statusConfig?.bgColor
-                            } ${statusConfig?.color}`}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusConfig?.bgColor} ${statusConfig?.color}`}
                           >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${statusConfig?.dotColor}`}
+                            />
                             {statusConfig?.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+
+                        {/* Date */}
+                        <td className="px-5 py-4 whitespace-nowrap">
                           <div className="text-text-secondary text-sm">
                             {formatDate(order.createdAt, 'HH:mm DD/MM/YYYY')}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
+
+                        {/* Actions */}
+                        <td className="px-5 py-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
-                            {/* Action buttons based on status */}
                             {order.status === 'pending' && !expired && (
                               <>
                                 <button
                                   onClick={() => handlePayment(order)}
-                                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition-all hover:shadow"
                                 >
-                                  <CreditCard className="h-4 w-4" />
+                                  <CreditCard className="h-3.5 w-3.5" />
                                   Thanh toán
                                 </button>
                                 <button
                                   onClick={() => handleCancelOrder(order)}
-                                  className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+                                  className="border-border-default text-text-secondary hover:bg-background-primary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
                                 >
-                                  <Ban className="h-4 w-4" />
+                                  <Ban className="h-3.5 w-3.5" />
                                   Hủy
                                 </button>
                               </>
                             )}
 
-                            {order.status === 'paid' && (
-                              <>
-                                <button
-                                  onClick={() => openOrderModal(order)}
-                                  className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  Chi tiết
-                                </button>
-                              </>
+                            {(order.status === 'paid' ||
+                              order.status === 'completed') && (
+                              <button
+                                onClick={() => openOrderModal(order)}
+                                className="border-border-default text-text-secondary hover:bg-background-primary hover:text-text-primary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                Chi tiết
+                              </button>
                             )}
 
                             {order.status === 'failed' && (
                               <>
                                 <button
                                   onClick={() => handleRetryPayment(order)}
-                                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition-all hover:shadow"
                                 >
-                                  <RefreshCw className="h-4 w-4" />
+                                  <RefreshCw className="h-3.5 w-3.5" />
                                   Đặt lại
                                 </button>
                                 <button
                                   onClick={() => openOrderModal(order)}
-                                  className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+                                  className="border-border-default text-text-secondary hover:bg-background-primary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
                                 >
-                                  <Eye className="h-4 w-4" />
+                                  <Eye className="h-3.5 w-3.5" />
                                   Chi tiết
                                 </button>
                               </>
@@ -456,9 +487,9 @@ export default function MyOrdersPage() {
                               (order.status === 'pending' && expired)) && (
                               <button
                                 onClick={() => openOrderModal(order)}
-                                className="border-border-default text-text-secondary hover:bg-background-secondary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+                                className="border-border-default text-text-secondary hover:bg-background-primary inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-3.5 w-3.5" />
                                 Xem chi tiết
                               </button>
                             )}
@@ -474,7 +505,7 @@ export default function MyOrdersPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
+            <div className="flex items-center justify-center gap-1.5 pt-2">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
@@ -495,9 +526,9 @@ export default function MyOrdersPage() {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium ${
+                        className={`min-w-[36px] rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                           currentPage === pageNum
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
                             : 'border-border-default text-text-primary hover:bg-background-secondary border'
                         }`}
                       >
@@ -534,16 +565,20 @@ export default function MyOrdersPage() {
           )}
         </div>
       ) : (
-        <div className="border-border-default bg-background-secondary flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
-          <div className="bg-background-primary mb-4 rounded-full p-4">
+        <div className="border-border-default bg-background-secondary flex flex-col items-center justify-center rounded-xl border border-dashed p-16 text-center">
+          <div
+            className={`mb-4 rounded-full p-4 ${currentTab?.bgColor || 'bg-background-primary'}`}
+          >
             {currentTab && (
-              <currentTab.icon className="text-text-secondary h-8 w-8" />
+              <currentTab.icon
+                className={`h-8 w-8 ${currentTab.color || 'text-text-secondary'}`}
+              />
             )}
           </div>
           <h3 className="text-text-primary mb-2 text-lg font-semibold">
             {searchTerm ? 'Không tìm thấy đơn hàng' : currentTab?.emptyMessage}
           </h3>
-          <p className="text-text-secondary text-sm">
+          <p className="text-text-secondary max-w-xs text-sm">
             {searchTerm
               ? 'Không có đơn hàng nào khớp với tìm kiếm của bạn.'
               : 'Hãy khám phá các sự kiện và đặt vé ngay!'}
