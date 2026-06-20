@@ -172,6 +172,12 @@ export const useBuyResaleWeb3 = () => {
 
       if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
         errorMessage = 'Bạn đã từ chối giao dịch trên ví.';
+      } else if (
+        error.message?.includes('0xe450d38c') || 
+        error.message?.includes('ERC20InsufficientBalance') ||
+        error.message?.includes('transfer amount exceeds balance')
+      ) {
+        errorMessage = 'Số dư USDT trong ví của bạn không đủ để thực hiện thanh toán này.';
       } else if (error.message && error.message.includes('gas required exceeds allowance')) {
         errorMessage = 'Chưa cấp quyền (Approve) đủ USDT cho giao dịch.';
       } else if (error.error?.message) {
