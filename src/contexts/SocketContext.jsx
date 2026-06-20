@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 // Giả sử bạn có hook hoặc logic lấy thông tin user đang đăng nhập
 import { useAuth } from '../hooks/useAuth';
-
+import { SERVER_URL } from '../constants/apiConstants';
 const SocketContext = createContext();
 
 export const useSocket = () => useContext(SocketContext);
@@ -15,7 +15,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Chỉ kết nối khi user đã đăng nhập
     if (user && isAuthenticated) {
-      const newSocket = io('http://localhost:3001', {
+      const newSocket = io(SERVER_URL, {
         withCredentials: true,
         transports: ['websocket', 'polling'],
       });
