@@ -24,6 +24,7 @@ import {
   getAdminEventById,
   updateEventStatusAdmin,
 } from '../../../services/adminService';
+import { toast } from 'react-toastify';
 
 // Helper function để format location
 const formatLocation = (location) => {
@@ -64,10 +65,12 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
     mutationFn: ({ eventId, status, reason }) =>
       updateEventStatusAdmin(eventId, status, reason),
     onSuccess: (data, variables) => {
-      console.log('Update success:', data, variables);
       // Đóng tất cả modal NGAY LẬP TỨC
       setShowApproveModal(false);
       setShowRejectModal(false);
+      toast.success(
+        `Sự kiện đã ${variables.status === 'approved' ? 'được phê duyệt' : 'bị từ chối'}!`
+      );
       onClose();
 
       // Invalidate queries trong background sau khi đã đóng modal
@@ -306,8 +309,8 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
               </h4>
 
               <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                  <div className="flex gap-2 md:col-span-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="flex gap-2">
                     <span className="text-text-secondary">Tên tổ chức:</span>
                     <span className="text-text-primary font-medium">
                       {event.organizer?.name || 'Chưa cập nhật'}
@@ -397,7 +400,10 @@ const EventReviewModal = ({ isOpen, onClose, eventId }) => {
                                 <div className="flex items-center gap-4 text-sm">
                                   <div className="text-primary flex items-center gap-1 font-semibold">
                                     <span>
-                                      {ticket.price.toLocaleString('vi-VN')} VNĐ
+                                      {ticket.price === 0
+                                        ? 'Miễn phí'
+                                        : ticket.price.toLocaleString('vi-VN') +
+                                          ' USDT'}
                                     </span>
                                   </div>
                                   <div className="text-text-primary bg-background-primary flex items-center gap-1 rounded-full px-2 py-1">
