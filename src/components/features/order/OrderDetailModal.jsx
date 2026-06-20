@@ -241,19 +241,22 @@ export default function OrderDetailModal({ order, onClose }) {
                       key={index}
                       className="border-border-default bg-background-secondary rounded-lg border p-4"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-background-primary rounded-lg p-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="bg-background-primary rounded-lg p-2 shrink-0">
                             <CreditCard className="text-primary h-5 w-5" />
                           </div>
-                          <div>
-                            <p className="text-text-primary font-medium">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-text-primary font-medium truncate">
                               {PAYMENT_METHOD_LABELS[
                                 transaction.paymentMethod
                               ] || transaction.paymentMethod}
                             </p>
                             {transaction.transactionCode && (
-                              <p className="text-text-secondary mt-1 font-mono text-xs">
+                              <p 
+                                className="text-text-secondary mt-1 font-mono text-xs truncate"
+                                title={transaction.transactionCode}
+                              >
                                 MGD: {transaction.transactionCode}
                               </p>
                             )}
@@ -267,7 +270,7 @@ export default function OrderDetailModal({ order, onClose }) {
                             )}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <p className="text-text-primary text-lg font-bold">
                             {transaction.amount} USDT
                           </p>
