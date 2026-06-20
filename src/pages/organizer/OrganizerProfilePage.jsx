@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Mail, Phone, Save } from 'lucide-react';
+import { Building2, Mail, Phone, Save, Wallet, Copy, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { usePrivy } from '@privy-io/react-auth';
 
 import Button from '../../components/ui/Button';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
@@ -27,6 +28,18 @@ const OrganizerProfilePage = () => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const authUser = useSelector((state) => state.auth.user);
+  const { user: privyUser } = usePrivy();
+  const walletAddress = privyUser?.wallet?.address || authUser?.walletAddress;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyWallet = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success('Đã sao chép địa chỉ ví');
+    }
+  };
 
   const [form, setForm] = useState({
     displayName: '',
@@ -243,6 +256,28 @@ const OrganizerProfilePage = () => {
             <span className="text-text-primary font-medium">
               {profile?.registeredEmail || authUser?.email || 'Chưa có'}
             </span>
+          </div>
+
+          <div className="bg-background-primary border-border-default flex items-center justify-between rounded-2xl border px-4 py-3 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <Wallet className="text-text-secondary h-4 w-4" />
+                <span className="text-text-secondary font-medium whitespace-nowrap">Ví Privy:</span>
+              </div>
+              <span className="text-text-primary font-mono font-medium break-all">
+                {walletAddress || 'Chưa kết nối ví'}
+              </span>
+            </div>
+            {walletAddress && (
+              <button
+                type="button"
+                onClick={handleCopyWallet}
+                className="text-text-secondary hover:text-primary transition-colors focus:outline-none p-1 ml-2"
+                title="Sao chép địa chỉ ví"
+              >
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </button>
+            )}
           </div>
 
           <FloatingLabelInput

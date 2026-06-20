@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Pencil, Save } from 'lucide-react';
+import { Pencil, Save, Wallet, Copy, Check } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { usePrivy } from '@privy-io/react-auth';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import { validatePhone } from '../../../utils/validation';
@@ -10,6 +12,20 @@ import { setUser } from '../../../store/slices/authSlice';
 const ProfileSection = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
+
+  const { user: privyUser } = usePrivy();
+  const walletAddress = privyUser?.wallet?.address || user?.walletAddress;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyWallet = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success('Đã sao chép địa chỉ ví');
+    }
+  };
+
   const [editMode, setEditMode] = useState(false);
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -72,6 +88,29 @@ const ProfileSection = () => {
           disabled
           inputClassName="bg-gray-100 cursor-not-allowed"
         />
+        
+        <div className="bg-background-primary border-border-default flex items-center justify-between rounded-xl border px-3 py-3 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="text-text-secondary h-4 w-4" />
+              <span className="text-text-secondary font-medium whitespace-nowrap">Ví Privy:</span>
+            </div>
+            <span className="text-text-primary font-mono font-medium break-all">
+              {walletAddress || 'Chưa kết nối ví'}
+            </span>
+          </div>
+          {walletAddress && (
+            <button
+              type="button"
+              onClick={handleCopyWallet}
+              className="text-text-secondary hover:text-primary transition-colors focus:outline-none p-1 ml-2"
+              title="Sao chép địa chỉ ví"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+            </button>
+          )}
+        </div>
+
         <Input
           id="fullName"
           label="Họ tên"
