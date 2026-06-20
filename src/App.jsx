@@ -81,14 +81,20 @@ const AdminNotificationsPage = lazy(
 );
 
 const ProtectedRoute = lazy(() => import('./components/auth/ProtectedRoute'));
+const RoleBasedRedirect = () => {
+  const { role, isLoading } = useAuth();
 
-const UserPublicWrapper = () => {
-  const { role } = useAuth();
+  if (isLoading) {
+    return <FullScreenLoader />;
+  }
+
   if (role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
-  } else if (role === 'organizer') {
+  }
+  if (role === 'organizer') {
     return <Navigate to="/organizer/my-events" replace />;
   }
+
   return <Outlet />;
 };
 
@@ -113,8 +119,11 @@ function App() {
                   element={<VnpayReturnPage />}
                 />
               </Route>
-              <Route element={<MainLayout />}>
-                <Route element={<UserPublicWrapper />}>
+              {/* RoleBasedRedirect nằm NGOÀI MainLayout:
+                  organizer/admin bị redirect trước khi MainLayout kịp mount
+                  → không còn flash màn hình home */}
+              <Route element={<RoleBasedRedirect />}>
+                <Route element={<MainLayout />}>
                   <Route path="/" element={<HomePage />} />
                   <Route
                     path="/event-detail/:id"
@@ -122,26 +131,26 @@ function App() {
                   />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/community" element={<Community />} />
-                </Route>
-                <Route
-                  element={
-                    <ProtectedRoute
-                      allowedRoles={['user', 'customer', 'staff']}
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={['user', 'customer', 'staff']}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/notifications"
+                      element={<NotificationsPage />}
                     />
-                  }
-                >
-                  <Route
-                    path="/notifications"
-                    element={<NotificationsPage />}
-                  />
-                  <Route
-                    path="/select-tickets/:id/:showId"
-                    element={<SelectTicketsPage />}
-                  />
-                  <Route
-                    path="/payment/:id/:showId"
-                    element={<PaymentPage />}
-                  />
+                    <Route
+                      path="/select-tickets/:id/:showId"
+                      element={<SelectTicketsPage />}
+                    />
+                    <Route
+                      path="/payment/:id/:showId"
+                      element={<PaymentPage />}
+                    />
+                  </Route>
                 </Route>
               </Route>
               <Route

@@ -364,14 +364,6 @@ export default function PaymentPage() {
     }
   };
 
-  const handleOpenVndPayment = () => {
-    setPaymentFlowMethod('vnd');
-
-    if (!paymentUrl) return;
-
-    window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-  };
-
   if (isLoadingEvent) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -380,11 +372,11 @@ export default function PaymentPage() {
     );
   }
 
-  if (!cart.items || Object.keys(cart.items).length === 0) {
-    return (
-      <ErrorDisplay message="Giỏ hàng của bạn đang trống. Vui lòng chọn vé." />
-    );
-  }
+  // if (!cart.items || Object.keys(cart.items).length === 0) {
+  //   return (
+  //     <ErrorDisplay message="Giỏ hàng của bạn đang trống. Vui lòng chọn vé." />
+  //   );
+  // }
 
   if (!event) {
     return <ErrorDisplay message="Không thể tải thông tin sự kiện." />;
