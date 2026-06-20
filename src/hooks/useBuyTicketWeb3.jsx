@@ -296,6 +296,12 @@ export const useBuyTicketWeb3 = () => {
       if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
         errorMessage = 'Bạn đã từ chối giao dịch trên ví.';
       } else if (
+        error.message?.includes('0xe450d38c') || 
+        error.message?.includes('ERC20InsufficientBalance') ||
+        error.message?.includes('transfer amount exceeds balance')
+      ) {
+        errorMessage = 'Số dư USDT trong ví của bạn không đủ để thực hiện thanh toán này.';
+      } else if (
         error.message?.includes('One of the events is not active') ||
         error.error?.message?.includes('One of the events is not active') ||
         error.data?.message?.includes('One of the events is not active') ||
