@@ -10,7 +10,7 @@ export default function FullScreenLoader({ message = 'LOADING...' }) {
 
           <div className="animate-reveal flex h-full flex-col items-center justify-center p-6">
             <img
-              src="favicon.ico"
+              src="/favicon.ico"
               alt="ShineTicket Logo"
               className="h-24 w-auto"
             />
