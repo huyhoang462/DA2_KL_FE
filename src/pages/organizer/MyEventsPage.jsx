@@ -12,7 +12,7 @@ const filters = [
   { label: 'Nháp', value: 'draft' },
   { label: 'Chờ duyệt', value: 'pending' },
   { label: 'Đã duyệt', value: 'approved' },
-  { label: 'Đang mint', value: 'minting' },
+  //{ label: 'Đang mint', value: 'minting' },
   { label: 'Sắp diễn ra', value: 'upcoming' },
   { label: 'Đang diễn ra', value: 'ongoing' },
   { label: 'Đã kết thúc', value: 'completed' },

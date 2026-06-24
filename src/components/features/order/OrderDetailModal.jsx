@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import Modal from '../../ui/Modal';
 import { formatDate } from '../../../utils/formatDate';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 const STATUS_CONFIG = {
   pending: {
@@ -55,13 +57,6 @@ export default function OrderDetailModal({ order, onClose }) {
   const firstItem = order.items?.[0];
   const event = firstItem?.ticketType?.show?.event;
   const show = firstItem?.ticketType?.show;
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
 
   return (
     <Modal isOpen={true} onClose={onClose} size="xl" maxWidth="max-w-2xl">
@@ -139,7 +134,11 @@ export default function OrderDetailModal({ order, onClose }) {
                         <Calendar className="h-4 w-4" />
                         <span>
                           {show.name} -{' '}
-                          {formatDate(show.startTime, 'HH:mm DD/MM/YYYY')}
+                          {format(
+                            new Date(show.startTime.replace('Z', '')),
+                            'HH:mm, EEE, dd MMM yyyy', // Thêm HH:mm vào chuỗi format
+                            { locale: vi }
+                          )}
                         </span>
                       </div>
                     )}
@@ -242,19 +241,19 @@ export default function OrderDetailModal({ order, onClose }) {
                       className="border-border-default bg-background-secondary rounded-lg border p-4"
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="bg-background-primary rounded-lg p-2 shrink-0">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="bg-background-primary shrink-0 rounded-lg p-2">
                             <CreditCard className="text-primary h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-text-primary font-medium truncate">
+                            <p className="text-text-primary truncate font-medium">
                               {PAYMENT_METHOD_LABELS[
                                 transaction.paymentMethod
                               ] || transaction.paymentMethod}
                             </p>
                             {transaction.transactionCode && (
-                              <p 
-                                className="text-text-secondary mt-1 font-mono text-xs truncate"
+                              <p
+                                className="text-text-secondary mt-1 truncate font-mono text-xs"
                                 title={transaction.transactionCode}
                               >
                                 MGD: {transaction.transactionCode}
@@ -270,7 +269,7 @@ export default function OrderDetailModal({ order, onClose }) {
                             )}
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="shrink-0 text-right">
                           <p className="text-text-primary text-lg font-bold">
                             {transaction.amount} USDT
                           </p>

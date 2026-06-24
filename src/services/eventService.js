@@ -204,6 +204,16 @@ export const getEventsByUserId = async (userId) => {
   }
 };
 
+export const getUpcomingEventsByUserId = async (userId) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/events/upcoming/${userId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw extractError(error);
+  }
+};
 // Dashboard APIs
 export const getDashboardOverview = async (eventId) => {
   try {

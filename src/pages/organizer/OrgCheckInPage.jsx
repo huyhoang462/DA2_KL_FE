@@ -109,7 +109,12 @@ const OrgCheckInPage = () => {
             {event.shows?.map((show) => (
               <option key={show._id || show.id} value={show._id || show.id}>
                 {show.name} -{' '}
-                {new Date(show.startTime).toLocaleDateString('vi-VN')}
+                {new Date(show.startTime).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  timeZone: 'UTC',
+                })}
               </option>
             ))}
           </select>

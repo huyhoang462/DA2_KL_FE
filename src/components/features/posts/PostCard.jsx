@@ -162,7 +162,10 @@ const PostCard = ({
 
       {/* ── Images (event_promotion) ── */}
       {post.postType === 'event_promotion' && post.images.length > 0 && (
-        <PostImageCarousel images={post.images} onClick={() => onOpen(post.id)} />
+        <PostImageCarousel
+          images={post.images}
+          onClick={() => onOpen(post.id)}
+        />
       )}
 
       {/* ── Marketplace listing preview ── */}
@@ -227,7 +230,9 @@ const PostCard = ({
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Tag className="h-3.5 w-3.5" />
-                    {post.relatedEvent.locationText}
+                    {post.format === 'online'
+                      ? 'Trực tuyến'
+                      : post.relatedEvent?.locationText }
                   </span>
                 </div>
               </div>

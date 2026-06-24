@@ -95,9 +95,13 @@ export default function TicketCard({
     ).padStart(2, '0')}`;
   };
 
-  const formattedDate = format(new Date(ticket.startTime), 'EEE, dd MMM yyyy', {
-    locale: vi,
-  });
+  const formattedDate = format(
+    new Date(ticket.startTime.replace('Z', '')),
+    'EEE, dd MMM yyyy',
+    {
+      locale: vi,
+    }
+  );
   const formattedTime = `${formatUtcTime(ticket.startTime)} – ${formatUtcTime(
     ticket.endTime
   )}`;

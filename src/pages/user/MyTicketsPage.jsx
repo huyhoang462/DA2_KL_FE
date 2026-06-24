@@ -133,12 +133,12 @@ export default function MyTicketsPage() {
 
     // Sort theo tab
     filtered.sort((a, b) => {
-      const timeA = new Date(a.startTime).getTime();
-      const timeB = new Date(b.startTime).getTime();
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
 
       if (activeTab === 'upcoming' || activeTab === 'ongoing') {
         // Sắp diễn ra / Đang diễn ra: gần nhất trước (ASC)
-        return timeA - timeB;
+        return timeB - timeA;
       } else {
         // Đã qua / Đã hủy: mới nhất trước (DESC)
         return timeB - timeA;

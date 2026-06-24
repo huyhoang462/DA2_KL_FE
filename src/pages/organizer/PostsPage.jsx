@@ -15,7 +15,7 @@ import {
   normalizeEventOption,
   normalizePost,
 } from '../../components/features/posts/postUtils';
-import { getEventsByUserId } from '../../services/eventService';
+import { getUpcomingEventsByUserId } from '../../services/eventService';
 import {
   createPost,
   deletePost,
@@ -78,7 +78,7 @@ const PostsPage = () => {
     error: eventsError,
   } = useQuery({
     queryKey: ['organizer-events', userId],
-    queryFn: () => getEventsByUserId(userId),
+    queryFn: () => getUpcomingEventsByUserId(userId),
     enabled: !!userId,
     staleTime: 60000,
   });
@@ -293,7 +293,9 @@ const PostsPage = () => {
         entityError={eventsError?.message || ''}
         images={composerForm.images}
         onAddImageFile={handleAddImageFile}
-        imageUploadStatus={isUploading ? 'uploading' : uploadError ? 'error' : 'idle'}
+        imageUploadStatus={
+          isUploading ? 'uploading' : uploadError ? 'error' : 'idle'
+        }
         onRemoveImage={(index) =>
           setComposerForm((prev) => ({
             ...prev,

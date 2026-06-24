@@ -173,9 +173,9 @@ const AdminEventDetailPage = () => {
                     {statusInfo.label}
                   </span>
                 </div>
-                <Button variant="success" onClick={() => setIsModalOpen(true)}>
+                {/* <Button variant="success" onClick={() => setIsModalOpen(true)}>
                   Tất toán
-                </Button>
+                </Button> */}
               </div>
               <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                 {eventInfo.organizerName && (

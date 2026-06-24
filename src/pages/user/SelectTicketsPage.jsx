@@ -78,13 +78,16 @@ export default function SelectTicketsPage() {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
   });
   const showTimeRange = `${showStartTime.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   })} - ${showEndTime.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   })}`;
 
   return (

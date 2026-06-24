@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector, useDispatch } from 'react-redux';
 import { listenForPaymentResult } from '../../utils/broadcastChannel';
 
@@ -66,6 +66,7 @@ export default function PaymentPage() {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncTxHash, setSyncTxHash] = useState(null);
   const [isResyncing, setIsResyncing] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: exchangeRateVndPerUsdt } = useUsdtVndRate();
   const { isProcessing, statusMessage, handleBuyWithWeb3 } = useBuyTicketWeb3();
@@ -272,6 +273,7 @@ export default function PaymentPage() {
           pollingInterval.current = null;
         }
 
+        queryClient.invalidateQueries({ queryKey: ['myTickets'] });
         setTimeout(() => {
           navigate('/user/tickets');
         }, 2000);
@@ -290,6 +292,7 @@ export default function PaymentPage() {
     orderId,
     dispatch,
     navigate,
+    queryClient,
   ]);
 
   useEffect(() => {
