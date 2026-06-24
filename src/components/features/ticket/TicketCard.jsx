@@ -249,10 +249,10 @@ export default function TicketCard({
           <img
             src={ticket.bannerImageUrl}
             alt={ticket.eventName}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {/* Overlay gradient nhẹ cho ảnh */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent to-black/5" />
         </div>
 
         {/* --- Phần 2: Nội dung chính (Middle) --- */}
@@ -337,13 +337,13 @@ export default function TicketCard({
             </div>
           </div>
           {/* Loại vé */}
-          <div className="mb-4 flex items-center gap-2 md:gap-1">
-            <span className="text-text-secondary text-xs font-semibold tracking-wider uppercase">
+          <div className="items- mb-4 flex gap-2 md:gap-1">
+            <span className="text-text-secondary text-sm font-semibold tracking-wider uppercase">
               Loại:
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="items- flex gap-1.5">
               {/* <Ticket className="text-primary h-4 w-4" /> */}
-              <span className="text-text-primary truncate text-sm font-bold">
+              <span className="text-text-primary line-clamp-2 text-sm font-bold">
                 {ticket.ticketTypeName}
               </span>
             </div>
