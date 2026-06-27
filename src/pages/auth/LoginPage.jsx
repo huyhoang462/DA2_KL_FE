@@ -4,11 +4,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { usePrivy } from '@privy-io/react-auth';
-
 import { handleLogin } from '../../services/authService';
 import { login } from '../../store/slices/authSlice';
 import { validateEmail } from '../../utils/validation';
 import { saveAccount, deleteAccount } from '../../utils/savedAccountsStorage'; // Thêm helper mới
+
+import { useQueryClient } from '@tanstack/react-query'; // Import queryClient
 
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -21,7 +22,7 @@ import SavedAccountDropdown, {
 export default function LoginPage() {
   const privyData = usePrivy();
   const { authenticated, ready, user: privyUser } = privyData;
-
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState({});
@@ -109,6 +110,11 @@ export default function LoginPage() {
       } else if (from) {
         nav(from, { replace: true });
       } else {
+        queryClient.invalidateQueries({
+          queryKey: ['events', 'recommendations'],
+        });
+        queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+
         nav('/', { replace: true });
       }
     } catch (err) {
