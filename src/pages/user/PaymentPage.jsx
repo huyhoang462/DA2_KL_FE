@@ -338,10 +338,14 @@ export default function PaymentPage() {
         setPaymentError(
           'Giao dịch đã thành công trên Blockchain nhưng hệ thống đang nghẽn mạch cập nhật. Vui lòng Đồng bộ lại hoặc liên hệ Support.'
         );
-      } else if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
+      } else if (error?.code === 'ACTION_REJECTED' || error?.code === 4001) {
         setPaymentError('Bạn đã từ chối giao dịch trên ví.');
+      } else if (error?.message?.includes('0xe450d38c') || error?.message?.includes('InsufficientBalance')) {
+        setPaymentError('Thanh toán thất bại: Số dư USDT trong ví của bạn không đủ. Vui lòng nạp thêm và thử lại.');
+      } else if (error?.message?.includes('0xfb8f41b2') || error?.message?.includes('InsufficientAllowance')) {
+        setPaymentError('Bạn chưa cấp quyền (Approve) cho hệ thống sử dụng USDT. Vui lòng thử lại và phê duyệt giao dịch Approve.');
       } else {
-        setPaymentError(error.message || 'Thanh toán Web3 thất bại.');
+        setPaymentError(error?.message || 'Thanh toán Web3 thất bại.');
       }
     }
   };
