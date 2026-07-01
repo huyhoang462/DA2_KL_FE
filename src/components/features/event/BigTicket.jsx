@@ -21,7 +21,9 @@ export default function BigTicket({ event }) {
   const isEndEvent = useMemo(() => {
     console.log('Calculating isEndEvent, shows:', event.shows);
     return (
-      event?.shows?.filter((show) => show.status === 'pending').length === 0
+      event?.shows?.filter(
+        (show) => show.status === 'pending' || show.status === 'ongoing'
+      ).length === 0
     );
   }, [event.shows]);
 

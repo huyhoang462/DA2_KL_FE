@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CalendarDays, Heart, Link2, MessageSquare, Tag } from 'lucide-react';
 import Modal from '../../ui/Modal';
 import CommentSection from './CommentSection';
+import LetterAvatar from '../../ui/LetterAvatar';
 import {
   CONTENT_PREVIEW_LIMIT,
   countComments,
@@ -96,11 +97,12 @@ const PostDetailModal = ({
           <div className="space-y-5 pb-4 md:pb-0">
             {/* Tác giả */}
             <div className="flex items-start gap-3">
-              <img
+              {/* <img
                 src={post.author.avatar}
                 alt={post.author.name}
                 className="border-border-subtle h-11 w-11 rounded-full border object-cover"
-              />
+              /> */}
+              <LetterAvatar name={post.author.name} />
               <div className="min-w-0 flex-1">
                 <h3 className="text-text-primary text-sm font-semibold">
                   {post.author.name}

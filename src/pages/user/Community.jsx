@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { ethers } from 'ethers';
 import { Calendar, User, Ticket, Sparkles } from 'lucide-react';
-
+import LetterAvatar from '../../components/ui/LetterAvatar';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import InfiniteScrollTrigger from '../../components/ui/InfiniteScrollTrigger'; // <--- Import cục bắt cuộn
@@ -474,13 +474,14 @@ const Community = () => {
         onClick={openComposer}
         className="bg-background-secondary border-border-default mb-4 flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 transition hover:shadow-sm"
       >
-        <img
+        {/* <img
           src={
             user?.avatar || 'https://picsum.photos/seed/community-user/100/100'
           }
           className="border-border-subtle h-10 w-10 flex-shrink-0 rounded-full border object-cover"
           alt="Avatar"
-        />
+        /> */}
+        <LetterAvatar name={user?.fullName || 'Bạn'} />
         <div className="bg-foreground flex flex-1 items-center gap-2 rounded-xl px-4 py-2.5">
           <Ticket className="text-primary h-4 w-4 flex-shrink-0 opacity-60" />
           <span className="text-text-placeholder text-sm">

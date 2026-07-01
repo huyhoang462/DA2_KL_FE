@@ -16,6 +16,7 @@ const filters = [
   { label: 'Sắp diễn ra', value: 'upcoming' },
   { label: 'Đang diễn ra', value: 'ongoing' },
   { label: 'Đã kết thúc', value: 'completed' },
+  { label: 'Đã tất toán', value: 'settled' },
   { label: 'Bị từ chối', value: 'rejected' },
   { label: 'Đã hủy', value: 'cancelled' },
 ];
@@ -116,9 +117,13 @@ export default function MyEventsPage() {
           </p>
 
           <div className="grid grid-cols-1 gap-6">
-            {paginatedEvents.map((event) => (
-              <MyEventCard key={event.id} event={event} />
-            ))}
+            {paginatedEvents.map((event) =>
+              event?.totalTicketsSold === 0 && event.status === 'completed' ? (
+                ''
+              ) : (
+                <MyEventCard key={event.id} event={event} />
+              )
+            )}
           </div>
 
           {/* Pagination */}

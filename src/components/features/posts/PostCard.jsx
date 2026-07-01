@@ -8,6 +8,7 @@ import {
   Trash2,
   Flag,
 } from 'lucide-react';
+import LetterAvatar from '../../ui/LetterAvatar';
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CONTENT_PREVIEW_LIMIT, formatDateTime, fromNow } from './postUtils';
@@ -63,11 +64,12 @@ const PostCard = ({
             onClick={() => onOpen(post.id)}
             className="flex min-w-0 items-center gap-3 text-left"
           >
-            <img
+            {/* <img
               src={post.author.avatar}
               alt={post.author.name}
               className="border-border-subtle h-10 w-10 flex-shrink-0 rounded-full border object-cover"
-            />
+            /> */}
+            <LetterAvatar name={post.author.name} />
             <div className="min-w-0">
               <h3 className="text-text-primary truncate text-sm leading-tight font-semibold">
                 {post.author.name}
@@ -232,7 +234,7 @@ const PostCard = ({
                     <Tag className="h-3.5 w-3.5" />
                     {post.format === 'online'
                       ? 'Trực tuyến'
-                      : post.relatedEvent?.locationText }
+                      : post.relatedEvent?.locationText}
                   </span>
                 </div>
               </div>

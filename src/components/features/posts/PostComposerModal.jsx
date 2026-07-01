@@ -3,6 +3,7 @@ import Button from '../../ui/Button';
 import Modal from '../../ui/Modal';
 import TextArea from '../../ui/TextArea';
 import ImageUploader from '../../ui/ImageUploader';
+import LetterAvatar from '../../ui/LetterAvatar';
 
 const PostComposerModal = ({
   isOpen,
@@ -43,13 +44,16 @@ const PostComposerModal = ({
     >
       <div className="">
         <div className="mb-4 flex items-center gap-3">
-          <img
+          {/* <img
             src={
               currentUser?.avatar ||
               'https://picsum.photos/seed/post-composer/100/100'
             }
             className="h-11 w-11 rounded-full object-cover"
             alt={currentUser?.name || 'Avatar'}
+          /> */}
+          <LetterAvatar
+            name={currentUser?.fullName || currentUser?.name || 'Bạn'}
           />
           <div>
             <p className="text-text-primary text-sm font-semibold">
@@ -74,7 +78,7 @@ const PostComposerModal = ({
         </div>
 
         {entityLabel && (
-          <div className="space-y-1.5 mb-4">
+          <div className="mb-4 space-y-1.5">
             <label className="text-text-secondary block text-sm font-medium">
               {entityLabel}
             </label>
@@ -120,7 +124,10 @@ const PostComposerModal = ({
             {images.length > 0 && (
               <div className="mb-3 grid grid-cols-2 gap-2">
                 {images.map((image, index) => (
-                  <div key={image} className="relative overflow-hidden rounded-lg">
+                  <div
+                    key={image}
+                    className="relative overflow-hidden rounded-lg"
+                  >
                     <img
                       src={image}
                       alt={`composer-${index + 1}`}

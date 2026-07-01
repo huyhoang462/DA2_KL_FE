@@ -32,6 +32,10 @@ const statusStyles = {
     label: 'Đã kết thúc',
     className: 'bg-foreground text-text-secondary',
   },
+  settled: {
+    label: 'Đã tất toán',
+    className: 'bg-success-background text-success-text-on-subtle',
+  },
   rejected: {
     label: 'Bị từ chối',
     className: 'bg-destructive-background text-destructive-text-on-subtle',
@@ -66,19 +70,20 @@ export default function MyEventCard({ event }) {
   return (
     <>
       {isMinting && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-background-secondary border-border-default max-w-md w-full rounded-2xl border p-6 shadow-2xl">
-            <h3 className="text-text-primary mb-4 text-lg font-bold text-center">
+        <div className="animate-fade-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="bg-background-secondary border-border-default w-full max-w-md rounded-2xl border p-6 shadow-2xl">
+            <h3 className="text-text-primary mb-4 text-center text-lg font-bold">
               Mint vé sự kiện
             </h3>
             <div className="bg-primary/10 flex flex-col items-center justify-center rounded-xl p-4 text-center">
               <LoadingSpinner size="md" className="text-primary mb-3" />
-              <p className="text-primary text-sm font-medium animate-pulse">
+              <p className="text-primary animate-pulse text-sm font-medium">
                 {statusMessage || 'Đang mint vé...'}
               </p>
             </div>
-            <p className="text-text-secondary mt-4 text-xs text-center font-medium">
-              🚨 Vui lòng KHÔNG ĐÓNG trình duyệt hay làm mới (F5) trang web lúc này!
+            <p className="text-text-secondary mt-4 text-center text-xs font-medium">
+              🚨 Vui lòng KHÔNG ĐÓNG trình duyệt hay làm mới (F5) trang web lúc
+              này!
             </p>
           </div>
         </div>

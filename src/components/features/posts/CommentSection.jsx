@@ -1,6 +1,7 @@
 // CommentSection.jsx
 
 import { useRef, useEffect } from 'react';
+import LetterAvatar from '../../ui/LetterAvatar';
 import {
   CornerDownRight,
   Send,
@@ -19,25 +20,17 @@ import {
 /* ─── Tiny avatar helper ──────────────────────────────── */
 const Avatar = ({ src, name, size = 'md' }) => {
   const dim = size === 'sm' ? 'h-7 w-7 text-[10px]' : 'h-9 w-9 text-xs';
-  const initials = (name || 'H')
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 
-  return src ? (
-    <img
-      src={src}
-      alt={name}
+  return name ? (
+    <LetterAvatar
+      name={name}
       className={`${dim} border-border-subtle flex-shrink-0 rounded-full border object-cover`}
     />
   ) : (
-    <div
+    <LetterAvatar
+      name={'Organizer'}
       className={`${dim} bg-primary/10 text-primary flex flex-shrink-0 items-center justify-center rounded-full font-semibold`}
-    >
-      {initials}
-    </div>
+    />
   );
 };
 
@@ -95,7 +88,7 @@ const RootCommentInput = ({
 
   return (
     <div className="flex gap-2 py-3">
-      <Avatar src={currentUser?.avatar} name={currentUser?.name} />
+      <Avatar src={currentUser?.avatar} name={currentUser?.fullName} />
       <div className="border-border-default bg-background-secondary focus-within:border-primary/50 flex flex-1 items-end gap-2 rounded-2xl border px-3 py-2.5 transition-colors">
         <AutoTextarea
           value={draft}

@@ -4,6 +4,7 @@ import Input from '../../ui/Input';
 import Modal from '../../ui/Modal';
 import TextArea from '../../ui/TextArea';
 import { buildPendingTicketMetaMap } from './PendingTicketsTreeSelect';
+import LetterAvatar from '../../ui/LetterAvatar';
 
 const getArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -112,14 +113,15 @@ const PostTicketModal = ({
         {/* User Info */}
 
         <div className="mb-4 flex items-center gap-3">
-          <img
-            src={
-              currentUser?.avatar ||
-              'https://picsum.photos/seed/post-composer/100/100'
-            }
-            className="h-9 w-9 rounded-full object-cover"
-            alt={currentUser?.name || 'Avatar'}
-          />
+          {/* <img
+              src={
+                currentUser?.avatar ||
+                'https://picsum.photos/seed/post-composer/100/100'
+              }
+              className="h-9 w-9 rounded-full object-cover"
+              alt={currentUser?.name || 'Avatar'}
+            /> */}
+          <LetterAvatar name={currentUser?.fullName || 'Bạn'} />
           <div>
             <p className="text-text-primary text-sm font-semibold">
               {currentUser?.name || currentUser?.fullName || 'Bạn'}

@@ -6,6 +6,7 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import PostComposerModal from '../../components/features/posts/PostComposerModal';
 import PostThread from '../../components/features/posts/PostThread';
+import LetterAvatar from '../../components/ui/LetterAvatar';
 import {
   POST_CONTENT_MAX_LENGTH,
   POST_CONTENT_MIN_LENGTH,
@@ -226,14 +227,15 @@ const PostsPage = () => {
         onClick={openComposer}
         className="bg-background-secondary border-border-default flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition hover:shadow-sm"
       >
-        <img
+        {/* <img
           src={
             user?.avatar ||
             'https://picsum.photos/seed/organizer-avatar/100/100'
           }
           alt={user?.name || 'Organizer'}
           className="h-10 w-10 rounded-full object-cover"
-        />
+        /> */}
+        <LetterAvatar name={user?.fullName || 'Organizer'} />
         <div className="bg-disabled-background text-text-secondary flex-1 rounded-full px-5 py-2.5 text-sm font-medium">
           Chia sẻ thông tin mới về sự kiện của bạn...
         </div>
