@@ -12,9 +12,10 @@ import {
 import Button from '../../components/ui/Button';
 import NotificationModal from '../../components/ui/NotificationModal';
 import ConfirmModal from '../../components/ui/ConfirmModal';
-import { Save, X, Loader2, Trash2, Clock } from 'lucide-react';
+import { Save, X, Loader2, Trash2, Clock, Rocket } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
+import { useMintTicket } from '../../hooks/useMintTicket';
 
 import BasicInfoForm from '../../components/features/createEvent/BasicInfoForm';
 import ShowsInfoForm from '../../components/features/createEvent/ShowsInfoForm';
@@ -405,6 +406,7 @@ export default function OrgEventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isMinting, statusMessage, handleMintTicket } = useMintTicket();
 
   const [firstData, setFirstData] = useState(null);
   const [editData, setEditData] = useState(null);
@@ -853,8 +855,27 @@ export default function OrgEventDetail() {
   const statusInfo = getStatusInfo(originalEvent.status);
 
   return (
-    <div className="flex h-full flex-col bg-gray-50/50">
-      <header className="sticky top-13 z-10 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm md:top-0">
+    <>
+      {isMinting && (
+        <div className="animate-fade-in fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="bg-background-secondary border-border-default w-full max-w-md rounded-2xl border p-6 shadow-2xl">
+            <h3 className="text-text-primary mb-4 text-center text-lg font-bold">
+              Mint vé sự kiện
+            </h3>
+            <div className="bg-primary/10 flex flex-col items-center justify-center rounded-xl p-4 text-center">
+              <LoadingSpinner size="md" className="text-primary mb-3" />
+              <p className="text-primary animate-pulse text-sm font-medium">
+                {statusMessage || 'Đang mint vé...'}
+              </p>
+            </div>
+            <p className="text-text-secondary mt-4 text-center text-xs font-medium">
+              🚨 Vui lòng KHÔNG ĐÓNG trình duyệt hay làm mới (F5) trang web lúc này!
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="flex h-full flex-col bg-gray-50/50">
+        <header className="sticky top-13 z-10 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm md:top-0">
         <div className="mx-auto px-4 py-4">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-gray-900">
@@ -920,11 +941,12 @@ export default function OrgEventDetail() {
                   </>
                 ) : null}
 
-                {/* {originalEvent?.status === 'approved' && (
+                {originalEvent?.status === 'approved' && (
                   <Button
                     size="sm"
-                    onClick={() => startMintMutation.mutate()}
+                    onClick={() => handleMintTicket(originalEvent)}
                     disabled={
+                      isMinting ||
                       startMintMutation.isPending ||
                       mintResultMutation.isPending ||
                       updateMutation.isPending ||
@@ -935,11 +957,11 @@ export default function OrgEventDetail() {
                     {startMintMutation.isPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <Clock className="mr-2 h-4 w-4" />
+                      <Rocket className="mr-2 h-4 w-4" />
                     )}
-                    Start mint
+                    Phát hành
                   </Button>
-                )} */}
+                )}
 
                 {originalEvent?.status === 'minting' && (
                   <>
@@ -1101,5 +1123,6 @@ export default function OrgEventDetail() {
       {/* 
       <DebugDifferentialData /> */}
     </div>
+    </>
   );
 }
