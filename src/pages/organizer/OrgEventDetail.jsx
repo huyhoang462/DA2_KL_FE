@@ -920,7 +920,7 @@ export default function OrgEventDetail() {
                   </>
                 ) : null}
 
-                {originalEvent?.status === 'approved' && (
+                {/* {originalEvent?.status === 'approved' && (
                   <Button
                     size="sm"
                     onClick={() => startMintMutation.mutate()}
@@ -939,7 +939,7 @@ export default function OrgEventDetail() {
                     )}
                     Start mint
                   </Button>
-                )}
+                )} */}
 
                 {originalEvent?.status === 'minting' && (
                   <>
