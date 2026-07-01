@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   useMutation,
@@ -63,6 +64,7 @@ const TABS = [
 ];
 
 const Community = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useSelector((state) => state.auth.user);
   const userId = user?.id;
@@ -72,6 +74,7 @@ const Community = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [composerForm, setComposerForm] = useState({
     content: '',
     walletAddress: '',
@@ -106,12 +109,7 @@ const Community = () => {
     []
   );
 
-  useEffect(() => {
-    if (sessionStorage.getItem('purchase_success_toast') === 'true') {
-      toast.success('Mua vé thành công!');
-      sessionStorage.removeItem('purchase_success_toast');
-    }
-  }, []);
+  // Removed the useEffect that checks for purchase_success_toast since we will navigate instead.
 
   // =========================================================================
   // 1. ÁNH XẠ TAB THÀNH PARAMS & GỌI USE_INFINITE_QUERY
@@ -303,19 +301,29 @@ const Community = () => {
         totalPrice,
         destinationPrivyAddress: privyWalletAddress,
       });
+      
+      setIsFinalizing(true);
       await orderService.finalizeResaleOrder({
         orderId,
         txHash,
         ticketIds: selectedTickets.map((t) => t.ticketId),
       });
 
-      sessionStorage.setItem('purchase_success_toast', 'true');
-      window.location.reload();
+      setBuyResaleModalState((prev) => ({ ...prev, isOpen: false }));
+      toast.success('Mua vé thành công!');
+      
+      // Delay navigation slightly to ensure UI updates and Toast is shown
+      setTimeout(() => {
+        navigate('/user/tickets');
+      }, 500);
+      
     } catch (error) {
       if (!error.message?.includes('Bạn đã từ chối'))
         toast.error(error.message || 'Giao dịch thất bại.');
+    } finally {
+      setIsFinalizing(false);
     }
-  }, [buyResaleModalState, privyWalletAddress, handleBuyResaleWeb3]);
+  }, [buyResaleModalState, privyWalletAddress, handleBuyResaleWeb3, navigate]);
 
   // Handle Create Post logic (Giữ nguyên)
   const closeComposer = useCallback(() => {
@@ -675,8 +683,8 @@ const Community = () => {
         }
         selectedTickets={buyResaleModalState.selectedTickets}
         totalPrice={buyResaleModalState.totalPrice}
-        isProcessing={isBuyResaleProcessing}
-        statusMessage={buyResaleStatusMessage}
+        isProcessing={isBuyResaleProcessing || isFinalizing}
+        statusMessage={isFinalizing ? "Đang xác nhận giao dịch với hệ thống..." : buyResaleStatusMessage}
         onConfirmPayment={handleConfirmBuyResale}
       />
     </div>
