@@ -63,13 +63,13 @@ const HomePage = () => {
         />
       )}
 
-      <EventSection
+      {/* <EventSection
         title="Sắp hết vé"
         badge="⚡"
         queryKey={['events', 'selling-fast']}
         queryFn={() => getSellingFastEvents(8)}
         showViewAll={false}
-      />
+      /> */}
 
       <EventSection
         title="Sự kiện cuối tuần này"
